@@ -1,0 +1,72 @@
+# Testa o sistema e publica sozinho.
+#
+# - Qualquer push em main: testa. O Render publica main automaticamente.
+# - Push em uma branch claude/...: testa e, se passar, leva a mudança para
+#   main, o que dispara a publicação no Render. Se o teste falhar, main não
+#   muda e o site continua na versão anterior.
+name: Testar e publicar
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  testar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: custoplano
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependências
+        run: pip install flask openpyxl
+
+      - name: Verificar sintaxe
+        run: python -m py_compile app.py banco.py cronograma.py
+
+      - name: Testar se o site abre
+        env:
+          CP_BANCO: ${{ runner.temp }}/teste.db
+          CP_SECRET: teste
+        run: |
+          python - <<'PY'
+          import app
+          c = app.app.test_client()
+          r = c.get("/")
+          assert r.status_code == 200, f"página inicial respondeu {r.status_code}"
+          print("site OK")
+          PY
+
+      - name: Testar a imagem Docker
+        run: docker build -t custoplano .
+
+  levar-para-main:
+    needs: testar
+    if: startsWith(github.ref, 'refs/heads/claude/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Juntar a mudança em main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin "${GITHUB_REF_NAME}"
+          git merge --no-edit "origin/${GITHUB_REF_NAME}"
+          git push origin main
