@@ -70,3 +70,30 @@ jobs:
           git fetch origin "${GITHUB_REF_NAME}"
           git merge --no-edit "origin/${GITHUB_REF_NAME}"
           git push origin main
+
+      # Garante a publicação mesmo se o Render não perceber o push.
+      # Precisa do segredo RENDER_DEPLOY_HOOK (Render → Settings → Deploy Hook).
+      - name: Avisar o Render para publicar
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK" && echo "publicação pedida ao Render"
+          else
+            echo "segredo RENDER_DEPLOY_HOOK não configurado; dependendo do deploy automático do Render"
+          fi
+
+  publicar-main:
+    needs: testar
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Avisar o Render para publicar
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -n "$HOOK" ]; then
+            curl -fsS -X POST "$HOOK" && echo "publicação pedida ao Render"
+          else
+            echo "segredo RENDER_DEPLOY_HOOK não configurado; dependendo do deploy automático do Render"
+          fi
