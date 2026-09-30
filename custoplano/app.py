@@ -189,6 +189,19 @@ def importar():
     return ver_cronograma()
 
 
+@app.post("/api/importar-exemplo")
+@logado
+def importar_exemplo():
+    """Carrega o cronograma de exemplo para testar a medição sem ter um .mpp à mão."""
+    nome = "cronograma_exemplo.xml"
+    with open(os.path.join(AQUI, "exemplo", nome), encoding="utf-8") as f:
+        xml = f.read()
+    p = Projeto(xml, nome)
+    sd = p.data_status or dt.datetime.now().replace(hour=17, minute=0, second=0, microsecond=0)
+    banco.salvar_cronograma(session["uid"], nome, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
+    return ver_cronograma()
+
+
 @app.post("/api/medicao")
 @logado
 def medicao():

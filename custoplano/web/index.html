@@ -1843,7 +1843,9 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   function vMed() {
     if (!P) {
       return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">A medição pelo celular usa o cronograma real da obra. Importe o .mpp (ou o .xml do MS Project) na tela Project, pelo computador ou pelo celular.</p>' +
-        '<button type="button" class="btn btn-primary" data-a="nav:prj" style="align-self:flex-start">Ir para a tela Project</button></section>';
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:prj">Importar na tela Project</button>' +
+        (API ? '<button type="button" class="btn btn-ghost" data-a="mex">Testar com o cronograma de exemplo</button>' : '') + '</div>' +
+        (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') + '</section>';
     }
     var A = aggregate(), real = aPct(A.total, 'r'), prev = aPct(A.total, 'p');
     var q = S.med.q.trim().toLowerCase(), f = S.med.f;
@@ -2026,6 +2028,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         var cur = Math.round(P.meas[a[1]] || 0), nv = a[0] === 'mset' ? parseInt(a[2], 10) : cur + parseInt(a[2], 10);
         P.meas[a[1]] = Math.max(0, Math.min(100, nv)); persist(); break;
       case 'prel': baixarRelatorio(); return;
+      case 'mex':
+        if (precisaRede()) return;
+        S.prjMsg = 'Carregando o exemplo…'; render();
+        api('/api/importar-exemplo', {}).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = ''; S.med.f = 'todas'; render(); }, function (e) { S.prjMsg = 'Não foi possível carregar o exemplo: ' + e.message; render(); });
+        return;
       case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;
       case 'pareset': PA = null; S.pa.hl = -1; S.pa.msg = ''; if (API) api('/api/plano/remover', {}).catch(function () {}); break;
