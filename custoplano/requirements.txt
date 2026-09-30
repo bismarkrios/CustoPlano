@@ -1,0 +1,4 @@
+flask>=3.0
+openpyxl>=3.1
+# Leitura direta de .mpp (precisa do Java 11+ instalado):
+mpxj>=13.0
