@@ -115,6 +115,20 @@ def estaticos(arquivo):
     return send_from_directory(PASTA_WEB, arquivo)
 
 
+@app.get("/sw.js")
+def service_worker():
+    """Service worker na raiz, para o app funcionar sem internet em todo o site."""
+    r = send_from_directory(PASTA_WEB, "sw.js", mimetype="application/javascript")
+    r.headers["Cache-Control"] = "no-cache"
+    r.headers["Service-Worker-Allowed"] = "/"
+    return r
+
+
+@app.get("/manifest.webmanifest")
+def manifesto():
+    return send_from_directory(PASTA_WEB, "manifest.webmanifest", mimetype="application/manifest+json")
+
+
 # ------------------------------------------------------------------------ login
 @app.post("/api/login")
 def login():
@@ -243,6 +257,29 @@ def importar_plano():
 def remover_plano():
     banco.remover_plano(session["uid"])
     return jsonify(ok=True)
+
+
+# ----------------------------------------------------------- relatório mensal
+@app.get("/api/relatorio.pdf")
+@logado
+def relatorio_pdf():
+    import relatorio
+
+    c, p = carregar()
+    pl = banco.plano(session["uid"])
+    plano = json.loads(pl["dados"]) if pl else None
+    if not c and not plano:
+        return erro("Importe o cronograma (tela Project) ou o plano de ataque para gerar o relatório.", 404)
+    u = banco.usuario(session["uid"])
+    obra = (p.titulo if p else plano.get("titulo")) or (u["nome"] if u else "") or "Obra"
+    hist = [dict(h) for h in banco.historico(session["uid"])]
+    if c:
+        sd = para_data(c["data_status"])
+        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra)
+    else:
+        sd = dt.datetime.now()
+        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra)
+    return download(pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf", "application/pdf")
 
 
 # -------------------------------------------------------------------- exportar

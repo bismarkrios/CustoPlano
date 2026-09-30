@@ -1,0 +1,17 @@
+{
+  "name": "Custo Plano · Planejamento de obras",
+  "short_name": "Custo Plano",
+  "description": "Medição, plano de ataque e controle de obra da Custo Plano Engenharia.",
+  "lang": "pt-BR",
+  "start_url": "/#sistema",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F3F6F6",
+  "theme_color": "#282B59",
+  "icons": [
+    { "src": "/web/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/web/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/web/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/web/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

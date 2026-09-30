@@ -16,6 +16,7 @@ custoplano/
 ├── app.py            servidor web (rotas, login, API)
 ├── cronograma.py     leitura do .mpp/.xml, pesos, medição e exportações
 ├── plano_ataque.py   leitura da planilha do plano de ataque (escadinha)
+├── relatorio.py      relatório mensal em PDF
 ├── banco.py          banco de dados SQLite
 ├── web/index.html    site + telas do sistema (HTML/CSS/JS)
 ├── macro/CustoPlano.bas   macro do MS Project (grava a medição no seu .mpp)
@@ -67,6 +68,21 @@ No Project: **Alt+F11 → Arquivo → Importar arquivo → `macro/CustoPlano.bas
 - `ReceberMedicaoCustoPlano`: lê o boletim `.csv` e grava % concluído, % físico e data de status no `.mpp`.
 
 > Arquivos `.mpp` só podem ser **gravados** pelo MS Project. Por isso a volta da medição é pelo `.xml`, que o Project abre direto, ou pela macro, que grava no seu próprio `.mpp`.
+
+## Medição pelo celular e modo offline
+
+- Menu **Medição**: lista das tarefas com botões grandes (−10, +10, 0/25/50/75/100%), filtro “A medir”
+  (já deveriam ter começado pela linha de base e não chegaram a 100%) e busca por tarefa, EAP ou pavimento.
+- **Sem internet** a medição fica guardada no aparelho e é enviada sozinha quando a conexão volta.
+  O site vira um app instalável (no celular: menu do navegador → *Adicionar à tela inicial*); a página,
+  o cronograma e o plano de ataque ficam disponíveis offline depois do primeiro acesso.
+- Exportações, fechar medição, relatório e importações precisam de conexão.
+
+## Relatório mensal (PDF)
+
+Botão **Relatório mensal (PDF)** nas telas Project, Medição e Plano de ataque: resumo da medição, Curva S
+(prevista pela linha de base × real das medições fechadas), avanço por etapa, tarefas com maior impacto no
+atraso, resumo do plano de ataque com marcos e campos para observações e assinaturas.
 
 ## Plano de ataque (escadinha)
 

@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Custo Plano Engenharia: planejamento e controle de obras e departamento de qualidade (PBQP-H e ISO 9001).">
 <title>Custo Plano Engenharia</title>
+<meta name="theme-color" content="#282B59">
+<link rel="icon" href="/web/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/web/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Custo Plano">
 <!--CP_API-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -394,6 +400,37 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .pct-in{width:58px;min-height:26px;padding:2px 6px;font-family:var(--mono);font-size:12px;text-align:right}
 .prj-real .prj-row{grid-template-columns:44px 300px 60px 80px 80px 60px 66px minmax(0,1fr)}
 .prj-bar select{width:auto;min-height:36px;padding:4px 8px}
+
+/* Medição pelo celular */
+.med-head{display:flex;flex-direction:column;gap:12px}
+.med-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.med-kpi div{display:flex;flex-direction:column}
+.med-kpi b{font-size:22px;font-weight:600}
+.med-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.med-row input{width:auto;min-height:44px;padding:4px 10px}
+.med-sync{font-size:13px;color:var(--muted);margin:0}
+.med-sync.off{color:var(--bad);font-weight:600}
+.med-tabs{display:flex;width:100%}.med-tabs button{flex:1;min-height:42px;padding:0 4px;font-size:13px;white-space:nowrap}
+#medQ{min-height:46px;width:100%;padding:6px 12px}
+.med-list{display:flex;flex-direction:column;gap:10px}
+.med-grp{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 2px 0}
+.med-item{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;min-width:0}
+.med-item.changed{border-left:4px solid var(--blue)}
+.med-top{display:flex;gap:8px;align-items:baseline;justify-content:space-between}
+.med-name{font-weight:600;font-size:15.5px;line-height:1.3;overflow-wrap:anywhere}
+.med-wbs{font-size:11px;color:var(--muted);white-space:nowrap}
+.med-info{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;font-size:12.5px;color:var(--muted)}.med-info b{color:var(--ink)}
+.med-bar{position:relative;height:8px;border-radius:4px;background:var(--cell)}
+.med-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--blue)}
+.med-bar b{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);margin-left:-1px}
+.med-ctl{display:flex;align-items:center;gap:8px}
+.med-step{min-width:58px;min-height:50px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--ink);font:inherit;font-weight:700;font-size:17px;cursor:pointer;touch-action:manipulation}
+.med-in{flex:1;min-width:0;width:100%;min-height:50px;font-family:var(--mono);font-size:22px;font-weight:600;text-align:center;padding:4px 8px}
+.med-pc{font-family:var(--mono);font-size:16px;color:var(--muted)}
+.med-quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.med-quick button{min-height:42px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
+.med-quick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (min-width:861px){.med-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}.med-grp{grid-column:1/-1}}
 
 /* Plano de ataque (escadinha): matriz pavimento × serviço */
 :root{--pa0:#3D6A99;--pa1:#7A5BA6;--pa2:#C98A1E;--pa3:#2A8A83;--pa4:#B25D86;--pa5:#8C93AE}
@@ -810,6 +847,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       <div class="side-label">Obra</div>
       <button class="nav-btn" type="button" data-a="nav:painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Painel</button>
       <button class="nav-btn" type="button" data-a="nav:prj"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"></rect><path d="M9 4v16M3 9h18"></path><path d="M12 13h4M14 17h5"></path></svg>Project</button>
+      <button class="nav-btn" type="button" data-a="nav:med"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M9 12l2 2 4-4"></path><path d="M11 18h2"></path></svg>Medição</button>
       <button class="nav-btn" type="button" data-a="nav:sup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"></path><path d="M3 7v10l9 4 9-4V7"></path><path d="M12 11v10"></path></svg>Suprimentos<span class="count" id="supCount" style="background:var(--bad);color:var(--surface)">0</span></button>
       <button class="nav-btn" type="button" data-a="nav:cron"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M8 12h12M5 18h8"></path></svg>Cronograma</button>
       <button class="nav-btn" type="button" data-a="nav:lb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 20L9 4M9 20l6-16M15 20l6-16"></path></svg>Linha de balanço</button>
@@ -837,6 +875,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
           <button type="button" class="linkbtn" id="wkNow" data-a="wk:0">Semana atual</button>
         </div>
         <span class="demo-tag" id="wkTag">Dados de exemplo</span>
+        <span class="demo-tag alt" id="netTag" role="status" hidden></span>
         <div class="user">
           <span class="avatar" id="avatar" aria-hidden="true">CL</span>
           <button class="btn btn-ghost btn-sm" type="button" data-a="logout">Sair</button>
@@ -858,7 +897,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
     if (body instanceof FormData) o.body = body;
     else if (body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
-    return fetch(path, o).then(function (r) {
+    return fetch(path, o).catch(function () { var er = new Error('Sem conexão com a internet.'); er.offline = true; throw er; }).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.erro || ('Erro ' + r.status)); return j; });
     });
   }
@@ -1009,6 +1048,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     prj: ['Project', 'Cronograma detalhado com EAP, durações, datas, predecessoras e Gantt.'],
     sup: ['Suprimentos', 'Compras puxadas pelo cronograma: data de necessidade na obra menos o prazo do fornecedor.'],
     cron: ['Cronograma', 'Etapas planejadas × realizadas, com a posição de hoje.'],
+    med: ['Medição', 'Aponte o % de cada tarefa direto do canteiro. Sem internet, a medição fica guardada no aparelho e é enviada quando a conexão voltar.'],
     pa: ['Plano de ataque', 'Programação dos serviços pavimento por pavimento (escadinha): executado, atrasado e desvio contra a linha de base.'],
     lb: ['Linha de balanço', 'Pacotes de trabalho por pavimento e semana. Toque em um pacote para ver detalhes e atualizar.'],
     cp: ['Planejamento de curto prazo', 'Pacotes comprometidos na semana. Aponte a execução e o PPC é recalculado na hora.'],
@@ -1334,7 +1374,20 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   function persist(now) {
     clearTimeout(saveT);
     if (API) {
-      var send = function () { return P ? api('/api/medicao', { meas: P.meas, statusDate: isoDay(P.statusDate), weight: P.weight }).catch(function (e) { S.prjMsg = 'Não foi possível salvar a medição: ' + e.message; render(); }) : Promise.resolve(); };
+      var send = function () {
+        if (!P) return Promise.resolve();
+        var pay = { meas: Object.assign({}, P.meas), statusDate: isoDay(P.statusDate), weight: P.weight };
+        return kvSet('pend', pay).then(function () {
+          if (semRede()) { S.sync = 'offline'; paintSync(); return; }
+          S.sync = 'salvando'; paintSync();
+          return api('/api/medicao', pay).then(function () {
+            return kvGet('pend').then(function (cur) { if (cur && JSON.stringify(cur) === JSON.stringify(pay)) return kvSet('pend', null); }).then(function () { S.sync = ''; paintSync(); });
+          }, function (e) {
+            if (e.offline) { S.sync = 'offline'; paintSync(); return; }
+            S.sync = 'erro'; S.prjMsg = 'Não foi possível salvar a medição: ' + e.message; render();
+          });
+        });
+      };
       if (now) return send();
       saveT = setTimeout(send, 500); return;
     }
@@ -1433,7 +1486,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (API) {
       var fd = new FormData(); fd.append('arquivo', file);
       S.prjMsg = 'Importando ' + file.name + '…'; S.screen = 'prj'; render();
-      api('/api/importar', fd).then(function (v) { applyPrj(v); S.prjMsg = 'Cronograma importado: ' + P.tasks.length + ' tarefas.'; render(); }, function (e) { S.prjMsg = 'Não foi possível importar: ' + e.message; render(); });
+      api('/api/importar', fd).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = 'Cronograma importado: ' + P.tasks.length + ' tarefas.'; render(); }, function (e) { S.prjMsg = 'Não foi possível importar: ' + e.message; render(); });
       return;
     }
     if (/\.mpp$/i.test(file.name)) { S.prjMsg = 'Arquivos .mpp não podem ser lidos no navegador. No MS Project use Arquivo → Salvar como → Formato XML e importe o .xml.'; render(); return; }
@@ -1456,7 +1509,17 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   function loadHist() { if (!API) return; api('/api/historico').then(function (h) { S.hist = h; if (!app.hidden) render(); }).catch(function () {}); }
   function loadPrj() {
-    if (API) { api('/api/cronograma').then(function (v) { applyPrj(v); loadHist(); if (!app.hidden) render(); }).catch(function () {}); loadPlano(); return; }
+    if (API) {
+      api('/api/cronograma').then(function (v) {
+        applyPrj(v); loadHist();
+        return kvGet('pend').then(function (pd) {
+          if (pd && P) { P.meas = Object.assign({}, P.meas, pd.meas); if (pd.statusDate) P.statusDate = pdate(pd.statusDate + 'T17:00') || P.statusDate; if (pd.weight) P.weight = pd.weight; S.sync = 'offline'; }
+          if (!app.hidden) render();
+          return flushPend();
+        });
+      }).catch(function () {});
+      loadPlano(); return;
+    }
     kvGet('prj').then(function (v) { applyPrj(v); if (P && !app.hidden) render(); });
   }
   if (!API) loadPrj();
@@ -1523,7 +1586,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexport">Exportar para o MS Project (.xml)</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pcsv">Boletim de medição (.csv)</button>' +
-          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button>' : '') +
+          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button><button type="button" class="btn btn-primary btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pclose" title="A medição atual passa a ser a medição anterior">Fechar medição</button>' +
           '<span style="flex:1"></span>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexp">Expandir tudo</button>' +
@@ -1699,6 +1762,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<div class="tabs" role="group" aria-label="Visualização">' + tab('matriz', 'Matriz') + tab('grafico', 'Gráfico') + '</div>' +
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
       (D.base ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(D.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
+      (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
       '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
       (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '') +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
@@ -1724,6 +1788,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   function paImport(file) {
     if (!file) return;
+    if (semRede()) { S.pa.msg = 'Sem internet: a importação precisa de conexão.'; render(); return; }
     if (!API) { S.pa.msg = 'A importação da planilha precisa do servidor da Custo Plano (entre pelo site publicado).'; render(); return; }
     var fd = new FormData(); fd.append('arquivo', file);
     S.pa.msg = 'Lendo ' + file.name + '…'; S.screen = 'pa'; render();
@@ -1734,6 +1799,96 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     }, function (e) { S.pa.msg = 'Não foi possível importar: ' + e.message; render(); });
   }
   document.getElementById('paFile').addEventListener('change', function (e) { paImport(e.target.files[0]); e.target.value = ''; });
+
+  /* ---------- Medição pelo celular (funciona sem internet) ---------- */
+  S.med = { f: 'prev', q: '' };
+  S.sync = '';
+  function semRede() { return API && typeof navigator !== 'undefined' && navigator.onLine === false; }
+  function paintSync() {
+    var t = document.getElementById('netTag'); if (!t) return;
+    var txt = '', cls = 'demo-tag alt';
+    if (S.sync === 'offline') txt = 'Sem internet · medição guardada no aparelho';
+    else if (S.sync === 'salvando') txt = 'Salvando…';
+    else if (S.sync === 'enviado') { txt = 'Medição enviada ao servidor'; cls = 'demo-tag'; }
+    else if (S.sync === 'erro') txt = 'Erro ao salvar a medição';
+    else if (semRede()) txt = 'Sem internet';
+    t.textContent = txt; t.className = cls; t.hidden = !txt;
+    var m = document.getElementById('medSync');
+    if (m) { m.textContent = txt || 'Tudo salvo no servidor.'; m.className = 'med-sync' + (S.sync === 'offline' || semRede() ? ' off' : ''); }
+  }
+  function flushPend() {
+    if (!API) return Promise.resolve();
+    return kvGet('pend').then(function (p) {
+      if (!p) return;
+      if (semRede()) { S.sync = 'offline'; paintSync(); return; }
+      S.sync = 'salvando'; paintSync();
+      return api('/api/medicao', p).then(function () {
+        return kvSet('pend', null).then(function () { S.sync = 'enviado'; paintSync(); setTimeout(function () { if (S.sync === 'enviado') { S.sync = ''; paintSync(); } }, 4000); });
+      }, function (e) { S.sync = e.offline ? 'offline' : 'erro'; paintSync(); });
+    });
+  }
+  window.addEventListener('online', function () { flushPend(); paintSync(); });
+  window.addEventListener('offline', function () { paintSync(); });
+  function precisaRede() {
+    if (!semRede()) return false;
+    S.prjMsg = 'Sem internet: esta ação precisa de conexão. A medição continua guardada no aparelho e será enviada quando a conexão voltar.';
+    render(); return true;
+  }
+  function baixarRelatorio() {
+    if (precisaRede()) return;
+    var ir = function () { location.href = '/api/relatorio.pdf'; };
+    if (P) persist(true).then(ir); else ir();
+  }
+
+  function vMed() {
+    if (!P) {
+      return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">A medição pelo celular usa o cronograma real da obra. Importe o .mpp (ou o .xml do MS Project) na tela Project, pelo computador ou pelo celular.</p>' +
+        '<button type="button" class="btn btn-primary" data-a="nav:prj" style="align-self:flex-start">Ir para a tela Project</button></section>';
+    }
+    var A = aggregate(), real = aPct(A.total, 'r'), prev = aPct(A.total, 'p');
+    var q = S.med.q.trim().toLowerCase(), f = S.med.f;
+    var folhas = P.tasks.filter(function (t) { return !t.children.length; });
+    var cont = { prev: 0, and: 0, todas: folhas.length };
+    var lista = folhas.filter(function (t) {
+      var a = P.meas[t.uid] || 0, pp = plannedPct(t, P.statusDate);
+      var ehPrev = pp > 0 && a < 100, ehAnd = a > 0 && a < 100;
+      if (ehPrev) cont.prev++; if (ehAnd) cont.and++;
+      if (f === 'prev' && !ehPrev) return false;
+      if (f === 'and' && !ehAnd) return false;
+      if (q) { var txt = (t.wbs + ' ' + t.name + ' ' + (t.parent ? t.parent.name : '') + ' ' + (t.parent && t.parent.parent ? t.parent.parent.name : '')).toLowerCase(); if (txt.indexOf(q) < 0) return false; }
+      return true;
+    });
+    var LIM = 120, mais = lista.length - LIM;
+    var grupo = null, itens = '';
+    lista.slice(0, LIM).forEach(function (t) {
+      var g = [t.parent && t.parent.parent ? t.parent.parent.name : '', t.parent ? t.parent.name : ''].filter(Boolean).join(' › ');
+      if (g !== grupo) { grupo = g; itens += '<div class="med-grp">' + esc(g || 'Tarefas') + '</div>'; }
+      var a = Math.round(P.meas[t.uid] || 0), pp = plannedPct(t, P.statusDate), ant = Math.round(P.base[t.uid] || 0);
+      var atras = pp - a > 0.5;
+      var q5 = [0, 25, 50, 75, 100].map(function (v) { return '<button type="button" data-a="mset:' + t.uid + ':' + v + '" aria-pressed="' + (a === v) + '">' + v + '%</button>'; }).join('');
+      itens += '<div class="med-item' + (a !== ant ? ' changed' : '') + '">' +
+        '<div class="med-top"><span class="med-name">' + esc(t.name) + '</span><span class="mono med-wbs">' + esc(t.wbs) + '</span></div>' +
+        '<div class="med-info"><span>Previsto <b>' + fmt1(pp) + '%</b></span><span>Anterior <b>' + ant + '%</b></span><span>' + fdate(t.start).slice(0, 5) + ' → ' + fdate(t.finish).slice(0, 5) + '</span>' + (atras ? '<span class="chip c-bad">abaixo do previsto</span>' : '') + '</div>' +
+        '<div class="med-bar" aria-hidden="true"><i style="width:' + a + '%"></i><b style="left:' + Math.min(100, pp) + '%"></b></div>' +
+        '<div class="med-ctl"><button type="button" class="med-step" data-a="mstep:' + t.uid + ':-10" aria-label="Menos 10%">−10</button>' +
+        '<input class="med-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + a + '" aria-label="% concluído: ' + esc(t.name) + '"><span class="med-pc">%</span>' +
+        '<button type="button" class="med-step" data-a="mstep:' + t.uid + ':10" aria-label="Mais 10%">+10</button></div>' +
+        '<div class="med-quick" role="group" aria-label="Percentuais rápidos">' + q5 + '</div></div>';
+    });
+    var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' · ' + n + '</button>'; };
+    return '<section class="card med-head">' +
+        '<div class="med-kpi"><div><span class="kpi-t">Real</span><b class="mono">' + fmt1(real) + '%</b></div><div><span class="kpi-t">Previsto</span><b class="mono">' + fmt1(prev) + '%</b></div><div><span class="kpi-t">Desvio</span><b class="mono" style="color:' + (real - prev < -0.05 ? 'var(--bad)' : 'var(--good)') + '">' + (real - prev >= 0 ? '+' : '') + fmt1(real - prev) + '</b></div></div>' +
+        '<div class="med-row"><label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
+        '<p id="medSync" class="med-sync" role="status"></p>' +
+        (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
+        '<div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
+        '<input id="medQ" type="search" placeholder="Buscar tarefa, EAP ou pavimento" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
+      '</section>' +
+      '<div class="med-list">' + (itens || '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</div>' +
+      (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
+      (API ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
+      '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
+  }
 
   /* ---------- Suprimentos ---------- */
   var SUP_ST = ['solicitar', 'cotacao', 'pedido', 'entregue'];
@@ -1838,8 +1993,9 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     tag.className = 'demo-tag' + (CUR === HOJE_W ? '' : ' alt');
     var hd = HEADS[S.screen];
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, cp: vCP, res: vRes }[S.screen](M);
+    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cp: vCP, res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
+    paintSync();
   }
   function setSt(key, v) { S.st[key] = v; }
 
@@ -1848,7 +2004,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var a = el.getAttribute('data-a').split(':');
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; render(); window.scrollTo(0, 0); return;
+      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -1865,22 +2021,29 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         return;
       case 'sf': S.supF = a[1]; break;
       case 'pav': S.pa.view = a[1]; break;
+      case 'mf': S.med.f = a[1]; break;
+      case 'mstep': case 'mset':
+        var cur = Math.round(P.meas[a[1]] || 0), nv = a[0] === 'mset' ? parseInt(a[2], 10) : cur + parseInt(a[2], 10);
+        P.meas[a[1]] = Math.max(0, Math.min(100, nv)); persist(); break;
+      case 'prel': baixarRelatorio(); return;
       case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;
       case 'pareset': PA = null; S.pa.hl = -1; S.pa.msg = ''; if (API) api('/api/plano/remover', {}).catch(function () {}); break;
-      case 'pxlsx': persist(true).then(function () { location.href = '/api/exportar/xlsx'; }); return;
+      case 'pxlsx': if (precisaRede()) return; persist(true).then(function () { location.href = '/api/exportar/xlsx'; }); return;
       case 'ptg': P.open[a[1]] = !P.open[a[1]]; break;
       case 'pexp': P.tasks.forEach(function (t) { if (t.children.length) P.open[t.uid] = true; }); break;
       case 'pcol': P.open = {}; P.tasks.forEach(function (t) { if (!t.parent) P.open[t.uid] = true; }); break;
       case 'pmode': P.edit = !P.edit; S.prjMsg = P.edit ? 'Modo medição: digite o % de cada tarefa (Enter vai para a próxima). O avanço dos grupos é recalculado na hora.' : ''; break;
       case 'pclose':
+        if (precisaRede()) return;
         if (API) {
           persist(true).then(function () { return api('/api/fechar', {}); }).then(function () { P.base = Object.assign({}, P.meas); S.prjMsg = 'Medição fechada e guardada no histórico.'; loadHist(); render(); }, function (e) { S.prjMsg = e.message; render(); });
           return;
         }
         P.base = Object.assign({}, P.meas); S.prjMsg = 'Medição fechada: os percentuais atuais passam a ser a medição anterior.'; persist(); break;
-      case 'preset': P = null; if (API) api('/api/remover', {}).catch(function () {}); else kvSet('prj', null); S.prjMsg = ''; break;
+      case 'preset': P = null; kvSet('pend', null); S.sync = ''; if (API) api('/api/remover', {}).catch(function () {}); else kvSet('prj', null); S.prjMsg = ''; break;
       case 'pexport':
+        if (API && precisaRede()) return;
         if (API) { persist(true).then(function () { location.href = '/api/exportar/xml'; }); S.prjMsg = 'Arquivo exportado. No MS Project: Arquivo → Abrir → escolha o .xml e salve como .mpp.'; break; }
         var xml = buildXML();
         offerFile(stem() + '_medicao_' + isoDay(P.statusDate) + '.xml', xml, 'application/xml').then(function (r) {
@@ -1888,6 +2051,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         });
         return;
       case 'pcsv':
+        if (API && precisaRede()) return;
         if (API) { persist(true).then(function () { location.href = '/api/exportar/csv'; }); S.prjMsg = 'Boletim baixado. No MS Project, rode a macro “Receber medição Custo Plano” para gravar os percentuais no seu .mpp.'; break; }
         offerFile(stem() + '_boletim_' + isoDay(P.statusDate) + '.csv', buildCSV(aggregate()), 'text/csv').then(function (r) {
           S.prjMsg = r === 'ok' ? 'Boletim baixado. No MS Project, rode a macro “Receber medição Custo Plano” e escolha este .csv para gravar os percentuais no seu .mpp.' : (r === 'declined' ? 'Download cancelado.' : 'Não foi possível baixar o arquivo nesta visualização.'); render();
@@ -1904,7 +2068,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       case 'toggle': S.restr = S.restr.map(function (r) { return r.id === a[1] ? Object.assign({}, r, { aberta: !r.aberta }) : r; }); break;
       case 'logout':
         if (API) api('/api/logout', {}).catch(function () {});
-        user = null; P = null; PA = null; try { sessionStorage.removeItem('cp_user'); } catch (err) {}
+        user = null; P = null; PA = null; S.sync = ''; kvSet('pend', null); if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
         location.hash = 'entrar'; route(); return;
       default: return;
     }
@@ -1940,6 +2104,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute && e.target.getAttribute('data-a') && e.target.tagName !== 'BUTTON') { e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click', { bubbles: true })); return; }
     if (e.key === 'Enter' && e.target.hasAttribute && e.target.hasAttribute('data-meas')) { e.preventDefault(); commitMeas(e.target, true); }
   });
+  app.addEventListener('input', function (e) {
+    if (e.target.id !== 'medQ') return;
+    S.med.q = e.target.value; render();
+    var q2 = document.getElementById('medQ'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} }
+  });
   app.addEventListener('submit', function (e) {
     if (e.target.id !== 'newR') return;
     e.preventDefault();
@@ -1952,6 +2121,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var again = document.getElementById('nr-txt'); if (again) again.focus();
   });
 
+  if (API && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
   if (API) { try { sessionStorage.removeItem('cp_user'); } catch (e) {} user = null; api('/api/me').then(function (r) { user = r.email; route(); if (user) loadPrj(); }, function () { route(); }); }
   else route();
 })();
