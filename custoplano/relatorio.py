@@ -323,3 +323,90 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
 
     doc.build(H)
     return buf.getvalue()
+
+
+def fvs_pdf(i: dict, pegar_foto, obra: str) -> bytes:
+    """Ficha de Verificação de Serviço preenchida, com fotos e assinatura."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.lib.utils import ImageReader
+    from reportlab.platypus import Image, KeepTogether, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    NAVY, LINE, GROUND, MUTED = colors.HexColor("#282B59"), colors.HexColor("#D3DCDC"), colors.HexColor("#F3F6F6"), colors.HexColor("#5E6485")
+    OK, NC = colors.HexColor("#1E6B45"), colors.HexColor("#9A3412")
+    st = lambda n, **k: ParagraphStyle(n, **{"fontName": "Helvetica", "fontSize": 9, "leading": 12, "textColor": NAVY, **k})  # noqa: E731
+    h1, t, tb, sm = st("h1", fontName="Helvetica-Bold", fontSize=17, leading=21), st("t", fontSize=8.5, leading=11), \
+        st("tb", fontName="Helvetica-Bold", fontSize=8.5, leading=11), st("sm", fontSize=7.8, leading=10, textColor=MUTED)
+    esc = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;")  # noqa: E731
+    br = lambda s: f"{s[8:10]}/{s[5:7]}/{s[:4]}" if s else "-"  # noqa: E731
+
+    def img(fid, w, h):
+        f = pegar_foto(fid) if fid else None
+        if not f:
+            return None
+        try:
+            ir = ImageReader(io.BytesIO(f["dados"]))
+            iw, ih = ir.getSize()
+            k = min(w / iw, h / ih)
+            return Image(io.BytesIO(f["dados"]), iw * k, ih * k)
+        except Exception:
+            return None
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=14 * mm,
+                            title=f"{i['codigo']} - {i['servico']} - {i['local']}", author="Custo Plano Engenharia")
+    W = doc.width
+    ap = i["resultado"] == "aprovada"
+    H = [Paragraph(f"Ficha de Verificação de Serviço · {esc(i['codigo'])}", h1), Spacer(1, 4)]
+    cab = Table([
+        [Paragraph("<b>Obra</b>", t), Paragraph(esc(obra), t), Paragraph("<b>Serviço</b>", t), Paragraph(esc(i["servico"]), t)],
+        [Paragraph("<b>Local</b>", t), Paragraph(esc(i["local"]), t), Paragraph("<b>Data</b>", t), Paragraph(br(i["data"]), t)],
+        [Paragraph("<b>Inspetor</b>", t), Paragraph(esc(i["inspetor"]) or "-", t), Paragraph("<b>Resultado</b>", t),
+         Paragraph(f"<font color='{'#1E6B45' if ap else '#9A3412'}'><b>{'APROVADA' if ap else 'REPROVADA'}</b></font>"
+                   + (" (reinspeção)" if i.get("reinspecao_de") else ""), t)],
+    ], colWidths=[20 * mm, W / 2 - 20 * mm, 22 * mm, W / 2 - 22 * mm])
+    cab.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.6, LINE), ("INNERGRID", (0, 0), (-1, -1), 0.4, LINE),
+                             ("BACKGROUND", (0, 0), (0, -1), GROUND), ("BACKGROUND", (2, 0), (2, -1), GROUND),
+                             ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]))
+    H += [cab, Spacer(1, 8)]
+    lab = {"ok": ("C", OK, "Conforme"), "nc": ("NC", NC, "Não conforme"), "na": ("NA", MUTED, "Não se aplica")}
+    linhas = [[Paragraph("<b>Item de verificação</b>", t), Paragraph("<b>Critério</b>", t), Paragraph("<b>Situação</b>", t), Paragraph("<b>Observação</b>", t)]]
+    estilo = [("BACKGROUND", (0, 0), (-1, 0), GROUND), ("LINEBELOW", (0, 0), (-1, -1), 0.4, LINE), ("VALIGN", (0, 0), (-1, -1), "TOP"),
+              ("BOX", (0, 0), (-1, -1), 0.6, LINE)]
+    for n, it in enumerate(i["itens"], start=1):
+        c, cor, nome = lab[it["status"]]
+        linhas.append([Paragraph(f"{n}. {esc(it['item'])}", tb), Paragraph(esc(it["criterio"]), t),
+                       Paragraph(f"<font color='#{cor.hexval()[2:]}'><b>{nome}</b></font>", t), Paragraph(esc(it.get("obs")), t)])
+    tab = Table(linhas, colWidths=[48 * mm, W - 48 * mm - 26 * mm - 42 * mm, 26 * mm, 42 * mm], repeatRows=1)
+    tab.setStyle(TableStyle(estilo))
+    H += [tab]
+    if i.get("obs"):
+        H += [Spacer(1, 6), Paragraph("<b>Observações gerais:</b> " + esc(i["obs"]), t)]
+    if i.get("ncs"):
+        H += [Spacer(1, 6), Paragraph("<b>Não conformidades geradas:</b> " + "; ".join(
+            f"NC-{x['numero']:03d} ({'fechada' if x['status'] == 'fechada' else 'aberta'})" for x in i["ncs"]), t)]
+    fotos = [(n, fid) for n, it in enumerate(i["itens"], start=1) for fid in (it.get("fotos") or [])]
+    if fotos:
+        H += [Spacer(1, 8), Paragraph("<b>Registro fotográfico</b>", tb), Spacer(1, 4)]
+        cel = []
+        for n, fid in fotos[:12]:
+            im = img(fid, W / 3 - 6 * mm, 55 * mm)
+            if im:
+                cel.append([im, Paragraph(f"Item {n}", sm)])
+        grade = [cel[k:k + 3] for k in range(0, len(cel), 3)]
+        for linha in grade:
+            linha += [""] * (3 - len(linha))
+            g = Table([linha], colWidths=[W / 3] * 3)
+            g.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+            H.append(g)
+    assin = img(i.get("assinatura"), 60 * mm, 22 * mm) if i.get("assinatura") else None
+    bloco = Table([[assin or "", ""], [Paragraph("Inspetor: " + (esc(i["inspetor"]) or ""), sm), Paragraph("Engenheiro responsável", sm)]],
+                  colWidths=[W / 2] * 2, rowHeights=[24 * mm, None])
+    bloco.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.7, NAVY), ("LINEBELOW", (1, 0), (1, 0), 0.7, NAVY),
+                               ("VALIGN", (0, 0), (-1, 0), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8)]))
+    H += [Spacer(1, 12), KeepTogether([bloco])]
+    H += [Spacer(1, 8), Paragraph(f"Custo Plano Engenharia · gerado em {dt.datetime.now():%d/%m/%Y %H:%M}", sm)]
+    doc.build(H)
+    return buf.getvalue()

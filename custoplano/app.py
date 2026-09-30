@@ -26,6 +26,7 @@ import banco
 from cronograma import ErroCronograma, Projeto, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano
 import custos as cst
+import qualidade as ql
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PASTA_WEB = os.path.join(AQUI, "web")
@@ -56,6 +57,7 @@ DEMO = os.environ.get("CP_DEMO", "1") == "1"
 DEMO_EMAIL, DEMO_SENHA = "demo@custoplano.com.br", "demo"
 
 banco.iniciar()
+ql.iniciar()
 if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
     try:
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")
@@ -376,6 +378,77 @@ def remover_lancamento():
 def remover_custos():
     banco.remover_custos(session["uid"])
     return jsonify(ok=True)
+
+
+# ---------------------------------------------------------------- qualidade
+def _ql(fn):
+    try:
+        fn()
+    except ql.ErroQualidade as e:
+        return erro(str(e))
+    return jsonify(ql.estado(session["uid"]))
+
+
+@app.get("/api/qualidade")
+@logado
+def ver_qualidade():
+    return jsonify(ql.estado(session["uid"]))
+
+
+@app.post("/api/qualidade/modelo")
+@logado
+def qualidade_modelo():
+    return _ql(lambda: ql.salvar_modelo(session["uid"], request.get_json(silent=True) or {}))
+
+
+@app.post("/api/qualidade/modelo/remover")
+@logado
+def qualidade_modelo_remover():
+    return _ql(lambda: ql.remover_modelo(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
+
+
+@app.post("/api/qualidade/inspecao")
+@logado
+def qualidade_inspecao():
+    return _ql(lambda: ql.registrar_inspecao(session["uid"], request.get_json(silent=True) or {}))
+
+
+@app.post("/api/qualidade/inspecao/remover")
+@logado
+def qualidade_inspecao_remover():
+    return _ql(lambda: ql.remover_inspecao(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
+
+
+@app.post("/api/qualidade/nc")
+@logado
+def qualidade_nc():
+    return _ql(lambda: ql.salvar_nc(session["uid"], request.get_json(silent=True) or {}))
+
+
+@app.get("/api/qualidade/foto/<fid>")
+@logado
+def qualidade_foto(fid):
+    f = ql.foto(session["uid"], fid)
+    if not f:
+        abort(404)
+    r = Response(f["dados"], mimetype=f["mime"])
+    r.headers["Cache-Control"] = "private, max-age=31536000, immutable"
+    return r
+
+
+@app.get("/api/qualidade/inspecao/<int:iid>.pdf")
+@logado
+def qualidade_inspecao_pdf(iid):
+    import relatorio
+
+    i = ql.inspecao(session["uid"], iid)
+    if not i:
+        abort(404)
+    u = banco.usuario(session["uid"])
+    c, p = carregar()
+    obra = (p.titulo if p else "") or (u["nome"] if u else "") or "Obra"
+    pdf = relatorio.fvs_pdf(i, lambda fid: ql.foto(session["uid"], fid), obra)
+    return download(pdf, f"{i['codigo']}_{nome_base(i['local'])}_{i['data']}.pdf", "application/pdf")
 
 
 # ----------------------------------------------------------- relatório mensal

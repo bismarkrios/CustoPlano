@@ -18,6 +18,7 @@ custoplano/
 ├── plano_ataque.py   leitura da planilha do plano de ataque (escadinha)
 ├── relatorio.py      relatório mensal em PDF
 ├── custos.py         orçamento com composições, cronograma financeiro e orçado × realizado
+├── qualidade.py      FVS, inspeções, não conformidades e fotos
 ├── banco.py          banco de dados SQLite
 ├── web/index.html    site + telas do sistema (HTML/CSS/JS)
 ├── macro/CustoPlano.bas   macro do MS Project (grava a medição no seu .mpp)
@@ -69,6 +70,20 @@ No Project: **Alt+F11 → Arquivo → Importar arquivo → `macro/CustoPlano.bas
 - `ReceberMedicaoCustoPlano`: lê o boletim `.csv` e grava % concluído, % físico e data de status no `.mpp`.
 
 > Arquivos `.mpp` só podem ser **gravados** pelo MS Project. Por isso a volta da medição é pelo `.xml`, que o Project abre direto, ou pela macro, que grava no seu próprio `.mpp`.
+
+## Área do cliente: Planejamento e Qualidade
+
+Depois do login, o cliente escolhe a área. **Planejamento** reúne cronograma, medição, plano de ataque,
+custos, linha de balanço, curto prazo e restrições. **Qualidade** reúne:
+
+- **Inspeções (FVS):** aplica a ficha de verificação no local (pavimento, unidade, área), marca cada item como
+  conforme, não conforme ou N/A, com fotos e assinatura no celular; gera o PDF da FVS preenchida.
+  Funciona sem internet: fica guardada no aparelho e é enviada quando a conexão volta.
+- **Não conformidades:** item não conforme abre uma NC com prazo de 7 dias; tratamento com responsável,
+  causa, ação corretiva, fotos e verificação de eficácia. A reinspeção aprovada fecha as NCs da inspeção original.
+- **Matriz de inspeção:** última FVS de cada serviço em cada local (os pavimentos vêm do Plano de ataque).
+- **Modelos de FVS:** 12 fichas de referência (alvenaria, fôrmas e armação, concretagem, contrapiso, revestimentos,
+  gesso, pintura, impermeabilização, instalações, esquadrias), editáveis pela equipe de qualidade.
 
 ## Custos (orçamento, cronograma financeiro, orçado × realizado)
 

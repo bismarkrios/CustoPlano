@@ -401,6 +401,57 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .prj-real .prj-row{grid-template-columns:44px 300px 60px 80px 80px 60px 66px minmax(0,1fr)}
 .prj-bar select{width:auto;min-height:36px;padding:4px 8px}
 
+/* Escolha de área e qualidade */
+.hub{min-height:100dvh;background:var(--ground);display:flex;flex-direction:column}
+.hub-top{display:flex;align-items:center;gap:12px;padding:12px clamp(16px,4vw,40px);background:var(--panel);color:var(--panel-ink)}
+.hub-user{font-size:13px;color:var(--panel-muted)}
+.hub-sair{color:var(--panel-ink);border-color:var(--panel-line)}
+.hub-main{flex:1;display:flex;flex-direction:column;gap:22px;padding-block:clamp(28px,6vw,72px);width:100%}
+.hub-main h1{font-size:clamp(30px,4vw,44px);font-stretch:108%;font-weight:800}
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.hub-card{display:flex;flex-direction:column;gap:12px;padding:26px;border-radius:10px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink);min-height:230px;transition:border-color .15s,transform .15s}
+.hub-card:hover{border-color:var(--blue);transform:translateY(-2px)}
+.hub-card h2{font-size:28px;font-stretch:108%}
+.hub-card p{color:var(--muted);font-size:15px;flex:1;margin:0}
+.hub-card .go{font-weight:700;color:var(--blue)}
+.hub-ic{width:50px;height:50px;border-radius:10px;display:grid;place-items:center;background:var(--panel);color:var(--hl)}
+.nav-grp{display:flex;flex-direction:column;gap:2px}
+@media (max-width:860px){.nav-grp{flex-direction:row}}
+.q-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.q-bars{display:flex;flex-direction:column;gap:10px}
+.q-bars>div{display:grid;grid-template-columns:minmax(0,1.3fr) 2fr 30px;gap:10px;align-items:center;font-size:13.5px}
+.q-list{display:flex;flex-direction:column;gap:10px}
+@media (min-width:861px){.q-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}}
+.q-card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.q-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.q-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.q-sts{display:grid;grid-template-columns:1fr 1.2fr .7fr;gap:6px}
+.q-st{min-height:48px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;font-weight:600;font-size:14px;cursor:pointer;touch-action:manipulation}
+.q-ok[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--surface)}
+.q-nc[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:var(--surface)}
+.q-na[aria-pressed="true"]{background:var(--muted);border-color:var(--muted);color:var(--surface)}
+.q-nc-item{border-left:4px solid var(--bad)}
+.q-obs{width:100%;font:inherit;font-size:14.5px;padding:8px 10px;min-height:64px}
+.q-fotos{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.q-th{position:relative;width:76px;height:76px;border-radius:6px;overflow:hidden;border:1px solid var(--line);flex-shrink:0}
+.q-th img{width:100%;height:100%;object-fit:cover;display:block}
+.q-th button{position:absolute;top:3px;right:3px;width:26px;height:26px;border-radius:13px;border:0;background:rgba(0,0,0,.62);color:#fff;cursor:pointer;font-size:16px;line-height:1}
+.q-add{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border:1px dashed var(--muted);border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink)}
+.q-lab{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:600}
+.q-lab input,.q-lab select,.q-lab textarea{min-height:46px;font:inherit;font-size:15px;color:var(--ink);font-weight:400;width:100%;padding:6px 10px}
+.q-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.q-row2{grid-template-columns:1fr}}
+.q-sig{width:100%;height:auto;aspect-ratio:10/3;border:1px dashed var(--muted);border-radius:6px;background:#fff;touch-action:none;cursor:crosshair}
+.q-mat td.q-cell{padding:0}
+.q-mat td.q-cell button{width:100%;min-height:34px;border:0;background:transparent;color:var(--muted);font-size:17px;cursor:pointer}
+.q-mat td.q-cell button:hover{background:var(--cell)}
+.q-mh{display:block;width:84px;height:84px;padding:6px;font-size:11.5px;font-weight:600;overflow:hidden;color:var(--ink);text-align:left;text-transform:none;letter-spacing:0;font-family:var(--body)}
+.q-mod-list{display:flex;flex-direction:column;gap:8px}
+.q-mod-item{display:grid;grid-template-columns:20px 1fr 1.4fr 40px;gap:8px;align-items:center}
+.q-mod-item input{min-height:42px;font:inherit;font-size:14px;color:var(--ink);font-weight:400;width:100%}
+@media (max-width:700px){.q-mod-item{grid-template-columns:20px 1fr 40px}.q-mod-item input:nth-of-type(2){grid-column:2/3}}
+.q-ol{margin:0;padding-left:20px;font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+
 /* Custos */
 .tbl td.num,.tbl th.num{text-align:right;white-space:nowrap}
 .cu-et td,.cu-et th{font-weight:700;background:var(--soft)}
@@ -477,10 +528,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .pa-chart .pt{cursor:pointer}
 @media (max-width:1100px){.split{grid-template-columns:1fr}.grid-2-1{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:860px){
-  .app{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr;align-content:start}
   .side{position:static;height:auto;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:4px;padding:10px 12px;align-items:center}
   .side .brand{padding:0 8px 0 0}
-  .side .brand span{display:none}
+  .side .brand span{display:none!important}
+  .hub-user{display:none}
   .side-label,.side-foot{display:none}
   .nav-btn{width:auto;white-space:nowrap}
   .grid4{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -820,6 +872,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
           <li>Linha de balanço por pavimento</li>
           <li>Planejamento semanal e PPC</li>
           <li>Restrições e responsáveis</li>
+          <li>Qualidade: FVS e não conformidades</li>
         </ul>
       </div>
       <svg viewBox="0 0 400 120" style="width:100%;max-width:420px;height:auto" aria-hidden="true">
@@ -854,14 +907,47 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 </div>
 
 <!-- ================= SISTEMA ================= -->
+<div id="hub" hidden>
+  <div class="hub">
+    <header class="hub-top">
+      <a class="brand" href="#inicio" aria-label="Custo Plano, voltar ao site" style="color:var(--panel-ink)">
+        <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="#AFC3D9"></rect><rect x="12" y="10" width="6" height="18" fill="#AFC3D9"></rect><rect x="22" y="2" width="6" height="26" fill="#FFFFFF"></rect></svg>
+        <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small style="color:var(--panel-muted)">Área do cliente</small></span>
+      </a>
+      <span style="flex:1"></span>
+      <span class="hub-user" id="hubUser"></span>
+      <button class="btn btn-ghost btn-sm hub-sair" type="button" id="hubSair">Sair</button>
+    </header>
+    <main class="hub-main wrap">
+      <div><p class="eyebrow">Área do cliente</p><h1 style="margin-top:8px">Escolha a área</h1></div>
+      <div class="hub-grid">
+        <a class="hub-card" href="#sistema">
+          <span class="hub-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path></svg></span>
+          <h2>Planejamento</h2>
+          <p>Cronograma e medição (com o MS Project), medição pelo celular, plano de ataque, custos e cronograma financeiro, linha de balanço, curto prazo e restrições.</p>
+          <span class="go">Entrar no planejamento →</span>
+        </a>
+        <a class="hub-card" href="#qualidade">
+          <span class="hub-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 3v2h6V3"></path><path d="M9 12l2 2 4-4"></path></svg></span>
+          <h2>Qualidade</h2>
+          <p>Fichas de verificação de serviço (FVS) com fotos e assinatura, não conformidades e seu tratamento, matriz de inspeção por pavimento e modelos de FVS.</p>
+          <span class="go">Entrar na qualidade →</span>
+        </a>
+      </div>
+      <a class="linkbtn" href="#inicio" style="text-decoration:none;align-self:flex-start">← Voltar ao site</a>
+    </main>
+  </div>
+</div>
+
 <div id="app" hidden>
   <div class="app">
     <nav class="side" aria-label="Módulos do sistema">
       <a class="brand" href="#inicio" aria-label="Custo Plano, voltar ao site">
         <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="#AFC3D9"></rect><rect x="12" y="10" width="6" height="18" fill="#AFC3D9"></rect><rect x="22" y="2" width="6" height="26" fill="var(--accent)"></rect></svg>
-        <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small>Planejamento</small></span>
+        <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small id="sideSub">Planejamento</small></span>
       </a>
-      <div class="side-label">Obra</div>
+      <div class="side-label" id="sideLabel">Planejamento</div>
+      <div id="navPlan" class="nav-grp">
       <button class="nav-btn" type="button" data-a="nav:painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Painel</button>
       <button class="nav-btn" type="button" data-a="nav:prj"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"></rect><path d="M9 4v16M3 9h18"></path><path d="M12 13h4M14 17h5"></path></svg>Project</button>
       <button class="nav-btn" type="button" data-a="nav:med"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M9 12l2 2 4-4"></path><path d="M11 18h2"></path></svg>Medição</button>
@@ -872,25 +958,34 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       <button class="nav-btn" type="button" data-a="nav:pa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path></svg>Plano de ataque</button>
       <button class="nav-btn" type="button" data-a="nav:cp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l2 2 3-3M4 16l2 2 3-3M13 8h7M13 17h7"></path></svg>Curto prazo · PPC</button>
       <button class="nav-btn" type="button" data-a="nav:res"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3L2 20h20L12 3z"></path><path d="M12 10v4M12 17.5v.01"></path></svg>Restrições<span class="count" id="navCount">0</span></button>
+      </div>
+      <div id="navQual" class="nav-grp" hidden>
+      <button class="nav-btn" type="button" data-a="nav:qp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Painel da qualidade</button>
+      <button class="nav-btn" type="button" data-a="nav:qi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 3v2h6V3"></path><path d="M9 12l2 2 4-4"></path></svg>Inspeções (FVS)</button>
+      <button class="nav-btn" type="button" data-a="nav:qn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.01"></path></svg>Não conformidades<span class="count" id="qnCount">0</span></button>
+      <button class="nav-btn" type="button" data-a="nav:qm"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1.5"></rect><path d="M3 9h18M3 15h18M9 3v18M15 3v18"></path></svg>Matriz de inspeção</button>
+      <button class="nav-btn" type="button" data-a="nav:qmod"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>Modelos de FVS</button>
+      </div>
       <div class="side-foot">
+        <a class="linkbtn" href="#area" style="text-decoration:none">⇄ Trocar de área</a>
         <a class="linkbtn" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
       </div>
     </nav>
     <div class="app-main">
       <header class="app-top">
-        <label for="obraSel" class="kpi-t">Obra</label>
-        <select id="obraSel">
+        <label for="obraSel" class="kpi-t plan-only">Obra</label>
+        <select id="obraSel" class="plan-only">
           <option>Residencial Aurora – Torre A</option>
           <option>Residencial Aurora – Torre B</option>
           <option>Edifício Comercial Vértice</option>
         </select>
-        <div class="weeknav" role="group" aria-label="Semana de referência">
+        <div class="weeknav plan-only" role="group" aria-label="Semana de referência">
           <button type="button" class="iconbtn" id="wkPrev" data-a="wk:-1" aria-label="Semana anterior"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></button>
           <select id="wkSel" aria-label="Escolher semana"></select>
           <button type="button" class="iconbtn" id="wkNext" data-a="wk:1" aria-label="Próxima semana"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
           <button type="button" class="linkbtn" id="wkNow" data-a="wk:0">Semana atual</button>
         </div>
-        <span class="demo-tag" id="wkTag">Dados de exemplo</span>
+        <span class="demo-tag plan-only" id="wkTag">Dados de exemplo</span>
         <span class="demo-tag alt" id="netTag" role="status" hidden></span>
         <div class="user">
           <span class="avatar" id="avatar" aria-hidden="true">CL</span>
@@ -908,7 +1003,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 <script>
 (function () {
   /* ---------- Rotas: site / login / sistema ---------- */
-  var site = document.getElementById('site'), login = document.getElementById('login'), app = document.getElementById('app');
+  var site = document.getElementById('site'), login = document.getElementById('login'), app = document.getElementById('app'), hub = document.getElementById('hub');
   var API = !!window.CP_API;
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
@@ -922,19 +1017,28 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   try { user = sessionStorage.getItem('cp_user'); } catch (e) {}
 
   function show(view) {
-    site.hidden = view !== 'site'; login.hidden = view !== 'login'; app.hidden = view !== 'app';
+    site.hidden = view !== 'site'; login.hidden = view !== 'login'; app.hidden = view !== 'app'; hub.hidden = view !== 'hub';
+    if (view === 'hub') document.getElementById('hubUser').textContent = user || '';
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
-    if (h === 'entrar') { if (user) { show('app'); render(); } else { show('login'); } window.scrollTo(0, 0); return; }
-    if (h === 'sistema') { if (user) { show('app'); render(); } else { show('login'); } window.scrollTo(0, 0); return; }
+    if (h === 'entrar' || h === 'area') { show(user ? 'hub' : 'login'); window.scrollTo(0, 0); return; }
+    if (h === 'sistema' || h === 'qualidade') {
+      if (!user) { show('login'); window.scrollTo(0, 0); return; }
+      S.mod = h === 'qualidade' ? 'qual' : 'plan';
+      var ehQ = /^q/.test(S.screen);
+      if (S.mod === 'qual' && !ehQ) S.screen = 'qp';
+      if (S.mod === 'plan' && ehQ) S.screen = 'painel';
+      if (S.mod === 'qual' && API) loadQual();
+      show('app'); render(); window.scrollTo(0, 0); return;
+    }
     show('site');
     if (h) { var t = document.getElementById(h); if (t) t.scrollIntoView(); } else { window.scrollTo(0, 0); }
   }
   function enter(email) {
     user = email || 'demo@custoplano.com.br';
     if (API) { loadPrj(); } else { try { sessionStorage.setItem('cp_user', user); } catch (e) {} }
-    location.hash = 'sistema';
+    location.hash = 'area';
     route();
   }
   window.addEventListener('hashchange', route);
@@ -1065,6 +1169,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     prj: ['Project', 'Cronograma detalhado com EAP, durações, datas, predecessoras e Gantt.'],
     sup: ['Suprimentos', 'Compras puxadas pelo cronograma: data de necessidade na obra menos o prazo do fornecedor.'],
     cron: ['Cronograma', 'Etapas planejadas × realizadas, com a posição de hoje.'],
+    qp: ['Painel da qualidade', 'Inspeções, aprovação na primeira inspeção e não conformidades da obra.'],
+    qi: ['Inspeções (FVS)', 'Fichas de verificação de serviço aplicadas no canteiro, com fotos e assinatura. Funciona sem internet.'],
+    qn: ['Não conformidades', 'Registro, tratamento, prazo e fechamento com verificação de eficácia.'],
+    qm: ['Matriz de inspeção', 'Situação da última FVS de cada serviço em cada local.'],
+    qmod: ['Modelos de FVS', 'Itens de verificação e critérios de aceitação de cada serviço.'],
     cus: ['Custos', 'Orçamento com composições, cronograma físico-financeiro e custo orçado × realizado, com valor agregado pela medição física.'],
     med: ['Medição', 'Aponte o % de cada tarefa direto do canteiro. Sem internet, a medição fica guardada no aparelho e é enviada quando a conexão voltar.'],
     pa: ['Plano de ataque', 'Programação dos serviços pavimento por pavimento (escadinha): executado, atrasado e desvio contra a linha de base.'],
@@ -1820,6 +1929,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 
   /* ---------- Medição pelo celular (funciona sem internet) ---------- */
   S.med = { f: 'prev', q: '' };
+  S.mod = 'plan';
   S.sync = '';
   function semRede() { return API && typeof navigator !== 'undefined' && navigator.onLine === false; }
   function paintSync() {
@@ -2069,6 +2179,344 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   document.getElementById('cuFile').addEventListener('change', function (e) { cuImport(e.target.files[0]); e.target.value = ''; });
 
+  /* ================= QUALIDADE: FVS, não conformidades, matriz, modelos ================= */
+  var Q = null;
+  S.q = { form: null, ncTab: 'abertas', ncEdit: null, modEdit: null, msg: '', filtro: 'todas', busca: '' };
+  var Q_ST = { ok: ['Conforme', 'c-ok'], nc: ['Não conforme', 'c-bad'], na: ['Não se aplica', 'c-muted'] };
+  var NC_ST = { aberta: ['Aberta', 'c-bad'], tratamento: ['Em tratamento', 'c-warn'], fechada: ['Fechada', 'c-ok'] };
+  var GRAV = { baixa: 'Baixa', media: 'Média', alta: 'Alta' };
+  function uidNovo() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+  function hojeIso() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function fotoUrl(f) { return /^data:/.test(f) ? f : '/api/qualidade/foto/' + f; }
+  function loadQual() {
+    if (!API) return Promise.resolve();
+    return api('/api/qualidade').then(function (r) {
+      Q = r;
+      return kvGet('qout').then(function (fila) { aplicarFila(fila || []); if (!app.hidden && S.mod === 'qual') render(); flushQ(); });
+    }).catch(function () { if (!app.hidden && S.mod === 'qual') render(); });
+  }
+  /* fila offline: inspeções e NCs feitas sem internet */
+  function aplicarFila(fila) {
+    if (!Q) return;
+    fila.forEach(function (x) {
+      if (x.path === '/api/qualidade/inspecao' && !Q.inspecoes.some(function (i) { return i.cid === x.body.cid; })) {
+        var rep = x.body.itens.some(function (it) { return it.status === 'nc'; });
+        var mod = Q.modelos.filter(function (m) { return m.id === x.body.modelo_id; })[0] || {};
+        Q.inspecoes.unshift({ id: 'p-' + x.body.cid, cid: x.body.cid, pendente: true, codigo: mod.codigo || 'FVS', servico: mod.servico || '', local: x.body.local, data: x.body.data, inspetor: x.body.inspetor, resultado: rep ? 'reprovada' : 'aprovada', itens: x.body.itens, reinspecao_de: x.body.reinspecao_de });
+      }
+      if (x.path === '/api/qualidade/nc' && !x.body.id && !Q.ncs.some(function (n) { return n.cid === x.body.cid; })) {
+        Q.ncs.unshift(Object.assign({ id: 'p-' + x.body.cid, numero: 0, pendente: true, origem: 'Obra', status: 'aberta' }, x.body));
+      }
+    });
+  }
+  function qPost(path, body, okMsg) {
+    var tentar = function () { return api(path, body).then(function (r) { Q = r; return 'ok'; }); };
+    var guardar = function () {
+      return kvGet('qout').then(function (f) { f = f || []; f.push({ path: path, body: body }); return kvSet('qout', f).then(function () { aplicarFila([{ path: path, body: body }]); return 'offline'; }); });
+    };
+    var p = semRede() ? guardar() : tentar().catch(function (e) { if (e.offline) return guardar(); throw e; });
+    return p.then(function (r) { S.q.msg = r === 'offline' ? 'Sem internet: guardado no aparelho. Será enviado quando a conexão voltar.' : okMsg; render(); return r; },
+      function (e) { S.q.msg = e.message; render(); throw e; });
+  }
+  function flushQ() {
+    if (!API || semRede()) return Promise.resolve();
+    return kvGet('qout').then(function (fila) {
+      if (!fila || !fila.length) return;
+      var resto = [], cadeia = Promise.resolve();
+      fila.forEach(function (x) {
+        cadeia = cadeia.then(function () { return api(x.path, x.body).then(function (r) { Q = r; }, function (e) { if (e.offline) resto.push(x); else { S.q.msg = 'Um registro feito offline foi recusado: ' + e.message; } }); });
+      });
+      return cadeia.then(function () { return kvSet('qout', resto); }).then(function () {
+        if (!resto.length) S.q.msg = S.q.msg || 'Registros feitos sem internet foram enviados.';
+        if (!app.hidden && S.mod === 'qual') render();
+      });
+    });
+  }
+  window.addEventListener('online', function () { flushQ(); });
+  function reduzirFoto(file) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var k = Math.min(1, 1600 / Math.max(im.width, im.height)), c = document.createElement('canvas');
+          c.width = Math.round(im.width * k); c.height = Math.round(im.height * k);
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          res(c.toDataURL('image/jpeg', 0.72));
+        };
+        im.onerror = rej; im.src = fr.result;
+      };
+      fr.onerror = rej; fr.readAsDataURL(file);
+    });
+  }
+  function dias(a, b) { return Math.round((new Date(b + 'T12:00') - new Date(a + 'T12:00')) / 864e5); }
+  function vencida(n) { return n.status !== 'fechada' && n.prazo && n.prazo < (Q ? Q.hoje : hojeIso()); }
+  function qVazio() {
+    if (!API) return '<section class="card"><b>Qualidade</b><p class="kpi-s" style="margin-top:6px">A área de qualidade precisa do servidor da Custo Plano. Entre pelo site publicado.</p></section>';
+    return '<section class="card"><p class="kpi-s">Carregando…</p></section>';
+  }
+  function qMsg() { return S.q.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.q.msg) + '</p>' : ''; }
+
+  /* ---------- Painel da qualidade ---------- */
+  function vQPainel() {
+    if (!Q) return qVazio();
+    var I = Q.inspecoes, N = Q.ncs, mes = Q.hoje.slice(0, 7);
+    var primeiras = I.filter(function (i) { return !i.reinspecao_de; });
+    var apr1 = primeiras.filter(function (i) { return i.resultado === 'aprovada'; }).length;
+    var abertas = N.filter(function (n) { return n.status !== 'fechada'; }), venc = abertas.filter(vencida);
+    var fech = N.filter(function (n) { return n.status === 'fechada' && n.fechada_em && n.criado_em; });
+    var tmed = fech.length ? Math.round(fech.reduce(function (s, n) { return s + Math.max(0, dias(n.criado_em.slice(0, 10), n.fechada_em)); }, 0) / fech.length) : null;
+    var porServ = {};
+    N.forEach(function (n) { var k = n.servico || 'Outros'; porServ[k] = (porServ[k] || 0) + 1; });
+    var ks = Object.keys(porServ).sort(function (a, b) { return porServ[b] - porServ[a]; }).slice(0, 7), mx = Math.max.apply(null, [1].concat(ks.map(function (k) { return porServ[k]; })));
+    var kpis = '<div class="grid4">' +
+      '<div class="card"><div class="kpi-t">Inspeções (FVS)</div><div class="kpi-v">' + I.length + '</div><div class="kpi-s">' + I.filter(function (i) { return i.data.slice(0, 7) === mes; }).length + ' neste mês</div></div>' +
+      '<div class="card"><div class="kpi-t">Aprovação na 1ª inspeção</div><div class="kpi-v">' + (primeiras.length ? Math.round(apr1 / primeiras.length * 100) + '%' : '—') + '</div><div class="kpi-s">' + apr1 + ' de ' + primeiras.length + ' inspeções</div></div>' +
+      '<div class="card"><div class="kpi-t">Não conformidades abertas</div><div class="kpi-v" style="color:' + (abertas.length ? 'var(--bad)' : 'var(--good)') + '">' + abertas.length + '</div><div class="kpi-s">' + (venc.length ? '<span class="due">' + venc.length + ' com prazo vencido</span>' : 'nenhuma com prazo vencido') + '</div><button class="more" type="button" data-a="nav:qn">Ver não conformidades →</button></div>' +
+      '<div class="card"><div class="kpi-t">Tempo médio para fechar NC</div><div class="kpi-v">' + (tmed == null ? '—' : tmed + ' d') + '</div><div class="kpi-s">' + fech.length + ' NCs fechadas</div></div></div>';
+    var acao = '<section class="card q-cta"><span style="flex:1 1 240px"><b>Inspecionar um serviço</b><span class="kpi-s" style="display:block">Aplique a FVS no local, marque cada item e registre as fotos. Funciona sem internet.</span></span><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button></section>';
+    var graf = '<section class="card"><div class="card-head"><h2>Não conformidades por serviço</h2></div>' + (ks.length ? '<div class="q-bars">' + ks.map(function (k) { return '<div><span>' + esc(k) + '</span><div class="bar" style="height:10px"><i style="width:' + (porServ[k] / mx * 100) + '%;background:var(--bad)"></i></div><b class="mono">' + porServ[k] + '</b></div>'; }).join('') + '</div>' : '<p class="kpi-s">Nenhuma não conformidade registrada.</p>') + '</section>';
+    var ult = '<section class="card"><div class="card-head"><h2>Últimas inspeções</h2><button class="more" type="button" data-a="nav:qi">Todas →</button></div>' + (I.slice(0, 6).map(function (i) {
+      return '<div class="list-row"><div class="grow"><span>' + esc(i.codigo + ' · ' + i.servico) + '</span><span>' + esc(i.local) + ' · ' + isoBr(i.data) + (i.pendente ? ' · aguardando envio' : '') + '</span></div><span class="chip ' + (i.resultado === 'aprovada' ? 'c-ok' : 'c-bad') + '">' + (i.resultado === 'aprovada' ? 'Aprovada' : 'Reprovada') + '</span></div>';
+    }).join('') || '<p class="kpi-s">Nenhuma inspeção ainda.</p>') + '</section>';
+    var vl = venc.length ? '<section class="card"><div class="card-head"><h2>NCs com prazo vencido</h2></div>' + venc.slice(0, 6).map(function (n) { return '<div class="list-row"><div class="grow"><span>' + (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) + ' · ' : '') + esc(n.descricao) + '</span><span>' + esc(n.local) + ' · prazo ' + isoBr(n.prazo) + (n.responsavel ? ' · ' + esc(n.responsavel) : '') + '</span></div><button type="button" class="btn btn-ghost btn-sm" data-a="qncedit:' + n.id + '">Tratar</button></div>'; }).join('') + '</section>' : '';
+    return qMsg() + kpis + acao + '<div class="grid-2-1">' + graf + ult + '</div>' + vl;
+  }
+
+  /* ---------- Inspeções (FVS) ---------- */
+  function novaForm(modeloId, local, reinsp) {
+    var m = Q.modelos.filter(function (x) { return x.id === modeloId; })[0] || Q.modelos[0];
+    var ins = '';
+    try { ins = localStorage.getItem('cp_inspetor') || ''; } catch (e) {}
+    S.q.form = { cid: uidNovo(), modelo_id: m ? m.id : null, local: local || '', data: hojeIso(), inspetor: ins, obs: '', reinspecao_de: reinsp || null, assinatura: null,
+      itens: m ? m.itens.map(function (it) { return { id: it.id, item: it.item, criterio: it.criterio, status: null, obs: '', fotos: [] }; }) : [] };
+  }
+  function vQInsp() {
+    if (!Q) return qVazio();
+    if (S.q.form) return vQForm();
+    var f = S.q.filtro, b = S.q.busca.trim().toLowerCase();
+    var L = Q.inspecoes.filter(function (i) {
+      if (f === 'aprovada' && i.resultado !== 'aprovada') return false;
+      if (f === 'reprovada' && i.resultado !== 'reprovada') return false;
+      if (b && (i.codigo + ' ' + i.servico + ' ' + i.local + ' ' + (i.inspetor || '')).toLowerCase().indexOf(b) < 0) return false;
+      return true;
+    });
+    var reinspecionadas = {};
+    Q.inspecoes.forEach(function (i) { if (i.reinspecao_de) reinspecionadas[i.reinspecao_de] = true; });
+    var tab = function (id, t) { return '<button type="button" data-a="qfil:' + id + '" aria-pressed="' + (f === id) + '">' + t + '</button>'; };
+    var rows = L.map(function (i) {
+      var nNc = i.itens.filter(function (it) { return it.status === 'nc'; }).length;
+      var acoes = '';
+      if (!i.pendente) acoes += '<a class="btn btn-ghost btn-sm" href="/api/qualidade/inspecao/' + i.id + '.pdf">PDF</a>';
+      if (i.resultado === 'reprovada' && !reinspecionadas[i.id] && !i.pendente) acoes += '<button type="button" class="btn btn-primary btn-sm" data-a="qreinsp:' + i.id + '">Reinspecionar</button>';
+      if (!i.pendente) acoes += '<button type="button" class="linkbtn" data-a="qidel:' + i.id + '" style="font-size:12.5px">Excluir</button>';
+      return '<div class="q-card"><div class="q-card-top"><b>' + esc(i.codigo) + ' · ' + esc(i.servico) + '</b><span class="chip ' + (i.resultado === 'aprovada' ? 'c-ok' : 'c-bad') + '">' + (i.resultado === 'aprovada' ? 'Aprovada' : 'Reprovada') + '</span></div>' +
+        '<div class="med-info"><span>' + esc(i.local) + '</span><span>' + isoBr(i.data) + '</span>' + (i.inspetor ? '<span>' + esc(i.inspetor) + '</span>' : '') + (nNc ? '<span style="color:var(--bad)">' + nNc + ' item(ns) não conforme(s)</span>' : '') + (i.reinspecao_de ? '<span>reinspeção</span>' : '') + (reinspecionadas[i.id] ? '<span>já reinspecionada</span>' : '') + (i.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '') + '</div>' +
+        '<div class="q-acts">' + acoes + '</div></div>';
+    }).join('');
+    return qMsg() + '<section class="card med-head"><div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button><span style="flex:1"></span><div class="tabs" role="group" aria-label="Filtro">' + tab('todas', 'Todas') + tab('aprovada', 'Aprovadas') + tab('reprovada', 'Reprovadas') + '</div></div>' +
+      '<input id="qBusca" type="search" placeholder="Buscar por FVS, serviço, local ou inspetor" value="' + esc(S.q.busca) + '" aria-label="Buscar inspeção"></section>' +
+      '<div class="q-list">' + (rows || '<p class="kpi-s">Nenhuma inspeção neste filtro.</p>') + '</div>';
+  }
+  function vQForm() {
+    var F = S.q.form, m = Q.modelos.filter(function (x) { return x.id === F.modelo_id; })[0];
+    var marcados = F.itens.filter(function (it) { return it.status; }).length;
+    var opts = Q.modelos.map(function (x) { return '<option value="' + x.id + '"' + (x.id === F.modelo_id ? ' selected' : '') + '>' + esc(x.codigo + ' · ' + x.servico) + '</option>'; }).join('');
+    var itens = F.itens.map(function (it, k) {
+      var b = function (st, t) { return '<button type="button" class="q-st q-' + st + '" data-a="qst:' + k + ':' + st + '" aria-pressed="' + (it.status === st) + '">' + t + '</button>'; };
+      return '<div class="med-item' + (it.status === 'nc' ? ' q-nc-item' : '') + '"><div class="med-top"><span class="med-name">' + (k + 1) + '. ' + esc(it.item) + '</span></div>' +
+        '<div class="kpi-s">' + esc(it.criterio) + '</div>' +
+        '<div class="q-sts" role="group" aria-label="Situação do item">' + b('ok', 'Conforme') + b('nc', 'Não conforme') + b('na', 'N/A') + '</div>' +
+        (it.status === 'nc' || it.obs ? '<textarea class="q-obs" data-qobs="' + k + '" rows="2" placeholder="' + (it.status === 'nc' ? 'O que está fora do critério? (vira a descrição da NC)' : 'Observação') + '">' + esc(it.obs) + '</textarea>' : '') +
+        '<div class="q-fotos">' + it.fotos.map(function (f, j) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto ' + (j + 1) + ' do item ' + (k + 1) + '"><button type="button" data-a="qfdel:' + k + ':' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
+        '<label class="q-add"><input type="file" accept="image/*" capture="environment" data-qfoto="' + k + '" hidden>+ Foto</label></div></div>';
+    }).join('');
+    var locs = (Q.locais || []).map(function (l) { return '<option value="' + esc(l) + '">'; }).join('');
+    return qMsg() + '<section class="card med-head"><div class="card-head"><h2>' + (F.reinspecao_de ? 'Reinspeção' : 'Nova inspeção') + '</h2><button type="button" class="linkbtn" data-a="qcancel">Cancelar</button></div>' +
+      '<label class="q-lab">Ficha (FVS)<select id="qfModelo"' + (F.reinspecao_de ? ' disabled' : '') + '>' + opts + '</select></label>' +
+      '<div class="q-row2"><label class="q-lab">Local<input id="qfLocal" list="qLocais" value="' + esc(F.local) + '" placeholder="Ex.: Pav. 3, Apto 302, Fachada norte"' + (F.reinspecao_de ? ' readonly' : '') + '><datalist id="qLocais">' + locs + '</datalist></label>' +
+      '<label class="q-lab">Data<input id="qfData" type="date" value="' + F.data + '"></label></div>' +
+      '<label class="q-lab">Inspetor<input id="qfInspetor" value="' + esc(F.inspetor) + '" placeholder="Nome de quem inspecionou"></label>' +
+      '<div class="prj-bar"><span class="kpi-s" style="flex:1">' + marcados + ' de ' + F.itens.length + ' itens marcados</span><button type="button" class="btn btn-ghost btn-sm" data-a="qtodos">Marcar os restantes como conforme</button></div></section>' +
+      '<div class="med-list">' + itens + '</div>' +
+      '<section class="card med-head"><label class="q-lab">Observações gerais<textarea id="qfObs" rows="2">' + esc(F.obs) + '</textarea></label>' +
+      '<div class="q-lab">Assinatura do inspetor<canvas id="qSig" class="q-sig" width="600" height="180" aria-label="Área para assinar com o dedo"></canvas><button type="button" class="linkbtn" data-a="qsigclr" style="align-self:flex-start;font-size:13px">Limpar assinatura</button></div>' +
+      '<button type="button" class="btn btn-primary btn-block" data-a="qsalvar">Salvar inspeção</button>' +
+      '<p class="kpi-s">Itens não conformes abrem uma não conformidade automaticamente, com prazo de 7 dias. A reinspeção aprovada fecha as NCs da inspeção original.</p></section>';
+  }
+  function iniciarAssinatura() {
+    var c = document.getElementById('qSig'); if (!c || !S.q.form) return;
+    var ctx = c.getContext('2d'), des = false, ult = null;
+    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#282B59';
+    if (S.q.form.assinatura) { var im = new Image(); im.onload = function () { ctx.drawImage(im, 0, 0); }; im.src = S.q.form.assinatura; }
+    var pos = function (e) { var r = c.getBoundingClientRect(); return [(e.clientX - r.left) * c.width / r.width, (e.clientY - r.top) * c.height / r.height]; };
+    c.addEventListener('pointerdown', function (e) { des = true; ult = pos(e); c.setPointerCapture(e.pointerId); e.preventDefault(); });
+    c.addEventListener('pointermove', function (e) { if (!des) return; var p = pos(e); ctx.beginPath(); ctx.moveTo(ult[0], ult[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ult = p; e.preventDefault(); });
+    var fim = function () { if (des) { des = false; S.q.form.assinatura = c.toDataURL('image/png'); } };
+    c.addEventListener('pointerup', fim); c.addEventListener('pointercancel', fim);
+  }
+
+  /* ---------- Não conformidades ---------- */
+  function vQNc() {
+    if (!Q) return qVazio();
+    if (S.q.ncEdit) return vQNcForm();
+    var t = S.q.ncTab;
+    var L = Q.ncs.filter(function (n) { return t === 'todas' ? true : t === 'abertas' ? n.status === 'aberta' : n.status === t; });
+    var cont = function (st) { return Q.ncs.filter(function (n) { return st === 'todas' || n.status === st || (st === 'abertas' && n.status === 'aberta'); }).length; };
+    var tab = function (id, tx) { return '<button type="button" data-a="qnct:' + id + '" aria-pressed="' + (t === id) + '">' + tx + ' · ' + cont(id) + '</button>'; };
+    var cards = L.map(function (n) {
+      var v = vencida(n);
+      return '<div class="q-card"><div class="q-card-top"><b>' + (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'Nova NC') + ' · ' + esc(n.servico || 'Sem serviço') + '</b><span class="chip ' + NC_ST[n.status][1] + '">' + NC_ST[n.status][0] + '</span></div>' +
+        '<p style="font-size:14.5px;margin:4px 0">' + esc(n.descricao) + '</p>' +
+        '<div class="med-info"><span>' + esc(n.local || '—') + '</span><span>Gravidade ' + GRAV[n.gravidade || 'media'] + '</span><span>' + esc(n.origem || '') + '</span>' + (n.responsavel ? '<span>' + esc(n.responsavel) + '</span>' : '<span style="color:var(--bad)">sem responsável</span>') + (n.prazo ? '<span' + (v ? ' style="color:var(--bad);font-weight:600"' : '') + '>prazo ' + isoBr(n.prazo) + (v ? ' (vencido)' : '') + '</span>' : '') + (n.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '') + '</div>' +
+        (n.fotos && n.fotos.length ? '<div class="q-fotos">' + n.fotos.map(function (f) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto da NC" loading="lazy"></span>'; }).join('') + '</div>' : '') +
+        (n.pendente ? '' : '<div class="q-acts"><button type="button" class="btn btn-ghost btn-sm" data-a="qncedit:' + n.id + '">' + (n.status === 'fechada' ? 'Ver' : 'Tratar') + '</button></div>') + '</div>';
+    }).join('');
+    return qMsg() + '<section class="card med-head"><div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qncnova">Registrar não conformidade</button><span style="flex:1"></span><div class="tabs" role="group" aria-label="Filtro">' + tab('abertas', 'Abertas') + tab('tratamento', 'Em tratamento') + tab('fechada', 'Fechadas') + tab('todas', 'Todas') + '</div></div></section>' +
+      '<div class="q-list">' + (cards || '<p class="kpi-s">Nenhuma não conformidade neste filtro.</p>') + '</div>';
+  }
+  function vQNcForm() {
+    var n = S.q.ncEdit;
+    var servs = Q.modelos.map(function (m) { return '<option value="' + esc(m.servico) + '">'; }).join('');
+    var locs = (Q.locais || []).map(function (l) { return '<option value="' + esc(l) + '">'; }).join('');
+    var sel = function (id, map, v) { return '<select id="' + id + '">' + Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>' + (Array.isArray(map[k]) ? map[k][0] : map[k]) + '</option>'; }).join('') + '</select>'; };
+    return qMsg() + '<section class="card med-head"><div class="card-head"><h2>' + (n.id ? 'NC-' + ('00' + n.numero).slice(-3) : 'Registrar não conformidade') + '</h2><button type="button" class="linkbtn" data-a="qnccancel">Voltar</button></div>' +
+      (n.inspecao_id ? '<p class="kpi-s">Aberta pela inspeção de FVS de ' + isoBr((Q.inspecoes.filter(function (i) { return i.id === n.inspecao_id; })[0] || {}).data) + '.</p>' : '') +
+      '<label class="q-lab">Descrição<textarea id="ncDesc" rows="3" placeholder="O que foi encontrado e onde">' + esc(n.descricao || '') + '</textarea></label>' +
+      '<div class="q-row2"><label class="q-lab">Serviço<input id="ncServ" list="qServs" value="' + esc(n.servico || '') + '"><datalist id="qServs">' + servs + '</datalist></label>' +
+      '<label class="q-lab">Local<input id="ncLocal" list="qLocais2" value="' + esc(n.local || '') + '"><datalist id="qLocais2">' + locs + '</datalist></label></div>' +
+      '<div class="q-row2"><label class="q-lab">Gravidade' + sel('ncGrav', GRAV, n.gravidade || 'media') + '</label><label class="q-lab">Prazo<input id="ncPrazo" type="date" value="' + (n.prazo || '') + '"></label></div>' +
+      '<label class="q-lab">Responsável pela correção<input id="ncResp" value="' + esc(n.responsavel || '') + '" placeholder="Empreiteiro, equipe ou pessoa"></label>' +
+      '<label class="q-lab">Causa provável<textarea id="ncCausa" rows="2">' + esc(n.causa || '') + '</textarea></label>' +
+      '<label class="q-lab">Ação corretiva<textarea id="ncAcao" rows="2" placeholder="O que foi ou será feito para corrigir">' + esc(n.acao || '') + '</textarea></label>' +
+      '<div class="q-row2"><label class="q-lab">Situação' + sel('ncSt', NC_ST, n.status || 'aberta') + '</label><label class="q-lab">Verificação de eficácia<input id="ncEfic" value="' + esc(n.eficacia || '') + '" placeholder="Como foi verificado"></label></div>' +
+      '<div class="q-lab">Fotos<div class="q-fotos">' + (n.fotos || []).map(function (f, j) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto ' + (j + 1) + '"><button type="button" data-a="qncfdel:' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
+      '<label class="q-add"><input type="file" accept="image/*" capture="environment" data-ncfoto="1" hidden>+ Foto</label></div></div>' +
+      '<button type="button" class="btn btn-primary btn-block" data-a="qncsalvar">Salvar</button></section>';
+  }
+  function lerNcForm() {
+    var n = S.q.ncEdit, g = function (id) { var e = document.getElementById(id); return e ? e.value : ''; };
+    if (!n || !document.getElementById('ncDesc')) return;
+    n.descricao = g('ncDesc'); n.servico = g('ncServ'); n.local = g('ncLocal'); n.gravidade = g('ncGrav'); n.prazo = g('ncPrazo');
+    n.responsavel = g('ncResp'); n.causa = g('ncCausa'); n.acao = g('ncAcao'); n.status = g('ncSt'); n.eficacia = g('ncEfic');
+  }
+
+  /* ---------- Matriz local × serviço ---------- */
+  function vQMatriz() {
+    if (!Q) return qVazio();
+    var I = Q.inspecoes.slice().sort(function (a, b) { return (a.data + String(a.id)).localeCompare(b.data + String(b.id)); });
+    var ult = {};
+    I.forEach(function (i) { ult[i.local + '||' + i.servico] = i; });
+    var servs = Q.modelos.map(function (m) { return m; });
+    var locs = (Q.locais || []).slice();
+    if (!locs.length) return qMsg() + '<section class="card"><b>Nenhum local ainda</b><p class="kpi-s" style="margin-top:6px">Os pavimentos vêm do Plano de ataque (área de Planejamento) ou das inspeções já feitas. Faça a primeira inspeção para começar.</p><button type="button" class="btn btn-primary" data-a="qnova" style="margin-top:10px">Nova inspeção</button></section>';
+    var cab = '<tr><th scope="col" class="pa-row">Local</th>' + servs.map(function (m) { return '<th scope="col"><span class="q-mh" title="' + esc(m.servico) + '">' + esc(m.servico) + '</span></th>'; }).join('') + '</tr>';
+    var rows = locs.map(function (l) {
+      return '<tr><th scope="row" class="pa-row">' + esc(l) + '</th>' + servs.map(function (m) {
+        var i = ult[l + '||' + m.servico];
+        if (!i) return '<td class="c q-cell"><button type="button" data-a="qcel:' + m.id + ':' + encodeURIComponent(l) + '" aria-label="Inspecionar ' + esc(m.servico) + ' em ' + esc(l) + '">+</button></td>';
+        var cls = i.resultado === 'aprovada' ? 'ok' : 'late';
+        return '<td class="c ' + cls + '" title="' + esc(m.servico + ' — ' + l + ': ' + (i.resultado === 'aprovada' ? 'aprovada' : 'reprovada') + ' em ' + isoBr(i.data)) + '">' + isoBr(i.data).slice(0, 5) + (i.resultado === 'aprovada' ? ' ✓' : ' ✗') + '</td>';
+      }).join('') + '</tr>';
+    }).join('');
+    return qMsg() + '<section class="card" style="display:flex;flex-direction:column;gap:10px;padding-bottom:0"><div class="legend-row pa-legend"><span><i style="background:var(--good);border-color:var(--good)"></i>Aprovada (última inspeção)</span><span><i style="background:var(--bad-bg);border:2px solid var(--bad)"></i>Reprovada, aguardando reinspeção</span><span><i style="background:var(--surface)"></i>Não inspecionado · toque em + para inspecionar</span></div>' +
+      '<div class="pa-box"><table class="pa q-mat"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
+      '<p style="font-size:12.5px;color:var(--muted)">Cada célula mostra a última inspeção daquela FVS naquele local. Os pavimentos vêm do Plano de ataque; os demais locais aparecem conforme as inspeções são feitas.</p>';
+  }
+
+  /* ---------- Modelos de FVS ---------- */
+  function vQMod() {
+    if (!Q) return qVazio();
+    var E = S.q.modEdit;
+    if (E) {
+      var its = E.itens.map(function (it, k) {
+        return '<div class="q-mod-item"><span class="mono kpi-s">' + (k + 1) + '</span><input data-mi="' + k + ':item" value="' + esc(it.item) + '" placeholder="Item de verificação"><input data-mi="' + k + ':criterio" value="' + esc(it.criterio) + '" placeholder="Critério de aceitação / tolerância"><button type="button" class="iconbtn" data-a="qmidel:' + k + '" aria-label="Remover item">×</button></div>';
+      }).join('');
+      return qMsg() + '<section class="card med-head"><div class="card-head"><h2>' + (E.id ? 'Editar FVS' : 'Nova FVS') + '</h2><button type="button" class="linkbtn" data-a="qmcancel">Voltar</button></div>' +
+        '<div class="q-row2"><label class="q-lab">Código<input id="qmCod" value="' + esc(E.codigo || '') + '" placeholder="FVS-13"></label><label class="q-lab">Serviço<input id="qmServ" value="' + esc(E.servico || '') + '"></label></div>' +
+        '<div class="q-lab">Itens de verificação<div class="q-mod-list">' + its + '</div><button type="button" class="btn btn-ghost btn-sm" data-a="qmiadd" style="align-self:flex-start">+ Item</button></div>' +
+        '<div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qmsalvar">Salvar FVS</button>' + (E.id ? '<span style="flex:1"></span><button type="button" class="linkbtn" data-a="qmdel" style="font-size:13px">Excluir FVS</button>' : '') + '</div></section>';
+    }
+    return qMsg() + '<section class="card med-head"><div class="prj-bar"><span class="kpi-s" style="flex:1">Fichas de verificação usadas nas inspeções. Os critérios são uma referência: ajuste aos procedimentos da empresa.</span><button type="button" class="btn btn-primary" data-a="qmnova">Nova FVS</button></div></section>' +
+      '<div class="q-list">' + Q.modelos.map(function (m) {
+        return '<div class="q-card"><div class="q-card-top"><b>' + esc(m.codigo + ' · ' + m.servico) + '</b><button type="button" class="btn btn-ghost btn-sm" data-a="qmedit:' + m.id + '">Editar</button></div><ol class="q-ol">' + m.itens.map(function (it) { return '<li><b>' + esc(it.item) + '</b> — <span class="kpi-s">' + esc(it.criterio) + '</span></li>'; }).join('') + '</ol></div>';
+      }).join('') + '</div>';
+  }
+  function lerModForm() {
+    var E = S.q.modEdit; if (!E) return;
+    var c = document.getElementById('qmCod'), s2 = document.getElementById('qmServ');
+    if (c) E.codigo = c.value; if (s2) E.servico = s2.value;
+  }
+
+  /* ---------- eventos da qualidade ---------- */
+  function qClick(a, el) {
+    var F = S.q.form;
+    switch (a[0]) {
+      case 'qnova': S.screen = 'qi'; novaForm(null, ''); S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
+      case 'qcel': S.screen = 'qi'; novaForm(parseInt(a[1], 10), decodeURIComponent(a[2])); S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
+      case 'qreinsp':
+        var o = Q.inspecoes.filter(function (i) { return String(i.id) === a[1]; })[0];
+        if (o) { novaForm(o.modelo_id, o.local, o.id); if (!S.q.form.modelo_id || S.q.form.modelo_id !== o.modelo_id) { S.q.form.itens = o.itens.map(function (it) { return { id: it.id, item: it.item, criterio: it.criterio, status: null, obs: '', fotos: [] }; }); S.q.form.modelo_id = o.modelo_id; } }
+        S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
+      case 'qcancel': S.q.form = null; render(); return true;
+      case 'qst': F.itens[+a[1]].status = a[2]; render(); var b2 = body.querySelector('[data-a="qst:' + a[1] + ':' + a[2] + '"]'); if (b2) b2.focus({ preventScroll: true }); return true;
+      case 'qtodos': F.itens.forEach(function (it) { if (!it.status) it.status = 'ok'; }); render(); return true;
+      case 'qfdel': F.itens[+a[1]].fotos.splice(+a[2], 1); render(); return true;
+      case 'qsigclr': F.assinatura = null; render(); return true;
+      case 'qsalvar':
+        var falta = F.itens.filter(function (it) { return !it.status; }).length;
+        if (!F.local.trim()) { S.q.msg = 'Informe o local da inspeção.'; render(); var l1 = document.getElementById('qfLocal'); if (l1) l1.focus(); return true; }
+        if (falta) { S.q.msg = 'Marque todos os itens: faltam ' + falta + '.'; render(); return true; }
+        try { localStorage.setItem('cp_inspetor', F.inspetor || ''); } catch (e) {}
+        el.disabled = true;
+        qPost('/api/qualidade/inspecao', JSON.parse(JSON.stringify(F)), 'Inspeção salva.').then(function () { S.q.form = null; render(); window.scrollTo(0, 0); }, function () { el.disabled = false; });
+        return true;
+      case 'qidel': if (!confirm('Excluir esta inspeção? As NCs ainda abertas geradas por ela também serão excluídas.')) return true; if (precisaRede()) return true;
+        api('/api/qualidade/inspecao/remover', { id: +a[1] }).then(function (r) { Q = r; S.q.msg = 'Inspeção excluída.'; render(); }, function (e) { S.q.msg = e.message; render(); }); return true;
+      case 'qfil': S.q.filtro = a[1]; render(); return true;
+      case 'qnct': S.q.ncTab = a[1]; render(); return true;
+      case 'qncnova': S.q.ncEdit = { cid: uidNovo(), descricao: '', gravidade: 'media', status: 'aberta', fotos: [], prazo: '' }; S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
+      case 'qncedit': var n = Q.ncs.filter(function (x) { return String(x.id) === a[1]; })[0]; if (n) { S.screen = 'qn'; S.q.ncEdit = JSON.parse(JSON.stringify(n)); S.q.msg = ''; render(); window.scrollTo(0, 0); } return true;
+      case 'qnccancel': S.q.ncEdit = null; render(); return true;
+      case 'qncfdel': lerNcForm(); S.q.ncEdit.fotos.splice(+a[1], 1); render(); return true;
+      case 'qncsalvar':
+        lerNcForm(); var N2 = S.q.ncEdit;
+        if (!N2.descricao.trim()) { S.q.msg = 'Descreva a não conformidade.'; render(); return true; }
+        el.disabled = true;
+        qPost('/api/qualidade/nc', JSON.parse(JSON.stringify(N2)), 'Não conformidade salva.').then(function () { S.q.ncEdit = null; render(); window.scrollTo(0, 0); }, function () { el.disabled = false; });
+        return true;
+      case 'qmnova': S.q.modEdit = { codigo: '', servico: '', itens: [{ item: '', criterio: '' }] }; render(); return true;
+      case 'qmedit': var m = Q.modelos.filter(function (x) { return String(x.id) === a[1]; })[0]; S.q.modEdit = JSON.parse(JSON.stringify(m)); render(); window.scrollTo(0, 0); return true;
+      case 'qmcancel': S.q.modEdit = null; render(); return true;
+      case 'qmiadd': lerModForm(); S.q.modEdit.itens.push({ item: '', criterio: '' }); render(); var ins = body.querySelectorAll('[data-mi$=":item"]'); if (ins.length) ins[ins.length - 1].focus(); return true;
+      case 'qmidel': lerModForm(); S.q.modEdit.itens.splice(+a[1], 1); render(); return true;
+      case 'qmsalvar': lerModForm(); if (precisaRede()) return true;
+        api('/api/qualidade/modelo', S.q.modEdit).then(function (r) { Q = r; S.q.modEdit = null; S.q.msg = 'FVS salva.'; render(); }, function (e) { S.q.msg = e.message; render(); }); return true;
+      case 'qmdel': if (!confirm('Excluir esta FVS? As inspeções já feitas continuam guardadas.')) return true; if (precisaRede()) return true;
+        api('/api/qualidade/modelo/remover', { id: S.q.modEdit.id }).then(function (r) { Q = r; S.q.modEdit = null; S.q.msg = 'FVS excluída.'; render(); }, function (e) { S.q.msg = e.message; render(); }); return true;
+    }
+    return false;
+  }
+  app.addEventListener('input', function (e) {
+    var t = e.target, F = S.q.form;
+    if (F && t.id === 'qfLocal') F.local = t.value;
+    else if (F && t.id === 'qfInspetor') F.inspetor = t.value;
+    else if (F && t.id === 'qfData') F.data = t.value;
+    else if (F && t.id === 'qfObs') F.obs = t.value;
+    else if (F && t.hasAttribute('data-qobs')) F.itens[+t.getAttribute('data-qobs')].obs = t.value;
+    else if (S.q.modEdit && t.hasAttribute('data-mi')) { var p = t.getAttribute('data-mi').split(':'); S.q.modEdit.itens[+p[0]][p[1]] = t.value; }
+    else if (t.id === 'qBusca') { S.q.busca = t.value; render(); var q2 = document.getElementById('qBusca'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} } }
+  });
+  app.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'qfModelo' && S.q.form) { var loc = S.q.form.local, dt2 = S.q.form.data, ins = S.q.form.inspetor; novaForm(parseInt(t.value, 10), loc); S.q.form.data = dt2; S.q.form.inspetor = ins; render(); return; }
+    var k = t.getAttribute && (t.getAttribute('data-qfoto') || t.getAttribute('data-ncfoto'));
+    if (k && t.files && t.files[0]) {
+      var nc = t.hasAttribute('data-ncfoto'); if (nc) lerNcForm();
+      reduzirFoto(t.files[0]).then(function (url) { if (nc) S.q.ncEdit.fotos.push(url); else S.q.form.itens[+k].fotos.push(url); render(); }, function () { S.q.msg = 'Não foi possível ler a foto.'; render(); });
+    }
+  });
+
   /* ---------- Suprimentos ---------- */
   var SUP_ST = ['solicitar', 'cotacao', 'pedido', 'entregue'];
   var SUP_LAB = { solicitar: 'A solicitar', cotacao: 'Em cotação', pedido: 'Pedido feito', entregue: 'Entregue' };
@@ -2149,6 +2597,20 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '</div>';
   }
 
+  function sair() {
+    Promise.all([kvGet('qout'), kvGet('pend')]).then(function (r) {
+      var n = (r[0] || []).length + (r[1] ? 1 : 0);
+      if (n && !confirm('Há registros feitos sem internet que ainda não foram enviados. Se sair agora, eles serão descartados. Sair mesmo assim?')) return;
+      sairJa();
+    });
+  }
+  function sairJa() {
+    if (API) api('/api/logout', {}).catch(function () {});
+    user = null; P = null; PA = null; CU = null; Q = null; S.q.form = null; S.sync = ''; kvSet('pend', null); kvSet('qout', null);
+    if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
+    location.hash = 'entrar'; route();
+  }
+  document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
   function render() {
     var M = model();
@@ -2169,21 +2631,30 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     document.getElementById('wkNow').hidden = CUR === HOJE_W;
     var tag = document.getElementById('wkTag');
     tag.textContent = CUR === HOJE_W ? 'Dados de exemplo' : (CUR < HOJE_W ? 'Visualizando semana passada' : 'Simulando semana futura');
-    tag.className = 'demo-tag' + (CUR === HOJE_W ? '' : ' alt');
+    tag.className = 'demo-tag plan-only' + (CUR === HOJE_W ? '' : ' alt');
     var hd = HEADS[S.screen];
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cus: vCus, cp: vCP, res: vRes }[S.screen](M);
+    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: vCP, res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
     paintSync();
+    var qm = S.mod === 'qual';
+    document.getElementById('navPlan').hidden = qm; document.getElementById('navQual').hidden = !qm;
+    document.getElementById('sideLabel').textContent = qm ? 'Qualidade' : 'Planejamento';
+    document.getElementById('sideSub').textContent = qm ? 'Qualidade' : 'Planejamento';
+    Array.prototype.forEach.call(document.querySelectorAll('.plan-only'), function (e) { e.hidden = qm; });
+    var nAb = Q ? Q.ncs.filter(function (n) { return n.status !== 'fechada'; }).length : 0, qc = document.getElementById('qnCount');
+    qc.textContent = nAb; qc.hidden = !nAb;
+    if (qm && S.screen === 'qi' && S.q.form) iniciarAssinatura();
   }
   function setSt(key, v) { S.st[key] = v; }
 
   app.addEventListener('click', function (e) {
     var el = e.target.closest('[data-a]'); if (!el) return;
     var a = el.getAttribute('data-a').split(':');
+    if (qClick(a, el)) return;
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } render(); window.scrollTo(0, 0); return;
+      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -2256,10 +2727,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       case 'expall': S.open = { top: true }; SERV.forEach(function (s) { S.open[s.id] = true; }); break;
       case 'colall': S.open = { top: true }; break;
       case 'toggle': S.restr = S.restr.map(function (r) { return r.id === a[1] ? Object.assign({}, r, { aberta: !r.aberta }) : r; }); break;
-      case 'logout':
-        if (API) api('/api/logout', {}).catch(function () {});
-        user = null; P = null; PA = null; CU = null; S.sync = ''; kvSet('pend', null); if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
-        location.hash = 'entrar'; route(); return;
+      case 'logout': sair(); return;
       default: return;
     }
     var keep = el.getAttribute('data-a');

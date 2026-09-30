@@ -3,10 +3,10 @@
  * - Cronograma, plano de ataque e histórico: busca na rede; sem rede, usa a última cópia.
  * - A medição feita offline fica no próprio app (IndexedDB) e é enviada quando a conexão volta.
  */
-const VERSAO = 'cp-app-v1';
+const VERSAO = 'cp-app-v2';
 const DADOS = 'cp-api';
 const CASCA = ['/', '/manifest.webmanifest', '/web/icon.svg', '/web/icon-192.png', '/web/icon-512.png'];
-const API_GUARDADA = ['/api/me', '/api/cronograma', '/api/plano', '/api/historico'];
+const API_GUARDADA = ['/api/me', '/api/cronograma', '/api/plano', '/api/historico', '/api/qualidade', '/api/custos'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(CASCA)).then(() => self.skipWaiting()));
@@ -47,6 +47,14 @@ self.addEventListener('fetch', (e) => {
     }
     if (API_GUARDADA.includes(url.pathname)) {
       e.respondWith(redePrimeiro(req, DADOS));
+      return;
+    }
+    if (url.pathname.startsWith('/api/qualidade/foto/')) {
+      // fotos não mudam: guardadas no aparelho para ver sem internet
+      e.respondWith(caches.match(req).then((achado) => achado || fetch(req).then((r) => {
+        if (r.ok) { const c = r.clone(); caches.open(DADOS).then((cc) => cc.put(req, c)); }
+        return r;
+      })));
       return;
     }
     if (url.pathname.startsWith('/web/') || url.pathname === '/manifest.webmanifest') {
