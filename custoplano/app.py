@@ -24,6 +24,7 @@ from flask import Flask, Response, abort, jsonify, request, send_from_directory,
 
 import banco
 from cronograma import ErroCronograma, Projeto, ler_arquivo, nome_base
+from plano_ataque import ErroPlano, ler_plano
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PASTA_WEB = os.path.join(AQUI, "web")
@@ -211,6 +212,37 @@ def remover():
 @logado
 def ver_historico():
     return jsonify([dict(h) for h in banco.historico(session["uid"])])
+
+
+# -------------------------------------------------- plano de ataque (escadinha)
+@app.get("/api/plano")
+@logado
+def ver_plano():
+    p = banco.plano(session["uid"])
+    if not p:
+        return jsonify(plano=None)
+    return jsonify(plano=json.loads(p["dados"]), atualizado_em=p["atualizado_em"])
+
+
+@app.post("/api/plano/importar")
+@logado
+def importar_plano():
+    arq = request.files.get("arquivo")
+    if not arq or not arq.filename:
+        return erro("Escolha a planilha do plano de ataque (.xlsx).")
+    try:
+        dados = ler_plano(arq.filename, arq.read())
+    except ErroPlano as e:
+        return erro(str(e))
+    banco.salvar_plano(session["uid"], arq.filename, dados)
+    return ver_plano()
+
+
+@app.post("/api/plano/remover")
+@logado
+def remover_plano():
+    banco.remover_plano(session["uid"])
+    return jsonify(ok=True)
 
 
 # -------------------------------------------------------------------- exportar

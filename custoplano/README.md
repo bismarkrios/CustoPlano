@@ -15,6 +15,7 @@ Servidor em **Python (Flask)** com:
 custoplano/
 ├── app.py            servidor web (rotas, login, API)
 ├── cronograma.py     leitura do .mpp/.xml, pesos, medição e exportações
+├── plano_ataque.py   leitura da planilha do plano de ataque (escadinha)
 ├── banco.py          banco de dados SQLite
 ├── web/index.html    site + telas do sistema (HTML/CSS/JS)
 ├── macro/CustoPlano.bas   macro do MS Project (grava a medição no seu .mpp)
@@ -66,6 +67,17 @@ No Project: **Alt+F11 → Arquivo → Importar arquivo → `macro/CustoPlano.bas
 - `ReceberMedicaoCustoPlano`: lê o boletim `.csv` e grava % concluído, % físico e data de status no `.mpp`.
 
 > Arquivos `.mpp` só podem ser **gravados** pelo MS Project. Por isso a volta da medição é pelo `.xml`, que o Project abre direto, ou pela macro, que grava no seu próprio `.mpp`.
+
+## Plano de ataque (escadinha)
+
+Programação dos serviços pavimento por pavimento: a forma em tabela da linha de balanço.
+
+1. **Plano de ataque → Importar planilha** e escolha a planilha da escadinha (.xlsx).
+2. O sistema lê a linha **Serviço** (nomes), **Fornecedor**, **Ciclo** e um pavimento por linha, com a data de
+   cada serviço e **ok** na coluna ao lado quando foi executado. Os blocos marcados **Linha de Base** viram a
+   comparação; **DATA BASE**, **Controle de prazo – datas marco**, **Término da obra** e **Meta trimestral** também são lidos.
+3. Veja a **matriz** (cores por mês, executado em verde, atrasado em vermelho) ou o **gráfico** (linha de balanço),
+   destaque um serviço e ligue **Comparar com a linha de base** para ver o desvio em dias de cada pacote.
 
 ## Publicar na internet (custoplano.com.br)
 

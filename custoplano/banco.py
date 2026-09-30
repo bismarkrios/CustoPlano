@@ -42,6 +42,13 @@ CREATE TABLE IF NOT EXISTS medicoes_fechadas (
     atual         TEXT NOT NULL,
     anterior      TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS planos_ataque (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id    INTEGER NOT NULL UNIQUE REFERENCES usuarios(id) ON DELETE CASCADE,
+    arquivo       TEXT NOT NULL,
+    dados         TEXT NOT NULL,                -- JSON lido da planilha (plano_ataque.ler_plano)
+    atualizado_em TEXT NOT NULL
+);
 """
 
 
@@ -150,6 +157,27 @@ def historico(usuario_id: int):
             "SELECT id, arquivo, data_status, fechado_em, avanco_real, avanco_prev FROM medicoes_fechadas WHERE usuario_id=? ORDER BY id DESC",
             (usuario_id,),
         ).fetchall()
+
+
+# ---------------------------------------------------- plano de ataque (escadinha)
+def salvar_plano(usuario_id: int, arquivo: str, dados: dict) -> None:
+    with conectar() as con:
+        con.execute(
+            """INSERT INTO planos_ataque (usuario_id, arquivo, dados, atualizado_em) VALUES (?, ?, ?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET arquivo=excluded.arquivo, dados=excluded.dados,
+                 atualizado_em=excluded.atualizado_em""",
+            (usuario_id, arquivo, json.dumps(dados, ensure_ascii=False), agora()),
+        )
+
+
+def plano(usuario_id: int):
+    with conectar() as con:
+        return con.execute("SELECT * FROM planos_ataque WHERE usuario_id = ?", (usuario_id,)).fetchone()
+
+
+def remover_plano(usuario_id: int) -> None:
+    with conectar() as con:
+        con.execute("DELETE FROM planos_ataque WHERE usuario_id = ?", (usuario_id,))
 
 
 def medicao_fechada(usuario_id: int, mid: int):
