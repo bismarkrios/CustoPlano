@@ -71,7 +71,7 @@ def resumo_plano(dados: dict) -> dict:
 
 
 def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.datetime, criterio: str | None,
-          historico: list, plano: dict | None, obra: str) -> bytes:
+          historico: list, plano: dict | None, obra: str, custos: dict | None = None) -> bytes:
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import A4
@@ -271,6 +271,43 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                                              for m in plano["marcos"]],
                                             [W - 110 * mm, 22 * mm, 22 * mm, 22 * mm, 22 * mm, 22 * mm], direita=(4, 5))]
         H.append(KeepTogether(blocos))
+
+    # ------------------------------------------------------------------ custos
+    if custos:
+        T = custos["totais"]
+        brl = lambda v: "-" if v is None else "R$ " + f"{v:,.0f}".replace(",", ".")  # noqa: E731
+        idc = T.get("idc")
+        blocos = [Pa("Custos · orçado x realizado", "h2"),
+                  kpis([
+                      ("Orçamento (custo direto)", brl(T["bac"]), f"com BDI: {brl(T['venda'])}"),
+                      ("Custo realizado", brl(T["cr"]), f"{_br(T['cr'] / T['bac'] * 100 if T['bac'] else 0)}% do orçamento"),
+                      ("Valor agregado", brl(T["va"]), f"previsto até a data: {brl(T['vp'])}"),
+                      ("IDC", f"<font color='{'#9A3412' if idc is not None and idc < 0.98 else '#1E6B45'}'>{'-' if idc is None else _br(idc, 2)}</font>",
+                       f"estimativa no término {brl(T['eac'])}" if T.get("eac") else "sem custo lançado"),
+                  ], W), Spacer(1, 6)]
+        linhas = []
+        for e in custos["etapas"]:
+            cv = e["va"] - e["cr"]
+            linhas.append([e["codigo"], Pa(e["nome"].replace("&", "&amp;")), brl(e["orcado"]), brl(e["vp"]), brl(e["va"]), brl(e["cr"]),
+                           Pa(f"<font color='{'#9A3412' if cv < -0.5 else '#1E6B45'}'>{'-' if cv < 0 else '+'}{brl(abs(cv))[3:]}</font>", "tr"),
+                           "-" if e["idc"] is None else _br(e["idc"], 2)])
+        cvt = T["va"] - T["cr"]
+        linhas.append(["", Pa("<b>Total</b>"), brl(T["bac"]), brl(T["vp"]), brl(T["va"]), brl(T["cr"]),
+                       Pa(f"<b>{'-' if cvt < 0 else '+'}{brl(abs(cvt))[3:]}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
+        blocos.append(tabela(["Cód.", "Etapa", "Orçado", "Previsto", "Agregado", "Realizado", "VA - CR", "IDC"], linhas,
+                             [12 * mm, W - 136 * mm, 22 * mm, 22 * mm, 22 * mm, 22 * mm, 22 * mm, 14 * mm], direita=(2, 3, 4, 5, 6, 7)))
+        H.append(KeepTogether(blocos))
+        serie = custos.get("serie") or []
+        if 0 < len(serie) <= 14:
+            mil = lambda v: _br(v / 1000, 1) if v else ""  # noqa: E731
+            cab = ["R$ mil"] + [f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][2:4]}" for s_ in serie]
+            larg = [34 * mm] + [(W - 34 * mm) / len(serie)] * len(serie)
+            H.append(KeepTogether([Spacer(1, 6), Pa("Cronograma financeiro", "h2"), tabela(cab, [
+                ["Previsto no mês"] + [mil(s_["previsto"]) for s_ in serie],
+                ["Previsto acumulado"] + [mil(s_["previsto_acum"]) for s_ in serie],
+                ["Realizado no mês"] + [mil(s_["realizado"]) for s_ in serie],
+                ["Realizado acumulado"] + [mil(s_["realizado_acum"]) for s_ in serie],
+            ], larg, direita=tuple(range(1, len(serie) + 1)))]))
 
     # ------------------------------------------------------------ assinaturas
     H += [Spacer(1, 10), Pa("Observações", "h2")]

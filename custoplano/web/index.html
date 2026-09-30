@@ -401,6 +401,23 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .prj-real .prj-row{grid-template-columns:44px 300px 60px 80px 80px 60px 66px minmax(0,1fr)}
 .prj-bar select{width:auto;min-height:36px;padding:4px 8px}
 
+/* Custos */
+.tbl td.num,.tbl th.num{text-align:right;white-space:nowrap}
+.cu-et td,.cu-et th{font-weight:700;background:var(--soft)}
+.cu-tar{display:block;font-size:11.5px;color:var(--muted);font-family:var(--body)}
+.cu-comp>td{background:var(--ground);padding-top:4px}
+.cu-tbl .caret{border:0;background:none;color:var(--ink);cursor:pointer;font-size:13px;padding:0 4px;min-width:24px;min-height:24px}
+.cu-fin th,.cu-fin td{white-space:nowrap;padding:8px 10px}
+.cu-sticky{position:sticky;left:0;background:var(--surface);z-index:1;min-width:210px;text-align:left}
+.cu-fin tbody th{font-family:var(--body);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:500;color:var(--ink);border-bottom:1px solid var(--line)}
+.cu-fin tbody .cu-et th{font-weight:700;background:var(--soft)}
+.cu-et .cu-sticky{background:var(--soft)}
+.cu-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
+.cu-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+.cu-form .w2{grid-column:span 2}
+.cu-form input,.cu-form select{min-height:42px;width:100%}
+@media (max-width:700px){.cu-form{grid-template-columns:1fr 1fr}.cu-form .w2{grid-column:1/-1}}
+
 /* Medição pelo celular */
 .med-head{display:flex;flex-direction:column;gap:12px}
 .med-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -850,6 +867,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       <button class="nav-btn" type="button" data-a="nav:med"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M9 12l2 2 4-4"></path><path d="M11 18h2"></path></svg>Medição</button>
       <button class="nav-btn" type="button" data-a="nav:sup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"></path><path d="M3 7v10l9 4 9-4V7"></path><path d="M12 11v10"></path></svg>Suprimentos<span class="count" id="supCount" style="background:var(--bad);color:var(--surface)">0</span></button>
       <button class="nav-btn" type="button" data-a="nav:cron"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M8 12h12M5 18h8"></path></svg>Cronograma</button>
+      <button class="nav-btn" type="button" data-a="nav:cus"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M7 15h3M14 15h3"></path></svg>Custos</button>
       <button class="nav-btn" type="button" data-a="nav:lb"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3 20L9 4M9 20l6-16M15 20l6-16"></path></svg>Linha de balanço</button>
       <button class="nav-btn" type="button" data-a="nav:pa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path></svg>Plano de ataque</button>
       <button class="nav-btn" type="button" data-a="nav:cp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7l2 2 3-3M4 16l2 2 3-3M13 8h7M13 17h7"></path></svg>Curto prazo · PPC</button>
@@ -883,6 +901,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       </header>
       <input type="file" id="prjFile" accept=".xml,.mpp" hidden>
       <input type="file" id="paFile" accept=".xlsx,.xlsm" hidden>
+      <input type="file" id="cuFile" accept=".xlsx,.xlsm" hidden>
       <div class="app-body" id="appBody"></div>
     </div>
   </div>
@@ -1048,6 +1067,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     prj: ['Project', 'Cronograma detalhado com EAP, durações, datas, predecessoras e Gantt.'],
     sup: ['Suprimentos', 'Compras puxadas pelo cronograma: data de necessidade na obra menos o prazo do fornecedor.'],
     cron: ['Cronograma', 'Etapas planejadas × realizadas, com a posição de hoje.'],
+    cus: ['Custos', 'Orçamento com composições, cronograma físico-financeiro e custo orçado × realizado, com valor agregado pela medição física.'],
     med: ['Medição', 'Aponte o % de cada tarefa direto do canteiro. Sem internet, a medição fica guardada no aparelho e é enviada quando a conexão voltar.'],
     pa: ['Plano de ataque', 'Programação dos serviços pavimento por pavimento (escadinha): executado, atrasado e desvio contra a linha de base.'],
     lb: ['Linha de balanço', 'Pacotes de trabalho por pavimento e semana. Toque em um pacote para ver detalhes e atualizar.'],
@@ -1892,6 +1912,165 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
   }
 
+  /* ---------- Custos: orçamento, cronograma financeiro, orçado × realizado ---------- */
+  var CU = null;
+  S.cu = { tab: 'orc', open: {}, msg: '', carregando: false };
+  var BRL0 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+  var BRL2 = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var NUM = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 });
+  function brl(v) { return v == null ? '—' : BRL0.format(v); }
+  function brl2(v) { return v == null ? '—' : BRL2.format(v); }
+  function mil(v) { return v ? (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : ''; }
+  function mesLab(m) { return MES[+m.slice(5, 7) - 1] + '/' + m.slice(2, 4); }
+  function isoBr(s) { return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '—'; }
+  var TIPO_COR = { mat: 'var(--pa0)', mo: 'var(--pa2)', eq: 'var(--pa3)', sv: 'var(--pa1)', out: 'var(--pa5)' };
+  var TIPO_NOME = { mat: 'Material', mo: 'Mão de obra', eq: 'Equipamento', sv: 'Serviço', out: 'Outros' };
+  function loadCustos() {
+    if (!API) return;
+    S.cu.carregando = !CU;
+    api('/api/custos').then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && S.screen === 'cus') render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
+  }
+  function cuSet(p) { return p.then(function (r) { CU = r.custos; S.cu.msg = ''; render(); }, function (e) { S.cu.msg = e.message; render(); }); }
+
+  function vCus() {
+    if (!API) return '<section class="card"><b>Custos</b><p style="color:var(--muted);font-size:14px;margin-top:6px">O controle de custos precisa do servidor da Custo Plano. Entre pelo site publicado.</p></section>';
+    var msg = S.cu.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.cu.msg) + '</p>' : '';
+    if (!CU) {
+      if (S.cu.carregando) return '<section class="card"><p class="kpi-s">Carregando…</p></section>';
+      return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum orçamento importado</b>' +
+        '<p style="color:var(--muted);font-size:14px">Envie o orçamento em Excel com as abas <b>Orçamento</b> (itens com quantidade e código da composição), <b>Composições</b> (insumos com coeficiente e preço) e, se quiser, <b>Realizado</b> (custos já pagos). Cada item é ligado a uma tarefa do cronograma pela EAP, para distribuir o custo no tempo e medir o valor agregado.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuFile" class="btn btn-primary" style="cursor:pointer">Importar orçamento (.xlsx)</label>' +
+        '<a class="btn btn-ghost" href="/api/custos/modelo.xlsx">Baixar o modelo</a>' +
+        '<button type="button" class="btn btn-ghost" data-a="cuex">Testar com o orçamento de exemplo</button></div>' + msg + '</section>';
+    }
+    var T = CU.totais, ds = isoBr(CU.data_status);
+    var idcCor = T.idc == null ? 'inherit' : (T.idc < 0.98 ? 'var(--bad)' : 'var(--good)');
+    var kpis = '<div class="grid4">' +
+      '<div class="card"><div class="kpi-t">Orçamento (custo direto)</div><div class="kpi-v" style="font-size:22px">' + brl(T.bac) + '</div><div class="kpi-s">com BDI de ' + fmt1(CU.bdi * 100) + '%: ' + brl(T.venda) + '</div></div>' +
+      '<div class="card"><div class="kpi-t">Custo realizado</div><div class="kpi-v" style="font-size:22px">' + brl(T.cr) + '</div><div class="kpi-s">' + (T.bac ? fmt1(T.cr / T.bac * 100) : '0') + '% do orçamento</div><div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, T.bac ? T.va / T.bac * 100 : 0) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, T.bac ? T.cr / T.bac * 100 : 0) + '%;background:var(--accent)"></i></div></div>' +
+      '<div class="card"><div class="kpi-t">Valor agregado (físico medido)</div><div class="kpi-v" style="font-size:22px">' + brl(T.va) + '</div><div class="kpi-s">previsto até ' + ds + ': ' + brl(T.vp) + '</div></div>' +
+      '<div class="card"><div class="kpi-t">Índice de desempenho de custo (IDC)</div><div class="kpi-v" style="color:' + idcCor + '">' + (T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ',')) + '</div><div class="kpi-s">' + (T.eac == null ? 'sem custo lançado ainda' : 'estimativa no término ' + brl(T.eac) + ' (<b style="color:' + (T.vac < 0 ? 'var(--bad)' : 'var(--good)') + '">' + (T.vac < 0 ? '−' : '+') + brl(Math.abs(T.vac)) + '</b>)') + '</div></div>' +
+      '</div>';
+    var avisos = (CU.avisos || []).slice();
+    if (!CU.tem_cronograma) avisos.push('Sem cronograma importado: o custo só é distribuído no tempo para itens com Início e Término, e o valor agregado fica zerado. Importe o cronograma na tela Project.');
+    else if (CU.sem_vinculo.n) avisos.push(CU.sem_vinculo.n + ' itens (' + brl(CU.sem_vinculo.valor) + ') não foram ligados a nenhuma tarefa do cronograma. Preencha a coluna Tarefa (EAP) na planilha.');
+    var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
+    var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
+      '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + tab('real', 'Orçado × real') + '</div></div>' +
+      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button></div>' +
+      (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
+    var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
+    return kpis + '<section class="card" style="display:flex;flex-direction:column;gap:12px">' + bar + '</section>' + corpo;
+  }
+
+  function vCusOrc() {
+    var tot = CU.tipos.reduce(function (s, t) { return s + t.valor; }, 0) || 1;
+    var comp = '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="card-head"><h2>Composição do custo direto</h2></div>' +
+      '<div style="display:flex;height:14px;border-radius:3px;overflow:hidden">' + CU.tipos.map(function (t) { return '<i title="' + t.nome + '" style="width:' + (t.valor / tot * 100) + '%;background:' + TIPO_COR[t.tipo] + '"></i>'; }).join('') + '</div>' +
+      '<div class="legend-row">' + CU.tipos.map(function (t) { return '<span><i class="sw" style="background:' + TIPO_COR[t.tipo] + '"></i>' + t.nome + ' <b class="mono" style="color:var(--ink)">' + brl(t.valor) + '</b> (' + fmt1(t.valor / tot * 100) + '%)</span>'; }).join('') + '</div></section>';
+    var linhas = '';
+    CU.etapas.forEach(function (e) {
+      var its = CU.itens.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.etapa === e.chave; });
+      if (!its.length) return;
+      linhas += '<tr class="cu-et"><td class="mono">' + esc(e.codigo) + '</td><td colspan="5">' + esc(e.nome) + '</td><td class="mono num">' + brl(e.orcado) + '</td><td class="mono num">' + fmt1(e.orcado / (CU.totais.bac || 1) * 100) + '%</td></tr>';
+      its.forEach(function (o) {
+        var it = o.it, ab = !!S.cu.open[o.i];
+        linhas += '<tr><td class="mono">' + esc(it.codigo) + '</td><td>' + (it.insumos.length ? '<button type="button" class="caret" data-a="cuit:' + o.i + '" aria-expanded="' + ab + '" aria-label="Ver composição">' + (ab ? '▾' : '▸') + '</button> ' : '') + esc(it.descricao) +
+          (it.tarefa ? '<span class="cu-tar">' + esc(it.tarefa) + (it.fisico != null ? ' · ' + fmt1(it.fisico) + '% medido' : '') + '</span>' : '<span class="cu-tar" style="color:var(--bad)">sem tarefa ligada</span>') + '</td>' +
+          '<td class="mono">' + esc(it.unidade) + '</td><td class="mono num">' + NUM.format(it.qtd) + '</td><td class="mono">' + esc(it.comp || '—') + '</td><td class="mono num">' + brl2(it.unit) + '</td><td class="mono num">' + brl(it.total) + '</td><td class="mono num">' + fmt1(it.total / (CU.totais.bac || 1) * 100) + '%</td></tr>';
+        if (ab) {
+          linhas += '<tr class="cu-comp"><td></td><td colspan="7"><div class="scroll-x"><table class="tbl" style="font-size:12.5px;min-width:560px"><thead><tr><th>Tipo</th><th>Insumo</th><th>Un.</th><th style="text-align:right">Coeficiente</th><th style="text-align:right">Preço unit.</th><th style="text-align:right">Custo por ' + esc(it.unidade || 'un') + '</th></tr></thead><tbody>' +
+            it.insumos.map(function (s) { return '<tr><td><span class="sw" style="background:' + TIPO_COR[s.tipo] + ';margin-right:6px"></span>' + TIPO_NOME[s.tipo] + '</td><td>' + esc(s.descricao) + '</td><td class="mono">' + esc(s.unidade) + '</td><td class="mono num">' + NUM.format(s.coef) + '</td><td class="mono num">' + brl2(s.preco) + '</td><td class="mono num">' + brl2(s.subtotal) + '</td></tr>'; }).join('') +
+            '<tr><td colspan="5" style="font-weight:600">' + esc(it.comp_desc) + '</td><td class="mono num" style="font-weight:700">' + brl2(it.unit) + '</td></tr></tbody></table></div></td></tr>';
+        }
+      });
+    });
+    linhas += '<tr class="cu-et"><td></td><td colspan="5">Total do custo direto</td><td class="mono num">' + brl(CU.totais.bac) + '</td><td class="mono num">100%</td></tr>' +
+      '<tr><td></td><td colspan="5" style="color:var(--muted)">BDI ' + fmt1(CU.bdi * 100) + '% · preço de venda</td><td class="mono num" style="color:var(--muted)">' + brl(CU.totais.venda) + '</td><td></td></tr>';
+    return comp + '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl cu-tbl" style="min-width:900px"><thead><tr><th style="width:74px">Código</th><th>Descrição</th><th>Un.</th><th style="text-align:right">Quant.</th><th>Composição</th><th style="text-align:right">Custo unit.</th><th style="text-align:right">Total</th><th style="text-align:right">%</th></tr></thead><tbody>' + linhas + '</tbody></table></div></section>' +
+      '<p style="font-size:12.5px;color:var(--muted)">Custo unitário = soma de coeficiente × preço dos insumos da composição. O controle de custo usa o custo direto; o BDI entra só no preço de venda. Toque na seta para abrir a composição.</p>';
+  }
+
+  function vCusFin() {
+    var S2 = CU.serie; if (!S2.length) return '<section class="card"><p class="kpi-s">Sem datas para montar o cronograma financeiro.</p></section>';
+    var W = 860, H = 260, L = 70, B = 30, TOP = 16, R = 12;
+    var maxA = Math.max(CU.totais.bac, S2[S2.length - 1].realizado_acum, 1);
+    var n = S2.length, bw = (W - L - R) / n;
+    var X = function (i) { return L + (i + 0.5) * bw; }, Y = function (v) { return H - B - v / maxA * (H - B - TOP); };
+    var maxM = Math.max.apply(null, S2.map(function (s) { return Math.max(s.previsto, s.realizado); }).concat([1]));
+    var YM = function (v) { return (v / maxM) * (H - B - TOP) * 0.45; };
+    var g = '<svg class="pa-chart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;min-width:620px;height:auto;display:block" role="img" aria-label="Cronograma financeiro: previsto e realizado por mês e acumulado">';
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (f) { var y = Y(maxA * f); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" style="stroke:var(--line)"></line><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + (maxA * f / 1e6 >= 1 ? fmt1(maxA * f / 1e6) + ' mi' : Math.round(maxA * f / 1000) + ' mil') + '</text>'; });
+    S2.forEach(function (s, i) {
+      var x = L + i * bw;
+      g += '<rect x="' + (x + bw * 0.18) + '" y="' + (H - B - YM(s.previsto)) + '" width="' + (bw * 0.3) + '" height="' + YM(s.previsto) + '" style="fill:var(--line)"><title>' + mesLab(s.mes) + ' previsto: ' + brl(s.previsto) + '</title></rect>';
+      g += '<rect x="' + (x + bw * 0.52) + '" y="' + (H - B - YM(s.realizado)) + '" width="' + (bw * 0.3) + '" height="' + YM(s.realizado) + '" style="fill:var(--pa2)"><title>' + mesLab(s.mes) + ' realizado: ' + brl(s.realizado) + '</title></rect>';
+      g += '<text x="' + X(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + mesLab(s.mes) + '</text>';
+    });
+    var linha = function (k) { return S2.map(function (s, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(s[k]).toFixed(1); }).join(' '); };
+    var ateHoje = S2.filter(function (s) { return s.mes <= CU.data_status.slice(0, 7); }).length;
+    g += '<path d="' + linha('previsto_acum') + '" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:6 4"></path>';
+    if (ateHoje) g += '<path d="' + S2.slice(0, ateHoje).map(function (s, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(s.realizado_acum).toFixed(1); }).join(' ') + '" style="fill:none;stroke:var(--pa2);stroke-width:3"></path>';
+    var iDs = Math.max(0, ateHoje - 1);
+    g += '<circle cx="' + X(iDs) + '" cy="' + Y(CU.totais.va) + '" r="6" style="fill:var(--accent);stroke:var(--surface);stroke-width:2"><title>Valor agregado em ' + isoBr(CU.data_status) + ': ' + brl(CU.totais.va) + '</title></circle>';
+    g += '</svg>';
+    var legenda = '<div class="legend-row"><span><i class="sw" style="background:var(--line)"></i>Previsto no mês</span><span><i class="sw" style="background:var(--pa2)"></i>Realizado no mês</span><span><svg width="24" height="8" aria-hidden="true"><path d="M1 4H23" style="stroke:var(--muted);stroke-width:2;stroke-dasharray:5 3"></path></svg>Previsto acumulado</span><span><svg width="24" height="8" aria-hidden="true"><path d="M1 4H23" style="stroke:var(--pa2);stroke-width:3"></path></svg>Realizado acumulado</span><span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" style="fill:var(--accent)"></circle></svg>Valor agregado na data de status</span></div>';
+    var cab = '<tr><th class="pa-row" style="position:sticky;left:0">Etapa</th>' + S2.map(function (s) { return '<th style="text-align:right">' + mesLab(s.mes) + '</th>'; }).join('') + '<th style="text-align:right">Total</th></tr>';
+    var rows = CU.etapas.filter(function (e) { return e.orcado; }).map(function (e) {
+      return '<tr><th scope="row" class="pa-row cu-sticky">' + esc((e.codigo ? e.codigo + ' ' : '') + e.nome) + '</th>' + S2.map(function (s) { return '<td class="mono num">' + mil(e.meses[s.mes]) + '</td>'; }).join('') + '<td class="mono num" style="font-weight:600">' + mil(e.orcado) + '</td></tr>';
+    }).join('');
+    var tl = function (rot, k, total, forte) { return '<tr class="cu-et"><th scope="row" class="pa-row cu-sticky">' + rot + '</th>' + S2.map(function (s) { return '<td class="mono num">' + mil(s[k]) + '</td>'; }).join('') + '<td class="mono num">' + (total != null ? mil(total) : '') + '</td></tr>'; };
+    rows += tl('Previsto no mês', 'previsto', CU.totais.bac) + tl('Previsto acumulado', 'previsto_acum') + tl('Realizado no mês', 'realizado', CU.totais.cr) + tl('Realizado acumulado', 'realizado_acum');
+    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><div class="card-head"><h2>Desembolso mensal e acumulado</h2></div>' + legenda + '<div class="scroll-x">' + g + '</div></section>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Cronograma físico-financeiro (R$ mil)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
+      '<p style="font-size:12.5px;color:var(--muted)">O custo de cada item é distribuído pelos dias da tarefa ligada a ele, pela linha de base do cronograma (ou pelas datas da planilha, se não houver tarefa).</p>';
+  }
+
+  function vCusReal() {
+    var rows = CU.etapas.map(function (e) {
+      var cv = e.va - e.cr;
+      return '<tr><td class="mono">' + esc(e.codigo) + '</td><td>' + esc(e.nome) + '</td><td class="mono num">' + brl(e.orcado) + '</td><td class="mono num">' + brl(e.vp) + '</td><td class="mono num">' + brl(e.va) + '</td><td class="mono num">' + brl(e.cr) + '</td>' +
+        '<td class="mono num" style="color:' + (cv < -0.5 ? 'var(--bad)' : 'var(--good)') + ';font-weight:600">' + (e.cr || e.va ? (cv < 0 ? '−' : '+') + brl(Math.abs(cv)) : '—') + '</td><td class="mono num" style="color:' + (e.idc == null ? 'inherit' : e.idc < 0.98 ? 'var(--bad)' : 'var(--good)') + '">' + (e.idc == null ? '—' : e.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
+    }).join('');
+    var T = CU.totais, cvT = T.va - T.cr;
+    rows += '<tr class="cu-et"><td></td><td>Total</td><td class="mono num">' + brl(T.bac) + '</td><td class="mono num">' + brl(T.vp) + '</td><td class="mono num">' + brl(T.va) + '</td><td class="mono num">' + brl(T.cr) + '</td><td class="mono num" style="color:' + (cvT < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (cvT < 0 ? '−' : '+') + brl(Math.abs(cvT)) + '</td><td class="mono num">' + (T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
+    var opts = CU.etapas.filter(function (e) { return e.codigo; }).map(function (e) {
+      var its = CU.itens.filter(function (it) { return it.etapa === e.chave; });
+      return '<optgroup label="' + esc(e.codigo + ' ' + e.nome) + '"><option value="' + esc(e.codigo) + '">' + esc(e.codigo + ' ' + e.nome) + ' (etapa toda)</option>' + its.map(function (it) { return '<option value="' + esc(it.codigo) + '">' + esc(it.codigo + ' ' + it.descricao) + '</option>'; }).join('') + '</optgroup>';
+    }).join('');
+    var hoje = new Date(); var hIso = hoje.getFullYear() + '-' + ('0' + (hoje.getMonth() + 1)).slice(-2) + '-' + ('0' + hoje.getDate()).slice(-2);
+    var form = '<section class="card"><div class="card-head"><h2>Lançar custo realizado</h2></div><form id="cuForm" class="cu-form">' +
+      '<label>Data<input name="data" type="date" required value="' + hIso + '"></label>' +
+      '<label class="w2">Etapa ou item<select name="codigo" required>' + opts + '</select></label>' +
+      '<label class="w2">Descrição<input name="descricao" maxlength="200" placeholder="Ex.: medição 3 da empreiteira"></label>' +
+      '<label>Fornecedor<input name="fornecedor" maxlength="120"></label>' +
+      '<label>Tipo<select name="tipo"><option>Material</option><option>Mão de obra</option><option>Equipamento</option><option selected>Serviço</option><option>Outros</option></select></label>' +
+      '<label>Valor (R$)<input name="valor" inputmode="decimal" required placeholder="0,00"></label>' +
+      '<button type="submit" class="btn btn-primary">Lançar</button></form></section>';
+    var L = CU.lancamentos, mostrar = L.slice(0, 60);
+    var lanc = '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Lançamentos (' + L.length + ')</h2></div><div class="scroll-x"><table class="tbl" style="min-width:760px"><thead><tr><th>Data</th><th>Etapa</th><th>Descrição</th><th>Fornecedor</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>' +
+      (mostrar.map(function (x) {
+        return '<tr><td class="mono">' + isoBr(x.data) + '</td><td>' + esc(x.codigo || '') + '<span class="cu-tar">' + esc(x.etapa) + '</span></td><td>' + esc(x.descricao || '') + '</td><td>' + esc(x.fornecedor || '') + '</td><td>' + (TIPO_NOME[x.tipo] || 'Outros') + '</td><td class="mono num">' + brl2(x.valor) + '</td>' +
+          '<td>' + (x.origem === 'sistema' ? '<button type="button" class="linkbtn" data-a="cudel:' + esc(x.id) + '" style="font-size:12.5px">Excluir</button>' : '<span class="kpi-s">planilha</span>') + '</td></tr>';
+      }).join('') || '<tr><td colspan="7" style="color:var(--muted)">Nenhum custo lançado ainda.</td></tr>') +
+      '</tbody></table></div>' + (L.length > 60 ? '<p class="kpi-s" style="padding:8px 18px">Mostrando os 60 mais recentes. O Excel exportado traz todos.</p>' : '') + '</section>';
+    return '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl" style="min-width:880px"><thead><tr><th>Código</th><th>Etapa</th><th style="text-align:right">Orçado</th><th style="text-align:right">Previsto até a data</th><th style="text-align:right">Valor agregado</th><th style="text-align:right">Realizado</th><th style="text-align:right">Variação (VA − CR)</th><th style="text-align:right">IDC</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>' +
+      '<p style="font-size:12.5px;color:var(--muted)">Valor agregado = orçado × % físico medido. Variação negativa ou IDC abaixo de 1 = gastou mais do que o avanço físico justifica. Previsto até a data = custo que a linha de base previa gastar até a data de status.</p>' +
+      form + lanc;
+  }
+
+  function cuImport(file) {
+    if (!file) return;
+    if (precisaRede()) return;
+    var fd = new FormData(); fd.append('arquivo', file);
+    S.cu.msg = 'Lendo ' + file.name + '…'; S.screen = 'cus'; render();
+    api('/api/custos/importar', fd).then(function (r) {
+      CU = r.custos; S.cu.open = {};
+      S.cu.msg = 'Orçamento importado: ' + CU.itens.length + ' itens, ' + brl(CU.totais.bac) + ' de custo direto.'; render();
+    }, function (e) { S.cu.msg = 'Não foi possível importar: ' + e.message; render(); });
+  }
+  document.getElementById('cuFile').addEventListener('change', function (e) { cuImport(e.target.files[0]); e.target.value = ''; });
+
   /* ---------- Suprimentos ---------- */
   var SUP_ST = ['solicitar', 'cotacao', 'pedido', 'entregue'];
   var SUP_LAB = { solicitar: 'A solicitar', cotacao: 'Em cotação', pedido: 'Pedido feito', entregue: 'Entregue' };
@@ -1995,7 +2174,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     tag.className = 'demo-tag' + (CUR === HOJE_W ? '' : ' alt');
     var hd = HEADS[S.screen];
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cp: vCP, res: vRes }[S.screen](M);
+    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cus: vCus, cp: vCP, res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
     paintSync();
   }
@@ -2006,7 +2185,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var a = el.getAttribute('data-a').split(':');
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; render(); window.scrollTo(0, 0); return;
+      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -2024,6 +2203,12 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       case 'sf': S.supF = a[1]; break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
+      case 'cut': S.cu.tab = a[1]; break;
+      case 'cuit': S.cu.open[a[1]] = !S.cu.open[a[1]]; break;
+      case 'cuex': if (precisaRede()) return; S.cu.msg = 'Carregando o exemplo…'; render(); cuSet(api('/api/custos/exemplo', {})).then(function () { loadPrj(); }); return;
+      case 'curm': if (!confirm('Remover o orçamento e todos os lançamentos de custo desta obra?')) return; if (precisaRede()) return; api('/api/custos/remover', {}).then(function () { CU = null; S.cu.msg = ''; render(); }, function (e2) { S.cu.msg = e2.message; render(); }); return;
+      case 'cudel': if (!confirm('Excluir este lançamento?')) return; if (precisaRede()) return; cuSet(api('/api/custos/lancamento/remover', { id: a[1] })); return;
+      case 'cuxls': if (precisaRede()) return; location.href = '/api/custos/financeiro.xlsx'; return;
       case 'mstep': case 'mset':
         var cur = Math.round(P.meas[a[1]] || 0), nv = a[0] === 'mset' ? parseInt(a[2], 10) : cur + parseInt(a[2], 10);
         P.meas[a[1]] = Math.max(0, Math.min(100, nv)); persist(); break;
@@ -2075,7 +2260,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       case 'toggle': S.restr = S.restr.map(function (r) { return r.id === a[1] ? Object.assign({}, r, { aberta: !r.aberta }) : r; }); break;
       case 'logout':
         if (API) api('/api/logout', {}).catch(function () {});
-        user = null; P = null; PA = null; S.sync = ''; kvSet('pend', null); if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
+        user = null; P = null; PA = null; CU = null; S.sync = ''; kvSet('pend', null); if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
         location.hash = 'entrar'; route(); return;
       default: return;
     }
@@ -2117,6 +2302,18 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var q2 = document.getElementById('medQ'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} }
   });
   app.addEventListener('submit', function (e) {
+    if (e.target.id === 'cuForm') {
+      e.preventDefault();
+      if (precisaRede()) return;
+      var f = e.target, d = {};
+      ['data', 'codigo', 'descricao', 'fornecedor', 'tipo', 'valor'].forEach(function (k) { d[k] = f.elements[k].value; });
+      var cod = d.codigo;
+      api('/api/custos/lancamento', d).then(function (r) {
+        CU = r.custos; S.cu.msg = 'Lançamento de ' + d.valor + ' registrado.'; render();
+        var f2 = document.getElementById('cuForm'); if (f2) { f2.elements.codigo.value = cod; f2.elements.valor.focus(); }
+      }, function (e2) { S.cu.msg = e2.message; render(); });
+      return;
+    }
     if (e.target.id !== 'newR') return;
     e.preventDefault();
     var inp = document.getElementById('nr-txt'), txt = inp.value.trim();

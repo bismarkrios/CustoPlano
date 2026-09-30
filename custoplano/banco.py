@@ -42,6 +42,14 @@ CREATE TABLE IF NOT EXISTS medicoes_fechadas (
     atual         TEXT NOT NULL,
     anterior      TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS custos (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id    INTEGER NOT NULL UNIQUE REFERENCES usuarios(id) ON DELETE CASCADE,
+    arquivo       TEXT NOT NULL,
+    dados         TEXT NOT NULL,                -- JSON do orçamento (custos.ler_custos)
+    lancamentos   TEXT NOT NULL DEFAULT '[]',   -- JSON: custos realizados lançados pelo sistema
+    atualizado_em TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS planos_ataque (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     usuario_id    INTEGER NOT NULL UNIQUE REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -178,6 +186,34 @@ def plano(usuario_id: int):
 def remover_plano(usuario_id: int) -> None:
     with conectar() as con:
         con.execute("DELETE FROM planos_ataque WHERE usuario_id = ?", (usuario_id,))
+
+
+# -------------------------------------------------------------------- custos
+def salvar_orcamento(usuario_id: int, arquivo: str, dados: dict) -> None:
+    """Grava o orçamento; os lançamentos feitos pelo sistema são mantidos."""
+    with conectar() as con:
+        con.execute(
+            """INSERT INTO custos (usuario_id, arquivo, dados, atualizado_em) VALUES (?, ?, ?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET arquivo=excluded.arquivo, dados=excluded.dados,
+                 atualizado_em=excluded.atualizado_em""",
+            (usuario_id, arquivo, json.dumps(dados, ensure_ascii=False), agora()),
+        )
+
+
+def custos(usuario_id: int):
+    with conectar() as con:
+        return con.execute("SELECT * FROM custos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+
+
+def salvar_lancamentos(usuario_id: int, lancamentos: list) -> None:
+    with conectar() as con:
+        con.execute("UPDATE custos SET lancamentos = ?, atualizado_em = ? WHERE usuario_id = ?",
+                    (json.dumps(lancamentos, ensure_ascii=False), agora(), usuario_id))
+
+
+def remover_custos(usuario_id: int) -> None:
+    with conectar() as con:
+        con.execute("DELETE FROM custos WHERE usuario_id = ?", (usuario_id,))
 
 
 def medicao_fechada(usuario_id: int, mid: int):

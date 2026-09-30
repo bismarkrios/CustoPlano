@@ -25,6 +25,7 @@ from flask import Flask, Response, abort, jsonify, request, send_from_directory,
 import banco
 from cronograma import ErroCronograma, Projeto, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano
+import custos as cst
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PASTA_WEB = os.path.join(AQUI, "web")
@@ -272,6 +273,111 @@ def remover_plano():
     return jsonify(ok=True)
 
 
+# ------------------------------------------------------------------- custos
+def analise_custos(uid: int):
+    reg = banco.custos(uid)
+    if not reg:
+        return None
+    c = banco.cronograma(uid)
+    p = Projeto(c["xml"], c["arquivo"]) if c else None
+    atual = json.loads(c["atual"]) if c else {}
+    ds = para_data(c["data_status"]).date() if c else dt.date.today()
+    a = cst.analisar(json.loads(reg["dados"]), json.loads(reg["lancamentos"]), p, atual, ds)
+    a["atualizado_em"] = reg["atualizado_em"]
+    return a
+
+
+@app.get("/api/custos")
+@logado
+def ver_custos():
+    return jsonify(custos=analise_custos(session["uid"]))
+
+
+@app.post("/api/custos/importar")
+@logado
+def importar_custos():
+    arq = request.files.get("arquivo")
+    if not arq or not arq.filename:
+        return erro("Escolha a planilha do orçamento (.xlsx).")
+    try:
+        dados = cst.ler_custos(arq.filename, arq.read())
+    except cst.ErroCustos as e:
+        return erro(str(e))
+    banco.salvar_orcamento(session["uid"], arq.filename, dados)
+    return ver_custos()
+
+
+@app.post("/api/custos/exemplo")
+@logado
+def exemplo_custos():
+    uid = session["uid"]
+    if not banco.cronograma(uid):
+        importar_exemplo()
+    c, p = carregar()
+    dados = cst.ler_custos("orcamento_exemplo.xlsx", cst.exemplo(p, json.loads(c["atual"])))
+    banco.salvar_orcamento(uid, "orcamento_exemplo.xlsx", dados)
+    return ver_custos()
+
+
+@app.get("/api/custos/modelo.xlsx")
+def modelo_custos():
+    return download(cst.modelo(), "modelo_orcamento_custo_plano.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@app.get("/api/custos/financeiro.xlsx")
+@logado
+def exportar_financeiro():
+    a = analise_custos(session["uid"])
+    if not a:
+        return erro("Importe o orçamento primeiro.", 404)
+    return download(cst.exportar_xlsx(a), "cronograma_financeiro.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+
+@app.post("/api/custos/lancamento")
+@logado
+def lancar_custo():
+    reg = banco.custos(session["uid"])
+    if not reg:
+        return erro("Importe o orçamento antes de lançar custos.", 404)
+    d = request.get_json(silent=True) or {}
+    try:
+        data_l = dt.date.fromisoformat(str(d.get("data"))[:10])
+        valor = cst.numero(d.get("valor"))
+        if valor is None:
+            raise ValueError
+    except (TypeError, ValueError):
+        return erro("Informe a data e o valor do lançamento.")
+    if valor == 0:
+        return erro("Informe um valor diferente de zero.")
+    lista = json.loads(reg["lancamentos"])
+    lista.append({"id": secrets.token_hex(6), "data": data_l.isoformat(), "codigo": str(d.get("codigo") or "").strip(),
+                  "descricao": str(d.get("descricao") or "").strip()[:200], "fornecedor": str(d.get("fornecedor") or "").strip()[:120],
+                  "tipo": cst.tipo_de(d.get("tipo")), "valor": round(valor, 2), "origem": "sistema",
+                  "criado_em": dt.datetime.now().isoformat(timespec="seconds")})
+    banco.salvar_lancamentos(session["uid"], lista)
+    return ver_custos()
+
+
+@app.post("/api/custos/lancamento/remover")
+@logado
+def remover_lancamento():
+    reg = banco.custos(session["uid"])
+    if not reg:
+        return erro("Nada para remover.", 404)
+    lid = (request.get_json(silent=True) or {}).get("id")
+    banco.salvar_lancamentos(session["uid"], [x for x in json.loads(reg["lancamentos"]) if x.get("id") != lid])
+    return ver_custos()
+
+
+@app.post("/api/custos/remover")
+@logado
+def remover_custos():
+    banco.remover_custos(session["uid"])
+    return jsonify(ok=True)
+
+
 # ----------------------------------------------------------- relatório mensal
 @app.get("/api/relatorio.pdf")
 @logado
@@ -281,17 +387,18 @@ def relatorio_pdf():
     c, p = carregar()
     pl = banco.plano(session["uid"])
     plano = json.loads(pl["dados"]) if pl else None
-    if not c and not plano:
-        return erro("Importe o cronograma (tela Project) ou o plano de ataque para gerar o relatório.", 404)
+    cus = analise_custos(session["uid"])
+    if not c and not plano and not cus:
+        return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
     u = banco.usuario(session["uid"])
-    obra = (p.titulo if p else plano.get("titulo")) or (u["nome"] if u else "") or "Obra"
+    obra = (p.titulo if p else (plano or {}).get("titulo")) or (u["nome"] if u else "") or "Obra"
     hist = [dict(h) for h in banco.historico(session["uid"])]
     if c:
         sd = para_data(c["data_status"])
-        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra)
+        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus)
     else:
         sd = dt.datetime.now()
-        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra)
+        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus)
     return download(pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf", "application/pdf")
 
 

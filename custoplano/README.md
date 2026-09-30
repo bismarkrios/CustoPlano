@@ -17,6 +17,7 @@ custoplano/
 ├── cronograma.py     leitura do .mpp/.xml, pesos, medição e exportações
 ├── plano_ataque.py   leitura da planilha do plano de ataque (escadinha)
 ├── relatorio.py      relatório mensal em PDF
+├── custos.py         orçamento com composições, cronograma financeiro e orçado × realizado
 ├── banco.py          banco de dados SQLite
 ├── web/index.html    site + telas do sistema (HTML/CSS/JS)
 ├── macro/CustoPlano.bas   macro do MS Project (grava a medição no seu .mpp)
@@ -68,6 +69,18 @@ No Project: **Alt+F11 → Arquivo → Importar arquivo → `macro/CustoPlano.bas
 - `ReceberMedicaoCustoPlano`: lê o boletim `.csv` e grava % concluído, % físico e data de status no `.mpp`.
 
 > Arquivos `.mpp` só podem ser **gravados** pelo MS Project. Por isso a volta da medição é pelo `.xml`, que o Project abre direto, ou pela macro, que grava no seu próprio `.mpp`.
+
+## Custos (orçamento, cronograma financeiro, orçado × realizado)
+
+1. **Custos → Baixar o modelo** e preencha as abas **Orçamento** (código, descrição, unidade, quantidade,
+   composição e a EAP da tarefa do cronograma), **Composições** (insumos com tipo, coeficiente e preço),
+   **Realizado** (custos pagos, opcional) e **Parâmetros** (BDI). Ou teste com **o orçamento de exemplo**.
+2. **Importar orçamento (.xlsx)**. O custo de cada item é distribuído pelos dias da tarefa ligada
+   (linha de base do cronograma) e o valor agregado sai do % físico medido.
+3. Abas **Orçamento** (com a composição de cada item), **Financeiro** (desembolso mensal e acumulado,
+   tabela etapa × mês) e **Orçado × real** (previsto, agregado, realizado, variação e IDC por etapa),
+   com o formulário para **lançar custos** pelo sistema. **Exportar para Excel** gera o cronograma financeiro.
+4. O controle usa o custo direto; o BDI aparece como preço de venda. O relatório mensal em PDF inclui os custos.
 
 ## Medição pelo celular e modo offline
 
