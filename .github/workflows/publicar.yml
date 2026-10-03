@@ -54,7 +54,20 @@ jobs:
         run: docker build -t custoplano .
 
       - name: Testar a leitura de .mpp na imagem (Java + MPXJ)
-        run: docker run --rm custoplano python -c "import cronograma; x = cronograma.mpp_para_xml(open('exemplo/cronograma_exemplo.xml', 'rb').read()); assert '<Project' in x; print('leitor .mpp OK')"
+        run: |
+          docker run -i --rm custoplano python - <<'PY'
+          import contextlib, io, cronograma
+          saida = io.StringIO()
+          try:
+              with contextlib.redirect_stdout(saida):
+                  x = cronograma.mpp_para_xml(open("exemplo/cronograma_exemplo.xml", "rb").read())
+              assert "<Project" in x
+              print("leitor .mpp OK")
+          except Exception as e:
+              detalhe = (str(e) + " | " + saida.getvalue()).replace("\n", " ")[-1500:]
+              print(f"::error::Leitor .mpp falhou: {detalhe}")
+              raise SystemExit(1)
+          PY
 
   levar-para-main:
     needs: testar
