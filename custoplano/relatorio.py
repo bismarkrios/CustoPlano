@@ -137,7 +137,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             c.rect(x * mm, h - 8 * mm, 2.3 * mm, hh * mm, fill=1, stroke=0)
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 8.5)
-        c.drawString(27 * mm, h - 6.4 * mm, "CUSTO PLANO ENGENHARIA")
+        c.drawString(27 * mm, h - 6.4 * mm, "CUSTO PLANO CONSULTORIA")
         c.setFont("Helvetica", 8.5)
         c.drawRightString(w - 16 * mm, h - 6.4 * mm, "Relatório mensal de avanço  |  " + obra[:60])
         c.setFillColor(MUTED)
@@ -148,7 +148,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
 
     buf = io.BytesIO()
     doc = BaseDocTemplate(buf, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=17 * mm,
-                          bottomMargin=16 * mm, title=f"Relatório mensal - {obra}", author="Custo Plano Engenharia")
+                          bottomMargin=16 * mm, title=f"Relatório mensal - {obra}", author="Custo Plano Consultoria")
     doc.addPageTemplates([PageTemplate(id="p", frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height)],
                                        onPage=cabecalho)])
     W = doc.width
@@ -356,7 +356,7 @@ def fvs_pdf(i: dict, pegar_foto, obra: str) -> bytes:
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=16 * mm, rightMargin=16 * mm, topMargin=14 * mm, bottomMargin=14 * mm,
-                            title=f"{i['codigo']} - {i['servico']} - {i['local']}", author="Custo Plano Engenharia")
+                            title=f"{i['codigo']} - {i['servico']} - {i['local']}", author="Custo Plano Consultoria")
     W = doc.width
     ap = i["resultado"] == "aprovada"
     H = [Paragraph(f"Ficha de Verificação de Serviço · {esc(i['codigo'])}", h1), Spacer(1, 4)]
@@ -407,6 +407,6 @@ def fvs_pdf(i: dict, pegar_foto, obra: str) -> bytes:
     bloco.setStyle(TableStyle([("LINEBELOW", (0, 0), (0, 0), 0.7, NAVY), ("LINEBELOW", (1, 0), (1, 0), 0.7, NAVY),
                                ("VALIGN", (0, 0), (-1, 0), "BOTTOM"), ("LEFTPADDING", (0, 0), (-1, -1), 8), ("RIGHTPADDING", (0, 0), (-1, -1), 8)]))
     H += [Spacer(1, 12), KeepTogether([bloco])]
-    H += [Spacer(1, 8), Paragraph(f"Custo Plano Engenharia · gerado em {dt.datetime.now():%d/%m/%Y %H:%M}", sm)]
+    H += [Spacer(1, 8), Paragraph(f"Custo Plano Consultoria · gerado em {dt.datetime.now():%d/%m/%Y %H:%M}", sm)]
     doc.build(H)
     return buf.getvalue()
