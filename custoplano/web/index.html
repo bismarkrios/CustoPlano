@@ -526,7 +526,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .pa thead tr.pa-ciclo th{top:93px;font-family:var(--mono);font-weight:500;font-size:11px;color:var(--muted);padding:3px 4px;text-align:center}
 .pa th.pa-row{position:sticky;left:0;z-index:1;background:var(--surface);text-align:left;font-weight:600;padding:0 10px;white-space:nowrap;min-width:86px}
 .pa thead th.pa-row{z-index:3;background:var(--soft);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:8px 10px}
-.pa-svc{display:block;width:84px;height:92px;overflow:hidden;padding:6px 6px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:11.5px;font-weight:600;line-height:1.2;text-align:left;cursor:pointer;hyphens:auto;overflow-wrap:break-word}
+.pa-svc{display:block;width:min-content;min-width:84px;height:92px;overflow:hidden;padding:6px 6px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:11.5px;font-weight:600;line-height:1.2;text-align:left;cursor:pointer;hyphens:none;-webkit-hyphens:none;overflow-wrap:normal;word-break:normal}
 .pa-svc:hover{background:var(--cell)}
 .pa-svc[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
 .pa td.c{height:34px;min-width:84px;padding:2px 4px;text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.15}
@@ -1789,6 +1789,21 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   function paMonthCls(ms) { var d = new Date(ms); return 'm' + ((d.getUTCFullYear() * 12 + d.getUTCMonth()) % 6); }
   function paMonthLab(k) { return MES[k % 12] + '/' + String(Math.floor(k / 12)).slice(2); }
   var PA_ST = { ok: 'Executado', late: 'Atrasado', prev: 'Programado' };
+  // Ao destacar um serviço, rola a matriz ou o gráfico até ele ficar inteiro na tela.
+  function paFoco() {
+    if (S.pa.hl < 0) return;
+    var box, alvo;
+    if (S.pa.view === 'matriz') { box = document.querySelector('.pa-box'); alvo = box && box.querySelector('.pa-svc[aria-pressed="true"]'); }
+    else { box = document.querySelector('.pa-chart'); box = box && box.parentNode; alvo = box && box.querySelector('.pa-hl-nome'); }
+    if (!box || !alvo || box.scrollWidth <= box.clientWidth) return;
+    var b = box.getBoundingClientRect(), r = alvo.getBoundingClientRect(), L = r.left, R = r.right;
+    var linha = box.querySelector('.pa-hl-linha');
+    if (linha) { var q = linha.getBoundingClientRect(); L = Math.min(L, q.left); R = Math.max(R, q.right); }
+    var fixo = S.pa.view === 'matriz' ? (box.querySelector('th.pa-row') || { offsetWidth: 0 }).offsetWidth : 0, livre = b.width - fixo;
+    if (L >= b.left + fixo && R <= b.right) return;
+    // cabe inteiro: centraliza; não cabe: mostra a partir do começo do serviço
+    box.scrollLeft += (R - L <= livre ? (L + R) / 2 - (b.left + fixo + livre / 2) : L - (b.left + fixo) - 8);
+  }
 
   function vPAMatriz(D, M) {
     var A = D.atual, hl = S.pa.hl, cmp = S.pa.cmp && D.base;
@@ -1826,7 +1841,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var W = L + nM * MW + 20, H = TOP + pavs.length * RH + 30;
     var X = function (ms) { return L + (ms - lo) / (hi - lo) * nM * MW; };
     var Y = function (k) { return TOP + (pavs.length - 1 - k) * RH + RH / 2; };
-    var g = '<svg class="pa-chart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;min-width:' + Math.min(W, 900) + 'px;height:auto;display:block" role="img" aria-label="Linha de balanço do plano de ataque: data de cada serviço por pavimento">';
+    var g = '<svg class="pa-chart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;min-width:' + Math.min(W, 640) + 'px;height:auto;display:block" role="img" aria-label="Linha de balanço do plano de ataque: data de cada serviço por pavimento">';
     pavs.forEach(function (o, k) {
       if (k % 2 === 0) g += '<rect x="' + L + '" y="' + (TOP + (pavs.length - 1 - k) * RH) + '" width="' + (nM * MW) + '" height="' + RH + '" style="fill:var(--soft)"></rect>';
       g += '<text x="' + (L - 8) + '" y="' + (Y(k) + 4) + '" text-anchor="end">' + esc(o.p.rotulo) + '</text>';
@@ -1846,14 +1861,17 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         var bs = seq.filter(function (q) { return q.c.lb != null; });
         if (bs.length > 1) lines += '<path d="' + bs.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.lb).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + (hl === i ? cor : 'var(--muted)') + ';stroke-width:1.5;stroke-dasharray:5 4;opacity:' + (hl === i ? 0.9 : 0.35) + '"></path>';
       }
-      lines += '<path d="' + seq.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.d).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + cor + ';stroke-width:' + (hl === i ? 3 : 1.8) + ';opacity:' + op + '"></path>';
+      lines += '<path' + (hl === i ? ' class="pa-hl-linha"' : '') + ' d="' + seq.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.d).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + cor + ';stroke-width:' + (hl === i ? 3 : 1.8) + ';opacity:' + op + '"></path>';
       if (dim) return;
       seq.forEach(function (q) {
         var c = q.c, tip = s.nome + ' — ' + q.p.rotulo + ': ' + fdate(c.d) + ' · ' + PA_ST[c.st] + (c.lb != null ? ' · LB ' + fdate(c.lb) + ' (' + sdias(c.dv) + ')' : '');
         var st = c.st === 'ok' ? 'fill:' + cor + ';stroke:' + cor : c.st === 'late' ? 'fill:var(--surface);stroke:var(--bad);stroke-width:2.5' : 'fill:var(--surface);stroke:' + cor + ';stroke-width:1.5';
         pts += '<circle class="pt" data-a="pah:' + i + '" cx="' + X(c.d).toFixed(1) + '" cy="' + Y(q.k) + '" r="' + (hl === i ? 5 : 3.5) + '" style="' + st + '"><title>' + esc(tip) + '</title></circle>';
       });
-      if (hl === i) { var top = seq[seq.length - 1]; pts += '<text x="' + (X(top.c.d) + 8) + '" y="' + (Y(top.k) - 6) + '" style="fill:' + cor + ';font-weight:700;font-size:12px">' + esc(s.nome) + '</text>'; }
+      if (hl === i) {
+        var top = seq[seq.length - 1], tx = X(top.c.d), tw = s.nome.length * 7.6, dir = tx + 8 + tw <= W - 4;
+        pts += '<text class="pa-hl-nome" x="' + (dir ? tx + 8 : tx - 8) + '" y="' + Math.max(12, Y(top.k) - 6) + '" text-anchor="' + (dir ? 'start' : 'end') + '" style="fill:' + cor + ';font-weight:700;font-size:12px">' + esc(s.nome) + '</text>';
+      }
     });
     g += lines + pts + '</svg>';
     return '<div class="legend-row"><span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" style="fill:var(--ink)"></circle></svg>Executado</span><span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" style="fill:var(--surface);stroke:var(--ink);stroke-width:1.5"></circle></svg>Programado</span><span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" style="fill:var(--surface);stroke:var(--bad);stroke-width:2.5"></circle></svg>Atrasado</span>' +
@@ -2629,6 +2647,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
     var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: vCP, res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
+    if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
     var qm = S.mod === 'qual';
     document.getElementById('navPlan').hidden = qm; document.getElementById('navQual').hidden = !qm;
@@ -2680,7 +2699,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         S.prjMsg = 'Carregando o exemplo…'; render();
         api('/api/importar-exemplo', {}).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = ''; S.med.f = 'todas'; render(); }, function (e) { S.prjMsg = 'Não foi possível carregar o exemplo: ' + e.message; render(); });
         return;
-      case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; break;
+      case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; S.pa.rolar = true; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;
       case 'pareset': PA = null; S.pa.hl = -1; S.pa.msg = ''; if (API) api('/api/plano/remover', {}).catch(function () {}); break;
       case 'pxlsx': if (precisaRede()) return; persist(true).then(function () { location.href = '/api/exportar/xlsx'; }); return;
@@ -2736,7 +2755,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       setTimeout(function () { var f = document.activeElement, fu = f && f.getAttribute ? f.getAttribute('data-meas') : null; render(); if (fu) { var el = body.querySelector('[data-meas="' + fu + '"]'); if (el) { el.focus(); el.select(); } } }, 0);
       return;
     }
-    if (e.target.id === 'paHl') { S.pa.hl = parseInt(e.target.value, 10); render(); var h2 = document.getElementById('paHl'); if (h2) h2.focus(); return; }
+    if (e.target.id === 'paHl') { S.pa.hl = parseInt(e.target.value, 10); S.pa.rolar = true; render(); var h2 = document.getElementById('paHl'); if (h2) h2.focus(); return; }
     if (e.target.id === 'pWeight') { P.weight = e.target.value; persist(); render(); return; }
     if (e.target.id === 'pSd') { var v2 = pdate(e.target.value + 'T17:00'); if (v2) { P.statusDate = v2; persist(); render(); } return; }
     if (e.target.id === 'wkSel') { CUR = parseInt(e.target.value, 10); S.sel = null; render(); document.getElementById('wkSel').focus(); return; }
