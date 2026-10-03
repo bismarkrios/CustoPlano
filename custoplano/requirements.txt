@@ -3,4 +3,3 @@ openpyxl>=3.1
 reportlab>=4.0
 # Leitura direta de .mpp (precisa do Java 11+ instalado):
 mpxj>=13.0
-JPype1>=1.5  # o mpxj 16+ não instala mais o JPype sozinho

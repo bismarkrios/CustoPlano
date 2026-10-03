@@ -36,34 +36,40 @@ def mpp_para_xml(dados: bytes) -> str:
     """Converte um .mpp em XML do MS Project usando a biblioteca MPXJ.
 
     Requer: pip install mpxj  (e Java 11 ou mais novo instalado).
+    O Java roda num processo separado e com memória limitada: assim ele
+    devolve a memória ao terminar e o servidor (512 MB) não é derrubado.
     """
+    import shutil
+    import subprocess
     try:
-        import mpxj  # noqa: F401  (coloca os .jar do MPXJ no classpath)
-        import jpype
-        import jpype.imports  # noqa: F401
+        import mpxj
     except ImportError as e:  # pragma: no cover - depende do ambiente
         raise ErroCronograma(
             "Para ler arquivos .mpp instale o MPXJ: pip install mpxj (é preciso ter o Java 11+ instalado)."
         ) from e
-
-    if not jpype.isJVMStarted():
-        jpype.startJVM()
-    try:  # MPXJ 14+ usa o pacote org.mpxj; versões antigas, net.sf.mpxj
-        from org.mpxj.reader import UniversalProjectReader  # type: ignore
-        from org.mpxj.mspdi import MSPDIWriter  # type: ignore
-    except ImportError:  # pragma: no cover
-        from net.sf.mpxj.reader import UniversalProjectReader  # type: ignore
-        from net.sf.mpxj.mspdi import MSPDIWriter  # type: ignore
+    java = shutil.which("java")
+    if not java:  # pragma: no cover - depende do ambiente
+        raise ErroCronograma("Para ler arquivos .mpp é preciso ter o Java 11+ instalado no servidor.")
+    classpath = os.path.join(os.path.dirname(mpxj.__file__), "lib", "*")
 
     with tempfile.TemporaryDirectory() as tmp:
         origem = os.path.join(tmp, "cronograma.mpp")
         destino = os.path.join(tmp, "cronograma.xml")
         with open(origem, "wb") as f:
             f.write(dados)
-        projeto = UniversalProjectReader().read(origem)
-        if projeto is None:
+        cmd = [java, "-Xmx" + os.environ.get("CP_JAVA_MEM", "200m"), "-XX:+UseSerialGC", "-Xss512k",
+               "-XX:MaxMetaspaceSize=128m", "-XX:ReservedCodeCacheSize=32m", "-XX:TieredStopAtLevel=1",
+               "-cp", classpath, "org.mpxj.sample.MpxjConvert", origem, destino]
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=150)
+        except subprocess.TimeoutExpired as e:
+            raise ErroCronograma("A leitura do .mpp demorou demais. Tente salvar como .xml no MS Project e enviar o .xml.") from e
+        if r.returncode != 0 or not os.path.exists(destino) or os.path.getsize(destino) == 0:
+            saida = (r.stderr or "") + (r.stdout or "")
+            if "OutOfMemoryError" in saida:
+                raise ErroCronograma("O .mpp é grande demais para o servidor. Salve como .xml no MS Project e envie o .xml.")
+            print("MPXJ falhou:", saida[-2000:], flush=True)
             raise ErroCronograma("O MPXJ não reconheceu este arquivo como um cronograma do MS Project.")
-        MSPDIWriter().write(projeto, destino)
         with open(destino, encoding="utf-8") as f:
             return f.read()
 
