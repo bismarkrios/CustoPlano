@@ -41,16 +41,16 @@ def mpp_para_xml(dados: bytes) -> str:
     """
     import shutil
     import subprocess
-    try:
-        import mpxj
-    except ImportError as e:  # pragma: no cover - depende do ambiente
+    import importlib.util
+    spec = importlib.util.find_spec("mpxj")  # só localiza os .jar: importar o pacote exigiria o JPype
+    if spec is None or not spec.submodule_search_locations:  # pragma: no cover - depende do ambiente
         raise ErroCronograma(
             "Para ler arquivos .mpp instale o MPXJ: pip install mpxj (é preciso ter o Java 11+ instalado)."
-        ) from e
+        )
     java = shutil.which("java")
     if not java:  # pragma: no cover - depende do ambiente
         raise ErroCronograma("Para ler arquivos .mpp é preciso ter o Java 11+ instalado no servidor.")
-    classpath = os.path.join(os.path.dirname(mpxj.__file__), "lib", "*")
+    classpath = os.path.join(list(spec.submodule_search_locations)[0], "lib", "*")
 
     with tempfile.TemporaryDirectory() as tmp:
         origem = os.path.join(tmp, "cronograma.mpp")
