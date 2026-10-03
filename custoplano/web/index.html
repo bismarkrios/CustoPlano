@@ -263,6 +263,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .week b{font-weight:600}
 .weeknav{display:flex;align-items:center;gap:6px}
 .weeknav select{width:auto;min-height:36px;padding:4px 8px;font-size:14px;font-weight:600;background:var(--surface)}
+@media (max-width:520px){.weeknav{max-width:100%;min-width:0}.weeknav select{min-width:0;flex:1 1 auto;max-width:calc(100vw - 120px);font-size:13px;padding:4px 4px}}
 .weeknav .iconbtn:disabled{opacity:.35;cursor:default}
 .weeknav .linkbtn{font-size:13.5px;padding:6px 4px}
 .demo-tag.alt{border-style:solid;border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 16%,transparent)}
@@ -1186,7 +1187,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<div class="grid4">' +
         '<div class="card"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + pct(M.feito / total) + '</div><div class="kpi-s">previsto ' + pct(M.prev / total) + '</div>' +
           '<div class="bar" style="margin-top:8px"><i style="width:' + (M.prev / total * 100) + '%;background:var(--line)"></i><i style="width:' + (M.feito / total * 100) + '%;background:var(--accent)"></i></div></div>' +
-        '<div class="card"><div class="kpi-t">PPC da semana ' + CUR + '</div><div class="kpi-v">' + ppc + '%</div><div class="kpi-s">' + M.okN + ' de ' + M.tasks.length + ' pacotes concluídos · meta 80%</div></div>' +
+        '<div class="card"><div class="kpi-t">PPC · ' + semMes(CUR).replace(' · Semana ', ' · sem. ') + '</div><div class="kpi-v">' + ppc + '%</div><div class="kpi-s">' + M.okN + ' de ' + M.tasks.length + ' pacotes concluídos · meta 80%</div></div>' +
         '<div class="card"><div class="kpi-t">Restrições abertas</div><div class="kpi-v">' + M.abertas + '</div><div class="kpi-s"><span class="due">' + M.semana + ' vencem nesta semana</span></div><button class="more" type="button" data-a="nav:res">Ver restrições →</button></div>' +
         '<div class="card"><div class="kpi-t">Pacotes atrasados</div><div class="kpi-v" style="color:var(--bad)">' + M.atr + '</div><div class="kpi-s">de ' + M.prev + ' previstos até hoje</div><button class="more" type="button" data-a="nav:lb">Abrir linha de balanço →</button></div>' +
       '</div>' +
@@ -1329,6 +1330,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   /* ---------- Project (EAP + Gantt) ---------- */
   var W1 = Date.UTC(2026, 6, 27); // segunda-feira da semana 1
   var MES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  // Semana referida ao mês: a semana pertence ao mês da sua quarta-feira (onde cai a maior parte dos dias úteis).
+  function semMes(w) {
+    var q = new Date(W1 + ((w - 1) * 7 + 2) * 864e5);
+    return ('0' + (q.getUTCMonth() + 1)).slice(-2) + '/' + q.getUTCFullYear() + ' · Semana ' + Math.ceil(q.getUTCDate() / 7);
+  }
   function dia(w, off) { var d = new Date(W1 + ((w - 1) * 7 + off) * 864e5); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2); }
   function vProject(M) {
     var rows = [], id = 0, ids = {};
@@ -2610,7 +2616,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var sel = document.getElementById('wkSel'), opts = '';
     for (var w = 1; w <= WEEKS; w++) {
       var d0 = new Date(W1 + (w - 1) * 7 * 864e5), d1 = new Date(W1 + ((w - 1) * 7 + 4) * 864e5);
-      opts += '<option value="' + w + '"' + (w === CUR ? ' selected' : '') + '>Semana ' + w + ' · ' + d0.getUTCDate() + (d0.getUTCMonth() !== d1.getUTCMonth() ? ' ' + MES[d0.getUTCMonth()] : '') + '–' + d1.getUTCDate() + ' ' + MES[d1.getUTCMonth()] + (w === HOJE_W ? ' (atual)' : '') + '</option>';
+      opts += '<option value="' + w + '"' + (w === CUR ? ' selected' : '') + '>' + semMes(w) + ' · ' + d0.getUTCDate() + (d0.getUTCMonth() !== d1.getUTCMonth() ? ' ' + MES[d0.getUTCMonth()] : '') + '–' + d1.getUTCDate() + ' ' + MES[d1.getUTCMonth()] + (w === HOJE_W ? ' (atual)' : '') + '</option>';
     }
     sel.innerHTML = opts;
     document.getElementById('wkPrev').disabled = CUR <= 1;
