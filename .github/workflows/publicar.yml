@@ -53,6 +53,9 @@ jobs:
       - name: Testar a imagem Docker
         run: docker build -t custoplano .
 
+      - name: Testar a leitura de .mpp na imagem (Java + MPXJ)
+        run: docker run --rm custoplano python -c "import cronograma; x = cronograma.mpp_para_xml(open('exemplo/cronograma_exemplo.xml', 'rb').read()); assert '<Project' in x; print('leitor .mpp OK')"
+
   levar-para-main:
     needs: testar
     if: startsWith(github.ref, 'refs/heads/claude/')
