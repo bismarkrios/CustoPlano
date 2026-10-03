@@ -63,8 +63,16 @@ ql.iniciar()
 # Primeiro acesso do administrador: defina CP_ADMIN_EMAIL e CP_ADMIN_SENHA no painel do Render.
 # A conta só é criada se ainda não existir; depois a senha não é mais tocada pela variável.
 _adm_email, _adm_senha = os.environ.get("CP_ADMIN_EMAIL", "").strip().lower(), os.environ.get("CP_ADMIN_SENHA", "")
-if _adm_email and len(_adm_senha) >= 8 and not any(u["email"].lower() == _adm_email for u in banco.listar_usuarios()):
-    banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano")
+if _adm_email and len(_adm_senha) < 8:
+    print("CP_ADMIN_SENHA precisa de pelo menos 8 caracteres; conta de acesso não criada.", flush=True)
+elif _adm_email:
+    _adm = next((u for u in banco.listar_usuarios() if u["email"].lower() == _adm_email), None)
+    if _adm is None:
+        banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano")
+        print(f"Conta de acesso criada: {_adm_email}", flush=True)
+    elif not banco.autenticar(_adm["email"], _adm_senha):
+        banco.trocar_senha(_adm["email"], _adm_senha)
+        print(f"Senha da conta {_adm_email} atualizada pela CP_ADMIN_SENHA.", flush=True)
 if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
     try:
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")

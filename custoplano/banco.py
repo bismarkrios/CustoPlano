@@ -94,7 +94,7 @@ def trocar_senha(email: str, senha: str) -> bool:
 
 def autenticar(email: str, senha: str):
     with conectar() as con:
-        u = con.execute("SELECT * FROM usuarios WHERE email = ?", (email.strip(),)).fetchone()
+        u = con.execute("SELECT * FROM usuarios WHERE lower(email) = lower(?)", (email.strip(),)).fetchone()
     if u and check_password_hash(u["senha_hash"], senha):
         return u
     return None
