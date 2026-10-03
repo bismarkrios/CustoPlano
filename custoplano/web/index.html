@@ -159,7 +159,7 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .fvs header b{font-size:15.5px}
 .fvs header span{font-size:13px;color:var(--muted)}
 .fvs-table{overflow-x:auto}
-.fvs table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:440px}
+.fvs table{width:100%;border-collapse:collapse;font-size:14.5px}
 .fvs th{text-align:left;font-size:12.5px;font-weight:600;color:var(--muted);padding:9px 16px;border-bottom:1px solid var(--line)}
 .fvs td{padding:10px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
 .fvs tr:last-child td{border-bottom:0}
@@ -169,6 +169,7 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ok{color:#8FD19C}:root:not([data-theme="light"]) .nc{color:#F29A8F}}
 :root[data-theme="dark"] .ok{color:#8FD19C}:root[data-theme="dark"] .nc{color:#F29A8F}
 .fvs footer{padding:10px 16px;font-size:13px;color:var(--muted);background:var(--ground)}
+@media (max-width:520px){.fvs .pill{font-size:11px;padding:2px 5px}.fvs table{font-size:13px}.fvs th,.fvs td{padding:9px 5px}.fvs th:first-child,.fvs td:first-child{padding-left:10px}}
 
 /* Manual */
 .manual{display:grid;grid-template-columns:120px minmax(0,1fr);gap:24px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:22px}

@@ -139,7 +139,9 @@ def inicio():
         html = f.read()
     # avisa o front-end de que há servidor (login real, banco e .mpp)
     html = html.replace("<!--CP_API-->", "<script>window.CP_API = true; window.CP_DEMO = %s;</script>" % ("true" if DEMO else "false"))
-    return Response(html, mimetype="text/html")
+    r = Response(html, mimetype="text/html")
+    r.headers["Cache-Control"] = "no-cache"  # sempre confere se há versão nova do site
+    return r
 
 
 @app.get("/web/<path:arquivo>")
