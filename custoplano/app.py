@@ -36,7 +36,8 @@ def chave_secreta() -> str:
     """Usa CP_SECRET do ambiente ou cria (uma vez) um arquivo com uma chave aleatória."""
     if os.environ.get("CP_SECRET"):
         return os.environ["CP_SECRET"]
-    caminho = os.path.join(AQUI, ".chave_secreta")
+    # fica junto do banco (no disco permanente, quando houver), para os logins sobreviverem a reinícios
+    caminho = os.path.join(os.path.dirname(banco.CAMINHO), ".chave_secreta")
     if not os.path.exists(caminho):
         with open(caminho, "w") as f:
             f.write(secrets.token_hex(32))
@@ -50,7 +51,8 @@ app.config.update(
     MAX_CONTENT_LENGTH=80 * 1024 * 1024,  # .mpp grandes
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_SECURE=os.environ.get("CP_HTTPS") == "1",
+    # no Render (que define RENDER) o site sempre roda em HTTPS
+    SESSION_COOKIE_SECURE=os.environ.get("CP_HTTPS") == "1" or bool(os.environ.get("RENDER")),
     PERMANENT_SESSION_LIFETIME=dt.timedelta(days=7),
 )
 DEMO = os.environ.get("CP_DEMO", "1") == "1"
@@ -63,6 +65,33 @@ if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")
     except Exception:
         banco.trocar_senha(DEMO_EMAIL, DEMO_SENHA)
+
+
+# ------------------------------------------------------------------ segurança
+@app.after_request
+def cabecalhos_seguranca(r: Response) -> Response:
+    """Cabeçalhos que impedem o site de ser embutido em outra página e reduzem ataques comuns."""
+    r.headers.setdefault("X-Frame-Options", "DENY")
+    r.headers.setdefault("X-Content-Type-Options", "nosniff")
+    r.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    r.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=()")
+    if request.is_secure or request.headers.get("X-Forwarded-Proto") == "https":
+        r.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    return r
+
+
+TENTATIVAS: dict[str, list[float]] = {}
+MAX_TENTATIVAS, JANELA = 5, 15 * 60  # 5 erros de senha em 15 minutos bloqueiam o e-mail naquele IP
+
+
+def _ip() -> str:
+    return (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+
+
+def _bloqueado(chave: str) -> bool:
+    agora_s = dt.datetime.now().timestamp()
+    TENTATIVAS[chave] = [t for t in TENTATIVAS.get(chave, []) if agora_s - t < JANELA]
+    return len(TENTATIVAS[chave]) >= MAX_TENTATIVAS
 
 
 # ---------------------------------------------------------------- utilidades
@@ -142,9 +171,14 @@ def login():
         email, senha = DEMO_EMAIL, DEMO_SENHA
     else:
         email, senha = (d.get("email") or "").strip(), d.get("senha") or ""
+    chave = f"{_ip()}|{email.lower()}"
+    if _bloqueado(chave):
+        return erro("Muitas tentativas de login. Aguarde 15 minutos e tente de novo.", 429)
     u = banco.autenticar(email, senha)
     if not u:
+        TENTATIVAS.setdefault(chave, []).append(dt.datetime.now().timestamp())
         return erro("E-mail ou senha incorretos.", 401)
+    TENTATIVAS.pop(chave, None)
     session.clear()
     session.permanent = True
     session["uid"] = u["id"]
