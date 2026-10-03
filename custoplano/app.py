@@ -60,6 +60,11 @@ DEMO_EMAIL, DEMO_SENHA = "demo@custoplano.com.br", "demo"
 
 banco.iniciar()
 ql.iniciar()
+# Primeiro acesso do administrador: defina CP_ADMIN_EMAIL e CP_ADMIN_SENHA no painel do Render.
+# A conta só é criada se ainda não existir; depois a senha não é mais tocada pela variável.
+_adm_email, _adm_senha = os.environ.get("CP_ADMIN_EMAIL", "").strip().lower(), os.environ.get("CP_ADMIN_SENHA", "")
+if _adm_email and len(_adm_senha) >= 8 and not any(u["email"].lower() == _adm_email for u in banco.listar_usuarios()):
+    banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano")
 if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
     try:
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")

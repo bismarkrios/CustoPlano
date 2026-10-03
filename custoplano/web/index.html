@@ -267,6 +267,9 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .weeknav .iconbtn:disabled{opacity:.35;cursor:default}
 .weeknav .linkbtn{font-size:13.5px;padding:6px 4px}
 .demo-tag.alt{border-style:solid;border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.app.real [data-a="nav:painel"],.app.real [data-a="nav:sup"],.app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:cp"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
+.obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
+.app.real .obra-nome{display:inline}
 .demo-tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px dashed var(--line);padding:4px 8px;border-radius:4px}
 .user{margin-left:auto;display:flex;align-items:center;gap:10px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--ground);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
@@ -961,6 +964,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     </nav>
     <div class="app-main">
       <header class="app-top">
+        <span class="obra-nome plan-only" id="obraNome"></span>
         <label for="obraSel" class="kpi-t plan-only">Obra</label>
         <select id="obraSel" class="plan-only">
           <option>Residencial Aurora – Torre A</option>
@@ -1016,7 +1020,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       S.mod = h === 'qualidade' ? 'qual' : 'plan';
       var ehQ = /^q/.test(S.screen);
       if (S.mod === 'qual' && !ehQ) S.screen = 'qp';
-      if (S.mod === 'plan' && ehQ) S.screen = 'painel';
+      if (S.mod === 'plan' && ehQ) S.screen = contaReal() ? 'prj' : 'painel';
       if (S.mod === 'qual' && API) loadQual();
       show('app'); render(); window.scrollTo(0, 0); return;
     }
@@ -1047,7 +1051,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   });
   document.getElementById('lg-forgot').addEventListener('click', function () {
     var msg = document.getElementById('lg-msg');
-    msg.textContent = 'Na versão final, enviaremos um link de redefinição para o e-mail cadastrado. Enquanto isso, fale com a equipe da Custo Plano.';
+    msg.textContent = 'Para redefinir a sua senha, fale com a equipe da Custo Plano.';
     msg.hidden = false;
   });
 
@@ -1880,6 +1884,17 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<p style="font-size:12.5px;color:var(--muted)">Cada linha é um serviço subindo pavimento a pavimento; a inclinação é o ritmo. Linhas que se aproximam indicam equipes chegando juntas no mesmo pavimento. Escolha um serviço para destacá-lo' + (D.base ? ' e ver a linha de base dele' : '') + '.</p>';
   }
 
+  function vPrjVazio() {
+    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Importe o cronograma da obra</b><p style="color:var(--muted);font-size:14px">Envie o .mpp direto do MS Project (ou um .xml salvo pelo Project). A EAP, as datas, a linha de base e o peso vêm do arquivo, e a medição e os custos passam a usar este cronograma.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="prjFile" class="btn btn-primary" style="cursor:pointer">Importar cronograma</label>' +
+      '<button type="button" class="btn btn-ghost" data-a="mex">Testar com o cronograma de exemplo</button></div>' +
+      (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') + '</section>';
+  }
+  function vPAVazio() {
+    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum plano de ataque importado</b><p style="color:var(--muted);font-size:14px">Envie a planilha do plano de ataque (.xlsx) com os serviços nas colunas, os pavimentos nas linhas e a data programada em cada célula. Se houver uma aba com a linha de base, ela entra na comparação.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="paFile" class="btn btn-primary" style="cursor:pointer">Importar planilha (.xlsx)</label></div>' +
+      (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '') + '</section>';
+  }
   function vPA() {
     var D = PA || paDemo(), M = paModel(D), A = D.atual;
     var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
@@ -1902,7 +1917,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       (D.base ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(D.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
       (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
       '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
-      (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '') +
+      (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">' + (contaReal() ? 'Remover planilha' : 'Voltar ao exemplo') + '</button>' : '') +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
 
     var main = '<section class="card" style="display:flex;flex-direction:column;gap:12px' + (S.pa.view === 'matriz' ? ';padding-bottom:0' : '') + '">' + bar +
@@ -2623,7 +2638,15 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
+  var DEMO_TELAS = { painel: 1, sup: 1, cron: 1, lb: 1, cp: 1, res: 1 };
+  function contaReal() { return API && !!user && user !== 'demo@custoplano.com.br'; }
   function render() {
+    var REAL = contaReal();
+    document.querySelector('#app .app').classList.toggle('real', REAL);
+    if (REAL) {
+      if (DEMO_TELAS[S.screen]) S.screen = 'prj';
+      document.getElementById('obraNome').textContent = P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado';
+    }
     var M = model();
     document.getElementById('navCount').textContent = M.abertas;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function (b) {
@@ -2645,7 +2668,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     tag.className = 'demo-tag plan-only' + (CUR === HOJE_W ? '' : ' alt');
     var hd = HEADS[S.screen];
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: vPainel, prj: (P ? vProjectReal : vProject), sup: vSup, cron: vCron, lb: vLB, pa: vPA, med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: vCP, res: vRes }[S.screen](M);
+    var v = { painel: vPainel, prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: vSup, cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: vCP, res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
