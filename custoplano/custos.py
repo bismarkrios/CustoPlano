@@ -738,3 +738,48 @@ def exportar_xlsx(a: dict) -> bytes:
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+# ---------------------------------------------- orçamento a partir do cronograma
+def _moeda(el, nome) -> float:
+    """Valores de custo no XML do MS Project vêm em centavos."""
+    from cronograma import _txt
+    v = numero(_txt(el, nome))
+    return (v or 0.0) / 100
+
+
+def dados_do_projeto(p) -> dict | None:
+    """Orçamento e realizado tirados das colunas de custo do próprio cronograma (Custo, Custo da
+    linha de base e Custo real). Devolve None se o cronograma não tiver custos."""
+    from cronograma import Q, _txt
+    raizes = [t for t in p.tarefas if t.pai is None]
+    pular = {raizes[0].uid} if len(raizes) == 1 and raizes[0].filhos else set()
+    itens, realizado = [], []
+    for t in p.tarefas:
+        if t.uid in pular:
+            continue
+        if t.filhos:
+            itens.append({"codigo": t.eap, "descricao": t.nome, "titulo": True, "unidade": "", "qtd": 0.0,
+                          "comp": "", "preco": None, "total_planilha": None, "tarefa": t.eap,
+                          "inicio": None, "termino": None})
+            continue
+        custo = _moeda(t.el, "Cost")
+        lb = 0.0
+        for b in t.el.findall(Q + "Baseline"):
+            if _txt(b, "Number") in ("", "0"):
+                lb = _moeda(b, "Cost")
+        orcado = lb or custo
+        if orcado > 0:
+            itens.append({"codigo": t.eap, "descricao": t.nome, "titulo": False, "unidade": "vb", "qtd": 1.0,
+                          "comp": "", "preco": round(orcado, 2), "total_planilha": round(orcado, 2), "tarefa": t.eap,
+                          "inicio": None, "termino": None})
+        real = _moeda(t.el, "ActualCost")
+        if real > 0:
+            quando = data(_txt(t.el, "ActualFinish")[:10]) or (p.data_status.date() if p.data_status else None) \
+                or (t.termino.date() if t.termino else dt.date.today())
+            realizado.append({"data": quando.isoformat(), "codigo": t.eap, "descricao": t.nome, "fornecedor": "",
+                              "tipo": "out", "valor": round(real, 2), "origem": "project"})
+    if not any(not i["titulo"] for i in itens):
+        return None
+    return {"arquivo": p.arquivo, "origem": "project", "bdi": 0.0, "itens": itens, "composicoes": {},
+            "realizado": realizado, "avisos": []}

@@ -302,3 +302,137 @@ def ler_plano(nome_arquivo: str, conteudo: bytes) -> dict:
         "termino": ler_termino(P),
         "metas": ler_metas(P),
     }
+
+
+# ------------------------------------------------- plano a partir do cronograma
+_PAV = [
+    (re.compile(r"\b(?:pav(?:to|imento)?\.?\s*)?tipo\s*(\d{1,3})\b"), lambda m: float(m[1])),
+    (re.compile(r"\b(\d{1,3})\s*o?\s*(?:pav(?:to|imento)?|andar|pvto)\b\.?"), lambda m: float(m[1])),
+    (re.compile(r"\b(?:pav(?:to|imento)?|andar|pvto|piso)\.?\s*(\d{1,3})\b"), lambda m: float(m[1])),
+    (re.compile(r"\b(\d{1,3})\s*o?\s*subsolo\b|\bsubsolo\s*(\d{0,2})\b"), lambda m: -float(m[1] or m[2] or 1)),
+    (re.compile(r"\bterreo\b"), lambda m: 0.0),
+    (re.compile(r"\bmezanino\b"), lambda m: 0.5),
+    (re.compile(r"\bcobertura\b"), lambda m: 1000.0),
+    (re.compile(r"\batico\b"), lambda m: 1001.0),
+    (re.compile(r"\bbarrilete\b"), lambda m: 1002.0),
+    (re.compile(r"\bcasa de maquinas\b"), lambda m: 1003.0),
+]
+
+
+def _norm_igual(nome: str) -> str:
+    """Minúsculas e sem acentos, com o mesmo número de caracteres do original."""
+    out = []
+    for ch in nome:
+        d = unicodedata.normalize("NFKD", ch).encode("ascii", "ignore").decode()
+        out.append(d[0].lower() if d else " ")
+    return "".join(out)
+
+
+def achar_pavimento(nome: str):
+    """Procura um pavimento no nome da tarefa. Devolve (número, trecho encontrado) ou None."""
+    t = _norm_igual(nome)
+    for rx, f in _PAV:
+        m = rx.search(t)
+        if m:
+            return f(m), m
+    return None
+
+
+def _rotulo_pav(n: float) -> str:
+    if n == 0:
+        return "Térreo"
+    if n == 0.5:
+        return "Mezanino"
+    if n < 0:
+        return f"Subsolo {int(-n)}"
+    return {1000: "Cobertura", 1001: "Ático", 1002: "Barrilete", 1003: "Casa de máquinas"}.get(n, f"{int(n)}º pav.")
+
+
+def _sem_pavimento(nome: str, trecho) -> str:
+    """Nome do serviço sem o pavimento (ex.: 'Alvenaria – 3º pav.' -> 'Alvenaria')."""
+    a, b = trecho.span()
+    s = (nome[:a] + " " + nome[b:]).strip()
+    s = re.sub(r"\(\s*\)|\[\s*\]", " ", s)
+    s = re.sub(r"^[\s\-–—:|/.,]+|[\s\-–—:|/.,(]+$", "", s)
+    s = re.sub(r"\s{2,}", " ", s)
+    return s.strip()
+
+
+def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | None = None) -> dict | None:
+    """Monta o plano de ataque (serviço × pavimento) a partir das tarefas do cronograma.
+
+    Reconhece as duas formas usuais de montar a EAP: Serviço > Pavimento ou Pavimento > Serviço
+    (o pavimento pode estar no nome da tarefa, ex.: 'Alvenaria 3º pav.', ou numa tarefa-resumo acima).
+    """
+    atual = atual or {}
+    celulas: dict[tuple[str, float], dict] = {}
+    nomes: dict[str, str] = {}
+    ordem_serv: dict[str, dt.datetime] = {}
+    for t in p.tarefas:
+        if t.filhos or t.marco or not t.inicio:
+            continue
+        achado = achar_pavimento(t.nome)
+        servico = None
+        if achado:
+            n, trecho = achado
+            servico = _sem_pavimento(t.nome, trecho) or (t.pai.nome if t.pai else "")
+        else:
+            a = t.pai
+            while a is not None and not (achado := achar_pavimento(a.nome)):
+                a = a.pai
+            if not achado:
+                continue
+            n = achado[0]
+            servico = t.nome
+        if not servico:
+            continue
+        chave = norm(servico)
+        nomes.setdefault(chave, servico)
+        c = celulas.setdefault((chave, n), {"ini": t.inicio, "lb": t.lb_inicio, "ok": True})
+        c["ini"] = min(c["ini"], t.inicio)
+        if t.lb_inicio:
+            c["lb"] = min(c["lb"], t.lb_inicio) if c["lb"] else t.lb_inicio
+        c["ok"] = c["ok"] and float(atual.get(t.uid, t.pct) or 0) >= 99.5
+        ordem_serv[chave] = min(ordem_serv.get(chave, t.inicio), t.inicio)
+
+    pavs = sorted({n for _, n in celulas})
+    # serviço que aparece em um pavimento só não forma escadinha
+    servs = [s for s in sorted(ordem_serv, key=lambda s: ordem_serv[s])
+             if sum(1 for (k, _) in celulas if k == s) >= 2]
+    if len(pavs) < 2 or not servs:
+        return None
+
+    def bloco(campo, com_status):
+        return {
+            "servicos": [{"nome": nomes[s], "fornecedor": "", "ciclo": None} for s in servs],
+            "pavimentos": [{
+                "rotulo": _rotulo_pav(n), "n": n,
+                "datas": [iso(celulas[(s, n)][campo].date()) if (s, n) in celulas and celulas[(s, n)][campo] else None for s in servs],
+                "ok": [bool(celulas.get((s, n), {}).get("ok")) for s in servs] if com_status else None,
+            } for n in pavs],
+        }
+
+    atual_b = bloco("ini", True)
+    tem_lb = any(c["lb"] for c in celulas.values())
+    marcos = []
+    for t in p.tarefas:
+        if t.marco and t.termino:
+            lb = t.lb_termino.date() if t.lb_termino else None
+            at = t.termino.date()
+            marcos.append({"nome": t.nome, "lb": iso(lb), "anterior": None, "atual": iso(at),
+                           "var_lb": (at - lb).days if lb else None, "var_mes": None})
+    raiz = [t for t in p.tarefas if t.pai is None]
+    fim = max((t.termino for t in raiz if t.termino), default=None)
+    fim_lb = max((t.lb_termino for t in raiz if t.lb_termino), default=None)
+    termino = ({"lb": iso(fim_lb.date()), "atual": iso(fim.date()), "var": (fim.date() - fim_lb.date()).days}
+               if fim and fim_lb else None)
+    return {
+        "arquivo": p.arquivo, "aba": None, "origem": "project",
+        "titulo": p.titulo,
+        "data_base": iso((data_status or p.data_status or dt.datetime.now()).date()),
+        "atual": atual_b,
+        "base": dict(bloco("lb", False), rotulo="Linha de base do Project") if tem_lb else None,
+        "marcos": marcos[:12],
+        "termino": termino,
+        "metas": [],
+    }

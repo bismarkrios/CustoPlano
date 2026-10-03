@@ -267,7 +267,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .weeknav .iconbtn:disabled{opacity:.35;cursor:default}
 .weeknav .linkbtn{font-size:13.5px;padding:6px 4px}
 .demo-tag.alt{border-style:solid;border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 16%,transparent)}
-.app.real [data-a="nav:painel"],.app.real [data-a="nav:sup"],.app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:cp"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
+.app.real [data-a="nav:sup"],.app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
 .app.real .obra-nome{display:inline}
 .demo-tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px dashed var(--line);padding:4px 8px;border-radius:4px}
@@ -1020,7 +1020,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       S.mod = h === 'qualidade' ? 'qual' : 'plan';
       var ehQ = /^q/.test(S.screen);
       if (S.mod === 'qual' && !ehQ) S.screen = 'qp';
-      if (S.mod === 'plan' && ehQ) S.screen = contaReal() ? 'prj' : 'painel';
+      if (S.mod === 'plan' && ehQ) S.screen = 'painel';
       if (S.mod === 'qual' && API) loadQual();
       show('app'); render(); window.scrollTo(0, 0); return;
     }
@@ -1156,6 +1156,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
 
   /* ---------- Telas ---------- */
+  var HEADS_REAL = {
+    painel: ['Painel da obra', 'Prazo, avanço físico e custos, tudo calculado a partir do cronograma importado.'],
+    cus: ['Custos', 'Orçamento, cronograma físico-financeiro e custo orçado × realizado, a partir das colunas de custo do cronograma.'],
+    cp: ['Planejamento de curto prazo', 'Tarefas do cronograma nas próximas três semanas, o que ainda falta para liberar cada uma e o PPC da semana passada.']
+  };
   var HEADS = {
     painel: ['Painel da obra', 'Visão geral de prazo, avanço físico e produção da semana.'],
     prj: ['Project', 'Cronograma detalhado com EAP, durações, datas, predecessoras e Gantt.'],
@@ -1610,7 +1615,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (API) {
       var fd = new FormData(); fd.append('arquivo', file);
       S.prjMsg = 'Importando ' + file.name + '…'; S.screen = 'prj'; render();
-      api('/api/importar', fd).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = 'Cronograma importado: ' + P.tasks.length + ' tarefas.'; render(); }, function (e) { S.prjMsg = 'Não foi possível importar: ' + e.message; render(); });
+      api('/api/importar', fd).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = 'Cronograma importado: ' + P.tasks.length + ' tarefas.'; recarregarDerivados(); render(); }, function (e) { S.prjMsg = 'Não foi possível importar: ' + e.message; render(); });
       return;
     }
     if (/\.mpp$/i.test(file.name)) { S.prjMsg = 'Arquivos .mpp não podem ser lidos no navegador. No MS Project use Arquivo → Salvar como → Formato XML e importe o .xml.'; render(); return; }
@@ -1738,7 +1743,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   function sdias(n) { return (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n) + ' d'; }
   function loadPlano() {
     if (!API) return;
-    api('/api/plano').then(function (r) { PA = r.plano || null; if (!app.hidden && S.screen === 'pa') render(); }).catch(function () {});
+    api('/api/plano').then(function (r) { PA = r.plano || null; if (!app.hidden && (S.screen === 'pa' || S.screen === 'painel')) render(); }).catch(function () {});
   }
   function paDemo() {
     /* exemplo gerado a partir da obra de demonstração: 1 pavimento por semana por serviço */
@@ -1884,6 +1889,95 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<p style="font-size:12.5px;color:var(--muted)">Cada linha é um serviço subindo pavimento a pavimento; a inclinação é o ritmo. Linhas que se aproximam indicam equipes chegando juntas no mesmo pavimento. Escolha um serviço para destacá-lo' + (D.base ? ' e ver a linha de base dele' : '') + '.</p>';
   }
 
+  /* ---------- Painel e curto prazo a partir do cronograma importado ---------- */
+  function nomeT(t) { return (t.parent && t.parent.parent ? t.parent.name + ' › ' : '') + t.name; }
+  function folhas() { return P.tasks.filter(function (t) { return !t.children.length; }); }
+  function fimLB(t) { return t.bFinish != null ? t.bFinish : t.finish; }
+  function iniLB(t) { return t.bStart != null ? t.bStart : t.start; }
+  function semPrj(tit) {
+    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">' + tit + '</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:prj">Importar na tela Project</button></div></section>';
+  }
+  function kpi(t, v, sub, cor) { return '<div class="card"><div class="kpi-t">' + t + '</div><div class="kpi-v"' + (cor ? ' style="color:' + cor + '"' : '') + '>' + v + '</div><div class="kpi-s">' + sub + '</div></div>'; }
+  function vPainelReal() {
+    if (!P) return semPrj('O painel é calculado a partir do cronograma da obra. Importe o .mpp na tela Project.');
+    var A = aggregate(), real = aPct(A.total, 'r'), prev = aPct(A.total, 'p'), sd = P.statusDate, dia = 864e5;
+    var fs = folhas().filter(function (t) { return !t.ms; });
+    var atras = fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd && (P.meas[t.uid] || 0) < 100; })
+      .sort(function (a, b) { return fimLB(a) - fimLB(b); });
+    var raiz = P.tasks.filter(function (t) { return !t.parent; });
+    var fim = Math.max.apply(null, raiz.map(function (t) { return t.finish || 0; }));
+    var fimB = Math.max.apply(null, raiz.map(function (t) { return t.bFinish || 0; }));
+    var varFim = fimB ? Math.round((fim - fimB) / dia) : null;
+    var dv = real - prev;
+    var html = '<div class="grid4">' +
+      kpi('Avanço físico', fmt1(real) + '%', 'previsto ' + fmt1(prev) + '% em ' + fdate(sd), null) +
+      kpi('Desvio de avanço', (dv > 0 ? '+' : '') + fmt1(dv) + ' p.p.', dv < -0.05 ? 'atrás do previsto' : 'em dia ou adiantado', dv < -0.05 ? 'var(--bad)' : 'var(--good)') +
+      kpi('Tarefas atrasadas', atras.length, 'término já passou e não chegaram a 100%', atras.length ? 'var(--bad)' : 'var(--good)') +
+      kpi('Término da obra', fdate(fim), fimB ? 'linha de base ' + fdate(fimB) + ' · <b style="color:' + (varFim > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(varFim) + '</b>' : 'sem linha de base salva no Project', null) +
+      '</div>';
+    if (CU && CU.totais) {
+      var T = CU.totais, br = function (v) { return 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR'); };
+      html += '<div class="grid4">' +
+        kpi('Orçado', br(T.bac), 'custo total do cronograma', null) +
+        kpi('Realizado', br(T.cr), 'custo real lançado', null) +
+        kpi('IDC', T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ','), 'valor agregado ÷ custo real', T.idc == null ? null : (T.idc < 0.98 ? 'var(--bad)' : 'var(--good)')) +
+        kpi('IDP', T.idp == null ? '—' : T.idp.toFixed(2).replace('.', ','), 'valor agregado ÷ valor planejado', T.idp == null ? null : (T.idp < 0.98 ? 'var(--bad)' : 'var(--good)')) +
+        '</div>';
+    }
+    var linha = function (t, extra) { return '<tr><td><span class="mono" style="color:var(--muted)">' + esc(t.wbs) + '</span> ' + esc(nomeT(t)) + '</td>' + extra + '</tr>'; };
+    var tabA = atras.slice(0, 10).map(function (t) { return linha(t, '<td class="mono">' + fdate(fimLB(t)) + '</td><td class="mono" style="text-align:right">' + fmt1(P.meas[t.uid] || 0) + '%</td><td class="mono" style="text-align:right;color:var(--bad)">' + Math.round((sd - fimLB(t)) / dia) + ' d</td>'); }).join('');
+    var marcos = P.tasks.filter(function (t) { return t.ms && t.finish != null && t.finish >= sd - dia; }).sort(function (a, b) { return a.finish - b.finish; }).slice(0, 6);
+    var tabM = marcos.map(function (t) { var v = t.bFinish ? Math.round((t.finish - t.bFinish) / dia) : null; return linha(t, '<td class="mono">' + fdate(t.finish) + '</td><td class="mono" style="text-align:right">' + (v == null ? '—' : '<span style="color:' + (v > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(v) + '</span>') + '</td>'); }).join('');
+    html += '<div class="pa-grid2">' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>Tarefas atrasadas</h2></div>' +
+      (tabA ? '<div class="scroll-x"><table class="tbl" style="min-width:460px"><thead><tr><th>Tarefa</th><th>Término (LB)</th><th style="text-align:right">Medido</th><th style="text-align:right">Atraso</th></tr></thead><tbody>' + tabA + '</tbody></table></div>' : '<p class="kpi-s" style="padding:10px 18px 16px">Nenhuma tarefa atrasada na data de status.</p>') +
+      (atras.length > 10 ? '<p class="kpi-s" style="padding:8px 18px 12px">e mais ' + (atras.length - 10) + '. Veja todas na tela Medição.</p>' : '') + '</section>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>Próximos marcos</h2></div>' +
+      (tabM ? '<div class="scroll-x"><table class="tbl" style="min-width:360px"><thead><tr><th>Marco</th><th>Data</th><th style="text-align:right">Contra a LB</th></tr></thead><tbody>' + tabM + '</tbody></table></div>' : '<p class="kpi-s" style="padding:10px 18px 16px">Nenhum marco à frente no cronograma.</p>') + '</section>' +
+      '</div>';
+    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:med">Fazer a medição</button><button type="button" class="btn btn-ghost" data-a="nav:cp">Curto prazo</button><button type="button" class="btn btn-ghost" data-a="nav:pa">Plano de ataque</button></div>';
+    return html;
+  }
+  function vCPReal() {
+    if (!P) return semPrj('O curto prazo é montado a partir do cronograma da obra. Importe o .mpp na tela Project.');
+    var dia = 864e5, sd = P.statusDate, d0 = new Date(sd);
+    var seg = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia;
+    var fs = folhas().filter(function (t) { return !t.ms && t.start != null && t.finish != null; });
+    var feito = function (t) { return (P.meas[t.uid] || 0) >= 100; };
+    // PPC: tarefas que a linha de base mandava terminar na semana passada
+    var pIni = seg - 7 * dia, pFim = seg;
+    var prog = fs.filter(function (t) { var f = fimLB(t); return f != null && f >= pIni && f < pFim; });
+    var ppcOk = prog.filter(feito).length;
+    var semanas = [0, 1, 2].map(function (k) {
+      var a = seg + k * 7 * dia, b = a + 7 * dia;
+      // esta semana: tudo que já devia ter começado e não terminou (inclui atrasadas); depois, só o que começa na semana
+      var lista = fs.filter(function (t) { return !feito(t) && t.start < b && (k === 0 || t.start >= a); }).sort(function (x, y) { return x.start - y.start; });
+      return { a: a, b: b, lista: lista };
+    });
+    var pend = 0;
+    var corpo = semanas.map(function (w, k) {
+      var linhas = w.lista.map(function (t) {
+        var falta = t.pred.map(function (u) { return P.byUid[u]; }).filter(function (q) { return q && (P.meas[q.uid] || 0) < 100; });
+        if (falta.length) pend++;
+        var atr = fimLB(t) != null && fimLB(t) < sd;
+        var st = atr ? '<span class="chip c-bad">atrasada</span> ' : '';
+        st += falta.length ? '<span class="chip c-warn" title="' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '<span class="chip c-ok">liberada</span>';
+        return '<tr><td><span class="mono" style="color:var(--muted)">' + esc(t.wbs) + '</span> ' + esc(nomeT(t)) +
+          (falta.length ? '<div class="kpi-s">falta: ' + esc(falta.slice(0, 3).map(nomeT).join(', ')) + (falta.length > 3 ? '…' : '') + '</div>' : '') + '</td>' +
+          '<td class="mono">' + fdate(t.start) + '</td><td class="mono">' + fdate(t.finish) + '</td><td class="mono" style="text-align:right">' + fmt1(P.meas[t.uid] || 0) + '%</td><td>' + st + '</td></tr>';
+      }).join('');
+      return '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>' + (k === 0 ? 'Esta semana' : k === 1 ? 'Próxima semana' : 'Daqui a duas semanas') + ' · ' + fdate(w.a) + ' a ' + fdate(w.b - dia) + '</h2></div>' +
+        (linhas ? '<div class="scroll-x"><table class="tbl" style="min-width:560px"><thead><tr><th>Tarefa</th><th>Início</th><th>Término</th><th style="text-align:right">Medido</th><th>Situação</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' : '<p class="kpi-s" style="padding:10px 18px 16px">Nenhuma tarefa aberta nesta semana.</p>') + '</section>';
+    }).join('');
+    var ppc = prog.length ? Math.round(ppcOk / prog.length * 100) : null;
+    return '<div class="grid4">' +
+      kpi('PPC da semana passada', ppc == null ? '—' : ppc + '%', prog.length ? ppcOk + ' de ' + prog.length + ' tarefas que deviam terminar' : 'nenhuma tarefa devia terminar', ppc == null ? null : (ppc < 80 ? 'var(--bad)' : 'var(--good)')) +
+      kpi('Tarefas nas 3 semanas', semanas.reduce(function (n, w) { return n + w.lista.length; }, 0), 'abertas, a partir de ' + fdate(seg), null) +
+      kpi('Aguardando liberação', pend, 'predecessoras ainda não concluídas', pend ? 'var(--warn, #B07816)' : 'var(--good)') +
+      kpi('Data de status', fdate(sd), 'mude na tela Medição', null) +
+      '</div>' + corpo;
+  }
   function vPrjVazio() {
     return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Importe o cronograma da obra</b><p style="color:var(--muted);font-size:14px">Envie o .mpp direto do MS Project (ou um .xml salvo pelo Project). A EAP, as datas, a linha de base e o peso vêm do arquivo, e a medição e os custos passam a usar este cronograma.</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="prjFile" class="btn btn-primary" style="cursor:pointer">Importar cronograma</label>' +
@@ -1891,8 +1985,10 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') + '</section>';
   }
   function vPAVazio() {
-    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum plano de ataque importado</b><p style="color:var(--muted);font-size:14px">Envie a planilha do plano de ataque (.xlsx) com os serviços nas colunas, os pavimentos nas linhas e a data programada em cada célula. Se houver uma aba com a linha de base, ela entra na comparação.</p>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="paFile" class="btn btn-primary" style="cursor:pointer">Importar planilha (.xlsx)</label></div>' +
+    var txt = P ? 'O plano de ataque é montado sozinho a partir do cronograma, mas não encontrei serviços repetidos por pavimento nele. Organize a EAP como <b>Serviço › Pavimento</b> (ex.: Alvenaria › 3º pavimento), <b>Pavimento › Serviço</b>, ou com o pavimento no nome da tarefa (ex.: “Alvenaria – 3º pav.”), e importe o .mpp de novo.'
+      : 'O plano de ataque é montado sozinho a partir do cronograma. Importe o .mpp na tela Project.';
+    return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>' + (P ? 'Sem serviços por pavimento no cronograma' : 'Nenhum cronograma importado') + '</b><p style="color:var(--muted);font-size:14px">' + txt + '</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:prj">Ir para a tela Project</button></div>' +
       (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '') + '</section>';
   }
   function vPA() {
@@ -1911,13 +2007,13 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var opts = '<option value="-1">Todos os serviços</option>' + A.servicos.map(function (s, i) { return '<option value="' + i + '"' + (S.pa.hl === i ? ' selected' : '') + '>' + esc(s.nome) + '</option>'; }).join('');
     var tab = function (id, txt) { return '<button type="button" data-a="pav:' + id + '" aria-pressed="' + (S.pa.view === id) + '">' + txt + '</button>'; };
     var bar = '<div class="prj-bar">' +
-      '<span style="display:flex;flex-direction:column;flex:1 1 240px;min-width:0"><b style="font-size:15px">' + esc(D.titulo) + (D.demo ? ' <span class="chip c-muted">exemplo</span>' : '') + '</b><span style="font-size:12.5px;color:var(--muted)">' + (D.demo ? 'Importe a planilha da escadinha da sua obra (.xlsx).' : esc(D.arquivo) + ' · ' + A.pavimentos.length + ' pavimentos · ' + A.servicos.length + ' serviços') + ' · data base ' + (M.db != null ? fdate(M.db) : '—') + '</span></span>' +
+      '<span style="display:flex;flex-direction:column;flex:1 1 240px;min-width:0"><b style="font-size:15px">' + esc(D.titulo) + (D.demo ? ' <span class="chip c-muted">exemplo</span>' : '') + '</b><span style="font-size:12.5px;color:var(--muted)">' + (D.demo ? 'Importe a planilha da escadinha da sua obra (.xlsx).' : (D.origem === 'project' ? 'Do cronograma ' : '') + esc(D.arquivo) + ' · ' + A.pavimentos.length + ' pavimentos · ' + A.servicos.length + ' serviços') + ' · data base ' + (M.db != null ? fdate(M.db) : '—') + '</span></span>' +
       '<div class="tabs" role="group" aria-label="Visualização">' + tab('matriz', 'Matriz') + tab('grafico', 'Gráfico') + '</div>' +
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
       (D.base ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(D.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
       (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
-      '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
-      (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">' + (contaReal() ? 'Remover planilha' : 'Voltar ao exemplo') + '</button>' : '') +
+      (D.origem === 'project' || contaReal() ? '' : '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
+      (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '')) +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
 
     var main = '<section class="card" style="display:flex;flex-direction:column;gap:12px' + (S.pa.view === 'matriz' ? ';padding-bottom:0' : '') + '">' + bar +
@@ -1937,7 +2033,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         '</tbody></table></div><p style="font-size:12px;color:var(--muted);padding:8px 18px 12px">IDP = real ÷ meta. Abaixo de 1 o avanço está atrás da meta.</p></section>';
     }
     return kpis + main + (extras ? '<div class="pa-grid2">' + extras + '</div>' : '') +
-      '<p style="font-size:12.5px;color:var(--muted)">O plano de ataque é a forma em tabela da linha de balanço: cada coluna é um serviço, cada linha um pavimento e cada célula a data programada. As datas do mesmo mês têm a mesma cor, e a diagonal que se forma é a “escadinha”. “ok” na planilha marca o pacote executado.</p>';
+      '<p style="font-size:12.5px;color:var(--muted)">O plano de ataque é a forma em tabela da linha de balanço: cada coluna é um serviço, cada linha um pavimento e cada célula a data programada. As datas do mesmo mês têm a mesma cor, e a diagonal que se forma é a “escadinha”. ' + (D.origem === 'project' ? 'O pacote conta como executado quando a medição das tarefas dele chega a 100%.' : '“ok” na planilha marca o pacote executado.') + '</p>';
   }
   function paImport(file) {
     if (!file) return;
@@ -1977,6 +2073,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       if (semRede()) { S.sync = 'offline'; paintSync(); return; }
       S.sync = 'salvando'; paintSync();
       return api('/api/medicao', p).then(function () {
+        recarregarDerivados();
         return kvSet('pend', null).then(function () { S.sync = 'enviado'; paintSync(); setTimeout(function () { if (S.sync === 'enviado') { S.sync = ''; paintSync(); } }, 4000); });
       }, function (e) { S.sync = e.offline ? 'offline' : 'erro'; paintSync(); });
     });
@@ -2059,10 +2156,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   function isoBr(s) { return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '—'; }
   var TIPO_COR = { mat: 'var(--pa0)', mo: 'var(--pa2)', eq: 'var(--pa3)', sv: 'var(--pa1)', out: 'var(--pa5)' };
   var TIPO_NOME = { mat: 'Material', mo: 'Mão de obra', eq: 'Equipamento', sv: 'Serviço', out: 'Outros' };
+  function recarregarDerivados() { if (API) { loadPlano(); loadCustos(); } }
   function loadCustos() {
     if (!API) return;
     S.cu.carregando = !CU;
-    api('/api/custos').then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && S.screen === 'cus') render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
+    api('/api/custos').then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && (S.screen === 'cus' || S.screen === 'painel')) render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
   }
   function cuSet(p) { return p.then(function (r) { CU = r.custos; S.cu.msg = ''; render(); }, function (e) { S.cu.msg = e.message; render(); }); }
 
@@ -2071,6 +2169,9 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var msg = S.cu.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.cu.msg) + '</p>' : '';
     if (!CU) {
       if (S.cu.carregando) return '<section class="card"><p class="kpi-s">Carregando…</p></section>';
+      if (contaReal()) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>' + (P ? 'O cronograma não tem custos' : 'Nenhum cronograma importado') + '</b>' +
+        '<p style="color:var(--muted);font-size:14px">' + (P ? 'Os custos vêm do próprio MS Project. Preencha a coluna <b>Custo</b> das tarefas (ou atribua recursos com custo), salve a linha de base e lance o <b>Custo real</b> conforme a obra anda. Depois importe o .mpp de novo na tela Project.' : 'Os custos vêm do próprio cronograma. Importe o .mpp na tela Project.') + '</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:prj">Ir para a tela Project</button></div>' + msg + '</section>';
       return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum orçamento importado</b>' +
         '<p style="color:var(--muted);font-size:14px">Envie o orçamento em Excel com as abas <b>Orçamento</b> (itens com quantidade e código da composição), <b>Composições</b> (insumos com coeficiente e preço) e, se quiser, <b>Realizado</b> (custos já pagos). Cada item é ligado a uma tarefa do cronograma pela EAP, para distribuir o custo no tempo e medir o valor agregado.</p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuFile" class="btn btn-primary" style="cursor:pointer">Importar orçamento (.xlsx)</label>' +
@@ -2091,7 +2192,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
     var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
       '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + tab('real', 'Orçado × real') + '</div></div>' +
-      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button></div>' +
+      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center">Custos tirados das colunas Custo, Custo da linha de base e Custo real do cronograma</span>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
       (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
     var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
     return kpis + '<section class="card" style="display:flex;flex-direction:column;gap:12px">' + bar + '</section>' + corpo;
@@ -2638,7 +2739,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
-  var DEMO_TELAS = { painel: 1, sup: 1, cron: 1, lb: 1, cp: 1, res: 1 };
+  var DEMO_TELAS = { sup: 1, cron: 1, lb: 1, res: 1 };
   function contaReal() { return API && !!user && user !== 'demo@custoplano.com.br'; }
   function render() {
     var REAL = contaReal();
@@ -2666,9 +2767,9 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var tag = document.getElementById('wkTag');
     tag.textContent = CUR === HOJE_W ? 'Dados de exemplo' : (CUR < HOJE_W ? 'Visualizando semana passada' : 'Simulando semana futura');
     tag.className = 'demo-tag plan-only' + (CUR === HOJE_W ? '' : ' alt');
-    var hd = HEADS[S.screen];
+    var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
     document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: vPainel, prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: vSup, cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: vCP, res: vRes }[S.screen](M);
+    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: vSup, cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
@@ -2689,7 +2790,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (qClick(a, el)) return;
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } render(); window.scrollTo(0, 0); return;
+      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -2720,7 +2821,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       case 'mex':
         if (precisaRede()) return;
         S.prjMsg = 'Carregando o exemplo…'; render();
-        api('/api/importar-exemplo', {}).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = ''; S.med.f = 'todas'; render(); }, function (e) { S.prjMsg = 'Não foi possível carregar o exemplo: ' + e.message; render(); });
+        api('/api/importar-exemplo', {}).then(function (v) { kvSet('pend', null); S.sync = ''; applyPrj(v); S.prjMsg = ''; S.med.f = 'todas'; recarregarDerivados(); render(); }, function (e) { S.prjMsg = 'Não foi possível carregar o exemplo: ' + e.message; render(); });
         return;
       case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; S.pa.rolar = true; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;

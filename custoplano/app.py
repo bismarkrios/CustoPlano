@@ -24,7 +24,7 @@ from flask import Flask, Response, abort, jsonify, request, send_from_directory,
 
 import banco
 from cronograma import ErroCronograma, Projeto, ler_arquivo, nome_base
-from plano_ataque import ErroPlano, ler_plano
+from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
 import custos as cst
 import qualidade as ql
 
@@ -294,13 +294,23 @@ def ver_historico():
 
 
 # -------------------------------------------------- plano de ataque (escadinha)
+def plano_de(uid: int):
+    """Plano de ataque montado a partir do cronograma importado; a planilha só entra se o
+    cronograma não tiver serviços por pavimento."""
+    c = banco.cronograma(uid)
+    if c:
+        d = plano_do_projeto(Projeto(c["xml"], c["arquivo"]), json.loads(c["atual"]), para_data(c["data_status"]))
+        if d:
+            return d, c["atualizado_em"] if "atualizado_em" in c.keys() else None
+    pl = banco.plano(uid)
+    return (json.loads(pl["dados"]), pl["atualizado_em"]) if pl else (None, None)
+
+
 @app.get("/api/plano")
 @logado
 def ver_plano():
-    p = banco.plano(session["uid"])
-    if not p:
-        return jsonify(plano=None)
-    return jsonify(plano=json.loads(p["dados"]), atualizado_em=p["atualizado_em"])
+    d, quando = plano_de(session["uid"])
+    return jsonify(plano=d, atualizado_em=quando)
 
 
 @app.post("/api/plano/importar")
@@ -325,16 +335,29 @@ def remover_plano():
 
 
 # ------------------------------------------------------------------- custos
-def analise_custos(uid: int):
+def orcamento_de(uid: int, p=None):
+    """Orçamento em uso: o das colunas de custo do cronograma importado; a planilha só entra
+    se o cronograma não tiver custos."""
     reg = banco.custos(uid)
-    if not reg:
-        return None
+    dados = json.loads(reg["dados"]) if reg else None
+    if p is not None and (dados is None or dados.get("origem") == "project"):
+        dp = cst.dados_do_projeto(p)
+        if dp or (dados and dados.get("origem") == "project"):
+            dados = dp
+    return reg, dados
+
+
+def analise_custos(uid: int):
     c = banco.cronograma(uid)
     p = Projeto(c["xml"], c["arquivo"]) if c else None
+    reg, dados = orcamento_de(uid, p)
+    if not dados:
+        return None
     atual = json.loads(c["atual"]) if c else {}
     ds = para_data(c["data_status"]).date() if c else dt.date.today()
-    a = cst.analisar(json.loads(reg["dados"]), json.loads(reg["lancamentos"]), p, atual, ds)
-    a["atualizado_em"] = reg["atualizado_em"]
+    a = cst.analisar(dados, json.loads(reg["lancamentos"]) if reg else [], p, atual, ds)
+    a["atualizado_em"] = reg["atualizado_em"] if reg else None
+    a["origem"] = dados.get("origem") or "planilha"
     return a
 
 
@@ -391,7 +414,12 @@ def exportar_financeiro():
 def lancar_custo():
     reg = banco.custos(session["uid"])
     if not reg:
-        return erro("Importe o orçamento antes de lançar custos.", 404)
+        _, p = carregar()
+        _, dados = orcamento_de(session["uid"], p)
+        if not dados:
+            return erro("Importe o orçamento antes de lançar custos.", 404)
+        banco.salvar_orcamento(session["uid"], dados.get("arquivo") or "cronograma", dados)
+        reg = banco.custos(session["uid"])
     d = request.get_json(silent=True) or {}
     try:
         data_l = dt.date.fromisoformat(str(d.get("data"))[:10])
@@ -507,8 +535,7 @@ def relatorio_pdf():
     import relatorio
 
     c, p = carregar()
-    pl = banco.plano(session["uid"])
-    plano = json.loads(pl["dados"]) if pl else None
+    plano, _ = plano_de(session["uid"])
     cus = analise_custos(session["uid"])
     if not c and not plano and not cus:
         return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
