@@ -224,8 +224,9 @@ def guardar_foto(con, uid: int, valor: str) -> str | None:
     """Recebe um data URL (ou um id já existente) e devolve o id da foto."""
     if not isinstance(valor, str):
         return None
-    if re.fullmatch(r"[0-9a-f]{16}", valor):
-        return valor
+    if re.fullmatch(r"[0-9a-f]{16}", valor):  # foto já enviada: só vale se for do mesmo usuário
+        dono = con.execute("SELECT 1 FROM fotos WHERE id=? AND usuario_id=?", (valor, uid)).fetchone()
+        return valor if dono else None
     m = RE_DATAURL.match(valor)
     if not m:
         return None
