@@ -17,6 +17,7 @@ import getpass
 import json
 import os
 import secrets
+import threading
 from functools import wraps
 
 import click
@@ -131,12 +132,30 @@ def para_ms(d: dt.datetime) -> int:
     return int(d.replace(tzinfo=dt.timezone.utc).timestamp() * 1000)
 
 
-def carregar():
+# Interpretar um cronograma grande ocupa muita memória (o servidor tem 512 MB): um de cada vez,
+# e o último fica guardado para as telas que pedem o mesmo cronograma em seguida.
+_PRJ_TRAVA = threading.Lock()
+_PRJ_CACHE: dict = {}
+
+
+def projeto_de(c, fresco: bool = False) -> Projeto:
+    chave = (c["usuario_id"], c["arquivo"], hash(c["xml"]))
+    with _PRJ_TRAVA:
+        if not fresco and _PRJ_CACHE.get("chave") == chave:
+            return _PRJ_CACHE["p"]
+        _PRJ_CACHE.clear()
+        p = Projeto(c["xml"], c["arquivo"])
+        if not fresco:  # exportar altera a árvore do XML: esse não vai para o cache
+            _PRJ_CACHE.update(chave=chave, p=p)
+        return p
+
+
+def carregar(fresco: bool = False):
     """Cronograma do usuário logado + Projeto já interpretado."""
     c = banco.cronograma(session["uid"])
     if not c:
         return None, None
-    return c, Projeto(c["xml"], c["arquivo"])
+    return c, projeto_de(c, fresco)
 
 
 def download(conteudo, nome: str, mime: str) -> Response:
@@ -231,8 +250,11 @@ def importar():
     if not arq or not arq.filename:
         return erro("Escolha o arquivo do cronograma (.mpp ou .xml).")
     try:
-        xml = ler_arquivo(arq.filename, arq.read())
-        p = Projeto(xml, arq.filename)
+        with _PRJ_TRAVA:
+            _PRJ_CACHE.clear()
+            xml = ler_arquivo(arq.filename, arq.read())
+            p = Projeto(xml, arq.filename)
+        print(f"Cronograma importado: {arq.filename}, {len(p.tarefas)} tarefas, XML de {len(xml) // 1024} KB", flush=True)
     except ErroCronograma as e:
         return erro(str(e))
     hoje = dt.datetime.now().replace(hour=17, minute=0, second=0, microsecond=0)
@@ -299,7 +321,7 @@ def plano_de(uid: int):
     cronograma não tiver serviços por pavimento."""
     c = banco.cronograma(uid)
     if c:
-        d = plano_do_projeto(Projeto(c["xml"], c["arquivo"]), json.loads(c["atual"]), para_data(c["data_status"]))
+        d = plano_do_projeto(projeto_de(c), json.loads(c["atual"]), para_data(c["data_status"]))
         if d:
             return d, c["atualizado_em"] if "atualizado_em" in c.keys() else None
     pl = banco.plano(uid)
@@ -349,7 +371,7 @@ def orcamento_de(uid: int, p=None):
 
 def analise_custos(uid: int):
     c = banco.cronograma(uid)
-    p = Projeto(c["xml"], c["arquivo"]) if c else None
+    p = projeto_de(c) if c else None
     reg, dados = orcamento_de(uid, p)
     if not dados:
         return None
@@ -569,7 +591,7 @@ def _exportar(c, p, formato: str, sufixo: str):
 @app.get("/api/exportar/<formato>")
 @logado
 def exportar(formato):
-    c, p = carregar()
+    c, p = carregar(fresco=True)
     if not c:
         return erro("Importe um cronograma primeiro.", 404)
     return _exportar(c, p, formato, "medicao" if formato == "xml" else "boletim")
@@ -581,7 +603,7 @@ def exportar_historico(mid, formato):
     c = banco.medicao_fechada(session["uid"], mid)
     if not c:
         abort(404)
-    return _exportar(c, Projeto(c["xml"], c["arquivo"]), formato, "medicao" if formato == "xml" else "boletim")
+    return _exportar(c, projeto_de(c, fresco=True), formato, "medicao" if formato == "xml" else "boletim")
 
 
 # ------------------------------------------------------------ comandos (CLI)
