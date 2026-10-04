@@ -1771,7 +1771,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     /* exemplo gerado a partir da obra de demonstração: 1 pavimento por semana por serviço */
     var iso = function (ms) { return new Date(ms).toISOString().slice(0, 10); };
     var pavs = [], bpavs = [];
-    for (var f = 1; f <= FLOORS; f++) {
+    for (var f = FLOORS; f >= 1; f--) {
       var ds = [], ok = [], bs = [];
       SERV.forEach(function (s) {
         var wk = s.lag + f, st = status(s.id + '-' + f, wk);
@@ -1845,7 +1845,10 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     }).join('') + '</tr>';
     var temCiclo = A.servicos.some(function (s) { return s.ciclo != null; });
     if (temCiclo) head += '<tr class="pa-ciclo"><th scope="row" class="pa-row">Ciclo (dias)</th>' + A.servicos.map(function (s) { return '<th>' + (s.ciclo != null ? fmt1(s.ciclo) : '—') + '</th>'; }).join('') + '</tr>';
-    var body = A.pavimentos.map(function (p, r) {
+    // como no prédio: último pavimento em cima, térreo embaixo
+    var ordem = A.pavimentos.map(function (p, r) { return { p: p, r: r }; }).sort(function (x, y) { return y.p.n - x.p.n; });
+    var body = ordem.map(function (o) {
+      var p = o.p, r = o.r;
       return '<tr><th scope="row" class="pa-row">' + esc(p.rotulo) + '</th>' + M.rows[r].map(function (c, i) {
         var on = hl === gi(i) ? ' on' : '';
         if (!c) return '<td class="c' + on + '"></td>';
