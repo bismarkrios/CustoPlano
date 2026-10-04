@@ -37,6 +37,14 @@ jobs:
       - name: Verificar sintaxe
         run: python -m py_compile app.py banco.py cronograma.py
 
+      - name: Garantir que nenhuma chave de API está no site (frontend)
+        run: |
+          if grep -rnEi "(api[_-]?key|apikey|secret[_-]?key|access[_-]?token|client[_-]?secret)[\"' ]*[:=]|sk-[A-Za-z0-9_-]{16,}|AIza[0-9A-Za-z_-]{30,}|gh[pousr]_[A-Za-z0-9]{20,}|xox[abpr]-[A-Za-z0-9-]{10,}|rnd_[A-Za-z0-9]{16,}|-----BEGIN [A-Z ]*PRIVATE KEY" web/; then
+            echo "::error::Encontrei algo parecido com uma chave de API nos arquivos do site (web/). Chaves ficam só no servidor, em variáveis de ambiente."
+            exit 1
+          fi
+          echo "nenhuma chave no frontend"
+
       - name: Testar se o site abre
         env:
           CP_BANCO: ${{ runner.temp }}/teste.db
