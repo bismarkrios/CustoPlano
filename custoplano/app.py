@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import datetime as dt
 import getpass
+import io
 import json
 import os
 import secrets
@@ -24,7 +25,7 @@ import click
 from flask import Flask, Response, abort, jsonify, request, send_from_directory, session
 
 import banco
-from cronograma import ErroCronograma, Projeto, ler_arquivo, nome_base
+from cronograma import ErroCronograma, Projeto, enxugar_xml, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
 import custos as cst
 import qualidade as ql
@@ -60,6 +61,19 @@ DEMO = os.environ.get("CP_DEMO", "1") == "1"
 DEMO_EMAIL, DEMO_SENHA = "demo@custoplano.com.br", "demo"
 
 banco.iniciar()
+
+# Cronogramas gravados antes do XML enxuto: enxuga uma vez, um por vez (ver cronograma.enxugar_xml).
+for _uid in banco.cronogramas_grandes():
+    try:
+        _c = banco.cronograma(_uid)
+        _antes = len(_c["xml"])
+        _xml = enxugar_xml(io.BytesIO(_c["xml"].encode("utf-8")))
+        del _c
+        banco.trocar_xml(_uid, _xml)
+        print(f"Cronograma do usuário {_uid} enxugado: {_antes // 1024} KB -> {len(_xml) // 1024} KB", flush=True)
+        del _xml
+    except Exception as _e:  # noqa: BLE001 - nunca impedir o site de subir por causa disso
+        print(f"Não consegui enxugar o cronograma do usuário {_uid}: {_e}", flush=True)
 ql.iniciar()
 # Primeiro acesso do administrador: defina CP_ADMIN_EMAIL e CP_ADMIN_SENHA no painel do Render.
 # A conta só é criada se ainda não existir; depois a senha não é mais tocada pela variável.

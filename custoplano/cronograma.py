@@ -70,8 +70,66 @@ def mpp_para_xml(dados: bytes) -> str:
                 raise ErroCronograma("O .mpp é grande demais para o servidor. Salve como .xml no MS Project e envie o .xml.")
             print("MPXJ falhou:", saida[-2000:], flush=True)
             raise ErroCronograma("O MPXJ não reconheceu este arquivo como um cronograma do MS Project.")
-        with open(destino, encoding="utf-8") as f:
-            return f.read()
+        return enxugar_xml(destino)
+
+
+# Campos do XML do MS Project que o sistema usa. Recursos, atribuições e calendários ficam de
+# fora: num cronograma grande eles são a maior parte do arquivo e não cabem na memória do servidor.
+_RAIZ = {"Name", "Title", "StatusDate", "CurrentDate", "StartDate", "FinishDate", "CurrencySymbol",
+         "MinutesPerDay", "MinutesPerWeek", "DaysPerMonth", "ExtendedAttributes"}
+_TAREFA = {"UID", "ID", "Name", "Type", "IsNull", "WBS", "OutlineNumber", "OutlineLevel", "Priority", "Start",
+           "Finish", "Duration", "DurationFormat", "Work", "Milestone", "Summary", "Critical", "PercentComplete",
+           "PercentWorkComplete", "PhysicalPercentComplete", "Cost", "ActualStart", "ActualFinish",
+           "ActualDuration", "RemainingDuration", "ActualCost", "RemainingCost", "ConstraintType",
+           "ConstraintDate", "Active", "Manual", "Estimated", "PredecessorLink", "ExtendedAttribute", "Baseline"}
+_LINHA_BASE = {"Number", "Start", "Finish", "Duration", "DurationFormat", "Cost", "Work"}
+
+
+def enxugar_xml(fonte) -> str:
+    """Lê o XML do MS Project em partes (sem montar a árvore inteira) e devolve só o que o
+    sistema usa. `fonte` é um caminho ou um arquivo aberto em modo binário."""
+    nova = ET.Element(Q + "Project")
+    tarefas = None
+    profundidade, secao = 0, ""
+    for evento, el in ET.iterparse(fonte, events=("start", "end")):
+        nome = el.tag.replace(Q, "")
+        if evento == "start":
+            profundidade += 1
+            if profundidade == 1 and nome != "Project":
+                raise ErroCronograma("Este XML não parece ter sido salvo pelo MS Project (faltam as tarefas).")
+            if profundidade == 2:
+                secao = nome
+            continue
+        profundidade -= 1
+        if profundidade == 1:  # fim de um filho direto de <Project>
+            if nome in _RAIZ:
+                nova.append(el)
+            else:
+                el.clear()
+            secao = ""
+        elif profundidade == 2 and secao not in _RAIZ:  # <Task>, <Resource>, <Assignment>, <Calendar>…
+            if nome == "Task":
+                t = ET.Element(Q + "Task")
+                for filho in el:
+                    n = filho.tag.replace(Q, "")
+                    if n not in _TAREFA:
+                        continue
+                    if n == "Baseline":
+                        if _txt(filho, "Number") not in ("", "0"):
+                            continue
+                        lb = ET.SubElement(t, Q + "Baseline")
+                        for x in filho:
+                            if x.tag.replace(Q, "") in _LINHA_BASE:
+                                lb.append(x)
+                        continue
+                    t.append(filho)
+                if tarefas is None:
+                    tarefas = ET.SubElement(nova, Q + "Tasks")
+                tarefas.append(t)
+            el.clear()
+    if tarefas is None or not len(tarefas):
+        raise ErroCronograma("Nenhuma tarefa encontrada no arquivo.")
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + ET.tostring(nova, encoding="unicode")
 
 
 def ler_arquivo(nome: str, dados: bytes) -> str:
@@ -80,7 +138,10 @@ def ler_arquivo(nome: str, dados: bytes) -> str:
     if ext == ".mpp":
         xml = mpp_para_xml(dados)
     elif ext == ".xml":
-        xml = dados.decode("utf-8-sig", errors="replace")
+        try:
+            xml = enxugar_xml(io.BytesIO(dados))
+        except ET.ParseError as e:
+            raise ErroCronograma("O arquivo não é um XML válido.") from e
     else:
         raise ErroCronograma("Envie o cronograma em .mpp ou em .xml salvo pelo MS Project.")
     Projeto(xml, nome)  # valida

@@ -219,3 +219,16 @@ def remover_custos(usuario_id: int) -> None:
 def medicao_fechada(usuario_id: int, mid: int):
     with conectar() as con:
         return con.execute("SELECT * FROM medicoes_fechadas WHERE usuario_id=? AND id=?", (usuario_id, mid)).fetchone()
+
+
+def cronogramas_grandes():
+    """(usuario_id) dos cronogramas gravados com recursos/atribuições/calendários (antes do XML enxuto)."""
+    with conectar() as con:
+        return [r[0] for r in con.execute(
+            "SELECT usuario_id FROM cronogramas WHERE instr(xml, '<Assignments') > 0 OR instr(xml, '<Resources') > 0 "
+            "OR instr(xml, '<Calendars') > 0").fetchall()]
+
+
+def trocar_xml(usuario_id: int, xml: str) -> None:
+    with conectar() as con:
+        con.execute("UPDATE cronogramas SET xml = ? WHERE usuario_id = ?", (xml, usuario_id))
