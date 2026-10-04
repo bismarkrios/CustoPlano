@@ -393,6 +393,26 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .torre-sel button{min-height:34px;padding:0 14px;border:1px solid var(--line);border-radius:17px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .torre-sel button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .pa-torre{font-size:15px;font-weight:700;margin:0}
+.pa-parte{display:flex;flex-direction:column;gap:10px}
+@media print{
+  @page{size:A4 landscape;margin:8mm}
+  body.imp-pa{background:#fff}
+  body.imp-pa .side,body.imp-pa .app-top,body.imp-pa .app-head p,body.imp-pa .app-body>.grid4,body.imp-pa .torre-sel,body.imp-pa .app-body>p,body.imp-pa .pa-parte>p,body.imp-pa .prj-bar>:not(:first-child),body.imp-pa .note{display:none!important}
+  body.imp-pa .app{display:block}
+  body.imp-pa .app-body{padding:0}
+  body.imp-pa .app-head h1{font-size:18px;margin:0}
+  body.imp-pa .card{border:0;box-shadow:none;padding:0}
+  body.imp-pa .pa-parte+.pa-parte{break-before:page}
+  body.imp-pa .pa-box,body.imp-pa .scroll-x{overflow:visible;max-height:none}
+  body.imp-pa .pa{font-size:10.5px;width:100%}
+  body.imp-pa .pa th.pa-row{padding:0 6px}
+  body.imp-pa .pa thead th{position:static}
+  body.imp-pa .pa th.pa-row{position:static}
+  body.imp-pa .pa-svc{min-width:0;width:auto;height:auto;max-height:80px;font-size:10px;padding:4px}
+  body.imp-pa .pa td.c{min-width:0;height:26px;padding:2px}
+  body.imp-pa .pa-chart{min-width:0!important;max-width:100%!important}
+  body.imp-pa *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 .sup-tbl th{white-space:nowrap}
 .sup-tbl td,.sup-tbl th{padding-inline:10px}
 .sup-tbl .btn-sm{padding:0 10px;font-size:13px;min-height:34px}
@@ -536,6 +556,35 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .med-step{min-width:58px;min-height:50px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--ink);font:inherit;font-weight:700;font-size:17px;cursor:pointer;touch-action:manipulation}
 .med-in{flex:1;min-width:0;width:100%;min-height:50px;font-family:var(--mono);font-size:22px;font-weight:600;text-align:center;padding:4px 8px}
 .med-pc{font-family:var(--mono);font-size:16px;color:var(--muted)}
+/* medição em linhas */
+.ml-list{padding:0;overflow:hidden}
+.ml-head,.ml-row{display:grid;grid-template-columns:minmax(200px,2.4fr) 72px 72px 104px minmax(80px,1fr) 176px 220px;gap:12px;align-items:center;padding:8px 14px}
+.ml-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
+.ml-row{border-bottom:1px solid var(--line);border-left:4px solid transparent}
+.ml-row.changed{border-left-color:var(--blue);background:color-mix(in srgb,var(--blue) 5%,var(--surface))}
+.ml-grp{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 14px 6px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ml-nome{display:flex;flex-direction:column;min-width:0}
+.ml-nome b{font-weight:600;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
+.ml-nome span{font-size:11px;color:var(--muted)}
+.ml-nome em{font-style:normal;color:var(--bad);font-weight:600}
+.ml-num,.ml-dt{font-size:13px}
+.ml-ctl{display:flex;align-items:center;gap:4px}
+.ml-step{min-width:42px;min-height:38px;border:1px solid var(--line);border-radius:6px;background:var(--soft);color:var(--ink);font:inherit;font-weight:700;font-size:14px;cursor:pointer;touch-action:manipulation}
+.ml-in{width:58px;min-height:38px;font-family:var(--mono);font-size:16px;font-weight:600;text-align:center;padding:2px 4px}
+.ml-quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.ml-quick button{min-height:34px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:11.5px;font-weight:600;cursor:pointer;padding:0 2px;touch-action:manipulation}
+.ml-quick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+@media (max-width:1100px){
+  .ml-head{display:none}
+  .ml-row{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px 8px;padding:8px 12px}
+  .ml-nome,.ml-bar{grid-column:1/-1}
+  .ml-num,.ml-dt{grid-column:span 2;font-size:12px;white-space:nowrap}
+  .ml-num::before,.ml-dt::before{content:attr(data-l) " ";color:var(--muted);font-size:10.5px}
+  .ml-dt::before{content:""}
+  .ml-ctl,.ml-quick{grid-column:span 3}
+  .ml-ctl .ml-step{min-height:40px;min-width:0;flex:0 0 40px;font-size:13px}.ml-ctl .ml-in{flex:1;min-width:0;width:auto;min-height:40px}
+  .ml-quick{gap:3px}.ml-quick button{min-height:40px;font-size:10.5px}
+}
 .med-quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .med-quick button{min-height:42px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
 .med-quick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
@@ -2054,6 +2103,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<div class="tabs" role="group" aria-label="Visualização">' + tab('matriz', 'Matriz') + tab('grafico', 'Gráfico') + '</div>' +
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
       (baseD ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(baseD.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
+      '<button type="button" class="btn btn-ghost btn-sm" data-a="paimp">Imprimir escadinha</button>' +
       (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
       (D.origem === 'project' || contaReal() ? '' : '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
       (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '')) +
@@ -2064,7 +2114,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       (TW.length > 1 ? '<button type="button" class="linkbtn" data-a="pat:*" style="font-size:13px">Ver todas</button>' : '') + '</div>' : '';
     var main = '<section class="card" style="display:flex;flex-direction:column;gap:12px' + (S.pa.view === 'matriz' ? ';padding-bottom:0' : '') + '">' + bar + tsel +
       partes.map(function (q) {
-        return (q.tw && q.tw.nome ? '<h3 class="pa-torre">' + esc(q.tw.nome) + '</h3>' : '') + (S.pa.view === 'matriz' ? vPAMatriz(q.D, q.M, q.G) : vPAGrafico(q.D, q.M, q.G));
+        return '<div class="pa-parte">' + (q.tw && q.tw.nome ? '<h3 class="pa-torre">' + esc(q.tw.nome) + '</h3>' : '') + (S.pa.view === 'matriz' ? vPAMatriz(q.D, q.M, q.G) : vPAGrafico(q.D, q.M, q.G)) + '</div>';
       }).join('') + '</section>';
 
     var extras = '';
@@ -2157,18 +2207,20 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var grupo = null, itens = '';
     lista.slice(0, LIM).forEach(function (t) {
       var g = [t.parent && t.parent.parent ? t.parent.parent.name : '', t.parent ? t.parent.name : ''].filter(Boolean).join(' › ');
-      if (g !== grupo) { grupo = g; itens += '<div class="med-grp">' + esc(g || 'Tarefas') + '</div>'; }
+      if (g !== grupo) { grupo = g; itens += '<div class="ml-grp">' + esc(g || 'Tarefas') + '</div>'; }
       var a = Math.round(P.meas[t.uid] || 0), pp = plannedPct(t, P.statusDate), ant = Math.round(P.base[t.uid] || 0);
       var atras = pp - a > 0.5;
       var q5 = [0, 25, 50, 75, 100].map(function (v) { return '<button type="button" data-a="mset:' + t.uid + ':' + v + '" aria-pressed="' + (a === v) + '">' + v + '%</button>'; }).join('');
-      itens += '<div class="med-item' + (a !== ant ? ' changed' : '') + '">' +
-        '<div class="med-top"><span class="med-name">' + esc(t.name) + '</span><span class="mono med-wbs">' + esc(t.wbs) + '</span></div>' +
-        '<div class="med-info"><span>Previsto <b>' + fmt1(pp) + '%</b></span><span>Anterior <b>' + ant + '%</b></span><span>' + fdate(t.start).slice(0, 5) + ' → ' + fdate(t.finish).slice(0, 5) + '</span>' + (atras ? '<span class="chip c-bad">abaixo do previsto</span>' : '') + '</div>' +
-        '<div class="med-bar" aria-hidden="true"><i style="width:' + a + '%"></i><b style="left:' + Math.min(100, pp) + '%"></b></div>' +
-        '<div class="med-ctl"><button type="button" class="med-step" data-a="mstep:' + t.uid + ':-10" aria-label="Menos 10%">−10</button>' +
-        '<input class="med-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + a + '" aria-label="% concluído: ' + esc(t.name) + '"><span class="med-pc">%</span>' +
-        '<button type="button" class="med-step" data-a="mstep:' + t.uid + ':10" aria-label="Mais 10%">+10</button></div>' +
-        '<div class="med-quick" role="group" aria-label="Percentuais rápidos">' + q5 + '</div></div>';
+      itens += '<div class="ml-row' + (a !== ant ? ' changed' : '') + '">' +
+        '<div class="ml-nome"><b>' + esc(t.name) + '</b><span class="mono">' + esc(t.wbs) + (atras ? ' · <em>abaixo do previsto</em>' : '') + '</span></div>' +
+        '<div class="ml-num mono" data-l="Previsto">' + fmt1(pp) + '%</div>' +
+        '<div class="ml-num mono" data-l="Anterior">' + ant + '%</div>' +
+        '<div class="ml-dt mono" data-l="Período">' + fdate(t.start).slice(0, 5) + ' → ' + fdate(t.finish).slice(0, 5) + '</div>' +
+        '<div class="ml-bar med-bar" aria-hidden="true"><i style="width:' + a + '%"></i><b style="left:' + Math.min(100, pp) + '%"></b></div>' +
+        '<div class="ml-ctl"><button type="button" class="ml-step" data-a="mstep:' + t.uid + ':-10" aria-label="Menos 10%">−10</button>' +
+        '<input class="ml-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + a + '" aria-label="% concluído: ' + esc(t.name) + '"><span class="med-pc">%</span>' +
+        '<button type="button" class="ml-step" data-a="mstep:' + t.uid + ':10" aria-label="Mais 10%">+10</button></div>' +
+        '<div class="ml-quick" role="group" aria-label="Percentuais rápidos">' + q5 + '</div></div>';
     });
     var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' · ' + n + '</button>'; };
     return '<section class="card med-head">' +
@@ -2183,7 +2235,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '</section>' +
-      '<div class="med-list">' + (itens || '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</div>' +
+      '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Período</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
       (API ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
@@ -2982,6 +3034,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         return;
       case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; S.pa.rolar = true; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;
+      case 'paimp':
+        document.body.classList.add('imp-pa');
+        var fimImp = function () { document.body.classList.remove('imp-pa'); window.removeEventListener('afterprint', fimImp); };
+        window.addEventListener('afterprint', fimImp);
+        window.print(); return;
       case 'pat':
         var TWs = (PA && PA.torres) || [];
         if (a[1] === '*') S.pa.torres = TWs.map(function (t) { return t.nome; });
