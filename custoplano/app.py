@@ -136,6 +136,13 @@ def erro(msg: str, codigo: int = 400):
     return jsonify(erro=msg), codigo
 
 
+@app.errorhandler(ValueError)
+@app.errorhandler(TypeError)
+def dados_invalidos(_e):
+    """Número, data ou id em formato errado vindo do navegador: responde 400, nunca 500."""
+    return erro("Dados inválidos.")
+
+
 def para_data(ms_ou_iso) -> dt.datetime:
     if isinstance(ms_ou_iso, (int, float)):
         return dt.datetime.fromtimestamp(ms_ou_iso / 1000, dt.timezone.utc).replace(tzinfo=None, hour=17, minute=0)

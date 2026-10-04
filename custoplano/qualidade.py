@@ -405,14 +405,15 @@ def salvar_nc(uid: int, d: dict) -> None:
             if status == "fechada" and not campos["acao"]:
                 raise ErroQualidade("Para fechar, descreva a ação corretiva executada.")
             sets = ", ".join(f"{k}=?" for k in campos)
-            con.execute(f"UPDATE ncs SET {sets}, fechada_em=?, atualizado_em=? WHERE id=? AND usuario_id=?",
-                        (*campos.values(), fechada, _agora(), int(d["id"]), uid))
+            con.execute(  # sql-seguro: nomes de coluna fixos no código, valores por parâmetro
+                f"UPDATE ncs SET {sets}, fechada_em=?, atualizado_em=? WHERE id=? AND usuario_id=?",
+                (*campos.values(), fechada, _agora(), int(d["id"]), uid))
         else:
             if not desc:
                 raise ErroQualidade("Descreva a não conformidade.")
             if cid and con.execute("SELECT 1 FROM ncs WHERE usuario_id=? AND cid=?", (uid, cid)).fetchone():
                 return
-            con.execute(
+            con.execute(  # sql-seguro: nomes de coluna fixos no código, valores por parâmetro
                 f"""INSERT INTO ncs (usuario_id, cid, numero, origem, {', '.join(campos)}, fechada_em, criado_em, atualizado_em)
                     VALUES (?,?,?,?,{','.join('?' * len(campos))},?,?,?)""",
                 (uid, cid, _proximo_nc(con, uid), str(d.get("origem") or "Obra")[:30], *campos.values(),
