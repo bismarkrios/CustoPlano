@@ -267,7 +267,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .weeknav .iconbtn:disabled{opacity:.35;cursor:default}
 .weeknav .linkbtn{font-size:13.5px;padding:6px 4px}
 .demo-tag.alt{border-style:solid;border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 16%,transparent)}
-.app.real [data-a="nav:sup"],.app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
+.app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
 .app.real .obra-nome{display:inline}
 .demo-tag{font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px dashed var(--line);padding:4px 8px;border-radius:4px}
@@ -381,6 +381,18 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .steps4 b{width:14px;height:2px;background:var(--line)}
 .steps4 b.on{background:var(--ink)}
 .sup-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sup-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sup-bar #supQ{flex:1 1 220px;width:auto;min-height:40px;padding:6px 12px}
+.sup-tbl input{min-height:34px;padding:2px 8px;font:inherit;font-size:13px}
+.sup-tbl input.sup-lead{width:62px;text-align:right;font-family:var(--mono)}
+.sup-tbl input.sup-forn{width:150px}
+.sup-nome{display:flex;flex-direction:column;min-width:0}
+.sup-nome b{font-weight:600}
+.sup-nome span{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.torre-sel{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.torre-sel button{min-height:34px;padding:0 14px;border:1px solid var(--line);border-radius:17px;background:var(--surface);color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.torre-sel button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.pa-torre{font-size:15px;font-weight:700;margin:0}
 .sup-tbl th{white-space:nowrap}
 .sup-tbl td,.sup-tbl th{padding-inline:10px}
 .sup-tbl .btn-sm{padding:0 10px;font-size:13px;min-height:34px}
@@ -490,13 +502,22 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 @media (max-width:700px){.cu-form{grid-template-columns:1fr 1fr}.cu-form .w2{grid-column:1/-1}}
 
 /* Medição pelo celular */
-.med-head{display:flex;flex-direction:column;gap:12px}
+.med-head{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
+.med-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(170px,auto);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.med-sum>div{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 12px;border-left:1px solid var(--line);min-width:0}
+.med-sum>div:first-child{border-left:0}
+.med-sum b{font-size:20px;font-weight:600;line-height:1.15}
+.med-sum .med-sd input{min-height:34px;padding:2px 8px;width:100%}
+.med-filt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.med-filt .med-tabs{flex:1 1 320px;width:auto}
+.med-filt #medQ{flex:1 1 220px;width:auto;min-height:42px}
+@media (max-width:560px){.med-sum{grid-template-columns:repeat(3,minmax(0,1fr))}.med-sum .med-sd{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);flex-direction:row;align-items:center;justify-content:space-between}.med-sum .med-sd input{width:auto}}
 .med-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .med-kpi div{display:flex;flex-direction:column}
 .med-kpi b{font-size:22px;font-weight:600}
 .med-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .med-row input{width:auto;min-height:44px;padding:4px 10px}
-.med-sync{font-size:13px;color:var(--muted);margin:0}
+.med-sync{font-size:12px;color:var(--muted);margin:0}
 .med-sync.off{color:var(--bad);font-weight:600}
 .med-tabs{display:flex;width:100%}.med-tabs button{flex:1;min-height:42px;padding:0 4px;font-size:13px;white-space:nowrap}
 #medQ{min-height:46px;width:100%;padding:6px 12px}
@@ -1159,6 +1180,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   var HEADS_REAL = {
     painel: ['Painel da obra', 'Prazo, avanço físico e custos, tudo calculado a partir do cronograma importado.'],
     cus: ['Custos', 'Orçamento, cronograma físico-financeiro e custo orçado × realizado, a partir das colunas de custo do cronograma.'],
+    sup: ['Suprimentos', 'Compras puxadas pelas linhas resumo do cronograma: a data de início de cada linha resumo menos o prazo do fornecedor.'],
     cp: ['Planejamento de curto prazo', 'Tarefas do cronograma nas próximas três semanas, o que ainda falta para liberar cada uma e o PPC da semana passada.']
   };
   var HEADS = {
@@ -1749,7 +1771,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     /* exemplo gerado a partir da obra de demonstração: 1 pavimento por semana por serviço */
     var iso = function (ms) { return new Date(ms).toISOString().slice(0, 10); };
     var pavs = [], bpavs = [];
-    for (var f = FLOORS; f >= 1; f--) {
+    for (var f = 1; f <= FLOORS; f++) {
       var ds = [], ok = [], bs = [];
       SERV.forEach(function (s) {
         var wk = s.lag + f, st = status(s.id + '-' + f, wk);
@@ -1793,7 +1815,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         return c;
       });
     });
-    return { db: db, rows: rows, tot: tot, ok: ok, prev: prev, prevOk: prevOk, late: late, dvMed: dvN ? dvS / dvN : null, months: Object.keys(months).map(Number).sort(function (a, b) { return a - b; }) };
+    return { db: db, rows: rows, tot: tot, ok: ok, prev: prev, prevOk: prevOk, late: late, dvS: dvS, dvN: dvN, dvMed: dvN ? dvS / dvN : null, months: Object.keys(months).map(Number).sort(function (a, b) { return a - b; }) };
   }
   function paMonthCls(ms) { var d = new Date(ms); return 'm' + ((d.getUTCFullYear() * 12 + d.getUTCMonth()) % 6); }
   function paMonthLab(k) { return MES[k % 12] + '/' + String(Math.floor(k / 12)).slice(2); }
@@ -1814,17 +1836,18 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     box.scrollLeft += (R - L <= livre ? (L + R) / 2 - (b.left + fixo + livre / 2) : L - (b.left + fixo) - 8);
   }
 
-  function vPAMatriz(D, M) {
+  function vPAMatriz(D, M, G) {
+    var gi = function (i) { return G ? G[i] : i; };
     var A = D.atual, hl = S.pa.hl, cmp = S.pa.cmp && D.base;
     var head = '<tr><th scope="col" class="pa-row">Pavimento</th>' + A.servicos.map(function (s, i) {
       var t = s.nome + (s.fornecedor ? ' · ' + s.fornecedor : '');
-      return '<th scope="col"><button type="button" class="pa-svc" data-a="pah:' + i + '" aria-pressed="' + (hl === i) + '" title="' + esc(t) + ' — clique para destacar">' + esc(s.nome) + '</button></th>';
+      return '<th scope="col"><button type="button" class="pa-svc" data-a="pah:' + gi(i) + '" aria-pressed="' + (hl === gi(i)) + '" title="' + esc(t) + ' — clique para destacar">' + esc(s.nome) + '</button></th>';
     }).join('') + '</tr>';
     var temCiclo = A.servicos.some(function (s) { return s.ciclo != null; });
     if (temCiclo) head += '<tr class="pa-ciclo"><th scope="row" class="pa-row">Ciclo (dias)</th>' + A.servicos.map(function (s) { return '<th>' + (s.ciclo != null ? fmt1(s.ciclo) : '—') + '</th>'; }).join('') + '</tr>';
     var body = A.pavimentos.map(function (p, r) {
       return '<tr><th scope="row" class="pa-row">' + esc(p.rotulo) + '</th>' + M.rows[r].map(function (c, i) {
-        var on = hl === i ? ' on' : '';
+        var on = hl === gi(i) ? ' on' : '';
         if (!c) return '<td class="c' + on + '"></td>';
         var cls = c.st === 'prev' ? paMonthCls(c.d) : c.st;
         var tip = A.servicos[i].nome + ' — ' + p.rotulo + ': ' + fdate(c.d) + ' · ' + PA_ST[c.st] + (c.lb != null ? ' · linha de base ' + fdate(c.lb) + ' (' + sdias(c.dv) + ')' : '');
@@ -1834,10 +1857,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     }).join('');
     var legend = '<div class="legend-row pa-legend"><span><i style="background:var(--good);border-color:var(--good)"></i>Executado</span><span><i style="background:var(--bad-bg);border:2px solid var(--bad)"></i>Atrasado (data até a data base, sem “ok”)</span>' +
       M.months.map(function (k) { return '<span><i class="pa-m" style="background:color-mix(in srgb,var(--pa' + (k % 6) + ') ' + [34, 34, 40, 34, 34, 45][k % 6] + '%,var(--surface))"></i>' + paMonthLab(k) + '</span>'; }).join('') + '</div>';
-    return legend + '<div class="pa-box"><table class="pa' + (hl >= 0 ? ' hl' : '') + '" aria-label="Plano de ataque: data de cada serviço por pavimento"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
+    return legend + '<div class="pa-box"><table class="pa' + (hl >= 0 && A.servicos.some(function (_, i) { return gi(i) === hl; }) ? ' hl' : '') + '" aria-label="Plano de ataque: data de cada serviço por pavimento"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>';
   }
 
-  function vPAGrafico(D, M) {
+  function vPAGrafico(D, M, G) {
+    var gi = function (i) { return G ? G[i] : i; };
     var A = D.atual, hl = S.pa.hl, cmp = S.pa.cmp && D.base;
     var cores = ['#3D6A99', '#B5654A', '#5B8C6E', '#7A5BA6', '#C98A1E', '#2A8A83', '#B25D86', '#5E6485'];
     var pavs = A.pavimentos.map(function (p, r) { return { p: p, r: r }; }).sort(function (a, b) { return a.p.n - b.p.n; });
@@ -1850,7 +1874,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var W = L + nM * MW + 20, H = TOP + pavs.length * RH + 30;
     var X = function (ms) { return L + (ms - lo) / (hi - lo) * nM * MW; };
     var Y = function (k) { return TOP + (pavs.length - 1 - k) * RH + RH / 2; };
-    var g = '<svg class="pa-chart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;min-width:' + Math.min(W, 640) + 'px;height:auto;display:block" role="img" aria-label="Linha de balanço do plano de ataque: data de cada serviço por pavimento">';
+    var g = '<svg class="pa-chart" viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;max-width:' + Math.round(W * 1.3) + 'px;min-width:' + Math.min(W, 640) + 'px;height:auto;display:block" role="img" aria-label="Linha de balanço do plano de ataque: data de cada serviço por pavimento">';
     pavs.forEach(function (o, k) {
       if (k % 2 === 0) g += '<rect x="' + L + '" y="' + (TOP + (pavs.length - 1 - k) * RH) + '" width="' + (nM * MW) + '" height="' + RH + '" style="fill:var(--soft)"></rect>';
       g += '<text x="' + (L - 8) + '" y="' + (Y(k) + 4) + '" text-anchor="end">' + esc(o.p.rotulo) + '</text>';
@@ -1863,21 +1887,21 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (M.db != null && M.db >= lo && M.db <= hi) g += '<line x1="' + X(M.db) + '" x2="' + X(M.db) + '" y1="' + (TOP - 12) + '" y2="' + (TOP + pavs.length * RH) + '" style="stroke:var(--ink);stroke-width:2;stroke-dasharray:4 3"></line><text x="' + (X(M.db) + 4) + '" y="' + (TOP - 6) + '" style="fill:var(--ink);font-weight:600">Data base ' + fdate(M.db) + '</text>';
     var lines = '', pts = '';
     A.servicos.forEach(function (s, i) {
-      var cor = cores[i % cores.length], dim = hl >= 0 && hl !== i, op = dim ? 0.12 : 1;
+      var cor = cores[i % cores.length], dim = hl >= 0 && hl !== gi(i), op = dim ? 0.12 : 1;
       var seq = pavs.map(function (o, k) { return { c: M.rows[o.r][i], k: k, p: o.p }; }).filter(function (q) { return q.c; });
       if (!seq.length) return;
       if (cmp && (!dim || hl < 0)) {
         var bs = seq.filter(function (q) { return q.c.lb != null; });
-        if (bs.length > 1) lines += '<path d="' + bs.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.lb).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + (hl === i ? cor : 'var(--muted)') + ';stroke-width:1.5;stroke-dasharray:5 4;opacity:' + (hl === i ? 0.9 : 0.35) + '"></path>';
+        if (bs.length > 1) lines += '<path d="' + bs.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.lb).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + (hl === gi(i) ? cor : 'var(--muted)') + ';stroke-width:1.5;stroke-dasharray:5 4;opacity:' + (hl === gi(i) ? 0.9 : 0.35) + '"></path>';
       }
-      lines += '<path' + (hl === i ? ' class="pa-hl-linha"' : '') + ' d="' + seq.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.d).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + cor + ';stroke-width:' + (hl === i ? 3 : 1.8) + ';opacity:' + op + '"></path>';
+      lines += '<path' + (hl === gi(i) ? ' class="pa-hl-linha"' : '') + ' d="' + seq.map(function (q, n) { return (n ? 'L' : 'M') + X(q.c.d).toFixed(1) + ' ' + Y(q.k); }).join(' ') + '" style="fill:none;stroke:' + cor + ';stroke-width:' + (hl === gi(i) ? 3 : 1.8) + ';opacity:' + op + '"></path>';
       if (dim) return;
       seq.forEach(function (q) {
         var c = q.c, tip = s.nome + ' — ' + q.p.rotulo + ': ' + fdate(c.d) + ' · ' + PA_ST[c.st] + (c.lb != null ? ' · LB ' + fdate(c.lb) + ' (' + sdias(c.dv) + ')' : '');
         var st = c.st === 'ok' ? 'fill:' + cor + ';stroke:' + cor : c.st === 'late' ? 'fill:var(--surface);stroke:var(--bad);stroke-width:2.5' : 'fill:var(--surface);stroke:' + cor + ';stroke-width:1.5';
-        pts += '<circle class="pt" data-a="pah:' + i + '" cx="' + X(c.d).toFixed(1) + '" cy="' + Y(q.k) + '" r="' + (hl === i ? 5 : 3.5) + '" style="' + st + '"><title>' + esc(tip) + '</title></circle>';
+        pts += '<circle class="pt" data-a="pah:' + gi(i) + '" cx="' + X(c.d).toFixed(1) + '" cy="' + Y(q.k) + '" r="' + (hl === gi(i) ? 5 : 3.5) + '" style="' + st + '"><title>' + esc(tip) + '</title></circle>';
       });
-      if (hl === i) {
+      if (hl === gi(i)) {
         var top = seq[seq.length - 1], tx = X(top.c.d), tw = s.nome.length * 7.6, dir = tx + 8 + tw <= W - 4;
         pts += '<text class="pa-hl-nome" x="' + (dir ? tx + 8 : tx - 8) + '" y="' + Math.max(12, Y(top.k) - 6) + '" text-anchor="' + (dir ? 'start' : 'end') + '" style="fill:' + cor + ';font-weight:700;font-size:12px">' + esc(s.nome) + '</text>';
       }
@@ -1992,40 +2016,55 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '') + '</section>';
   }
   function vPA() {
-    var D = PA || paDemo(), M = paModel(D), A = D.atual;
+    var D0 = PA || paDemo(), TW = D0.torres && D0.torres.length ? D0.torres : null;
+    if (TW) {
+      S.pa.torres = (S.pa.torres || []).filter(function (n) { return TW.some(function (t) { return t.nome === n; }); });
+      if (!S.pa.torres.length) S.pa.torres = [TW[0].nome];
+    }
+    // uma escadinha por torre escolhida; os serviços de todas entram numa lista só para destacar o mesmo serviço em todas
+    var U = [], uk = {};
+    var partes = (TW ? TW.filter(function (t) { return S.pa.torres.indexOf(t.nome) >= 0; }) : [null]).map(function (tw) {
+      var Dt = tw ? Object.assign({}, D0, { atual: tw.atual, base: tw.base }) : D0;
+      var G = Dt.atual.servicos.map(function (s) { var k = nkey(s.nome); if (!(k in uk)) { uk[k] = U.length; U.push(s); } return uk[k]; });
+      return { tw: tw, D: Dt, M: paModel(Dt), G: G };
+    });
+    var D = partes[0].D, M = { db: partes[0].M.db, tot: 0, ok: 0, prev: 0, prevOk: 0, late: 0, dvS: 0, dvN: 0 };
+    partes.forEach(function (q) { ['tot', 'ok', 'prev', 'prevOk', 'late', 'dvS', 'dvN'].forEach(function (k) { M[k] += q.M[k]; }); });
+    M.dvMed = M.dvN ? M.dvS / M.dvN : null;
+    var baseD = (partes.filter(function (q) { return q.D.base; })[0] || {}).D;
+    var nPav = Math.max.apply(null, partes.map(function (q) { return q.D.atual.pavimentos.length; }));
     var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
     var t = D.termino;
     var k4 = t && t.atual
       ? '<div class="card"><div class="kpi-t">Término da obra</div><div class="kpi-v" style="font-size:24px">' + fdate(dms(t.atual)) + '</div><div class="kpi-s">linha de base ' + fdate(dms(t.lb)) + ' · <b style="color:' + (t.var > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(t.var) + '</b></div></div>'
-      : '<div class="card"><div class="kpi-t">Desvio médio contra a linha de base</div><div class="kpi-v" style="color:' + (M.dvMed > 0 ? 'var(--bad)' : 'var(--good)') + '">' + (M.dvMed == null ? '—' : sdias(Math.round(M.dvMed))) + '</div><div class="kpi-s">' + (D.base ? 'média dos pacotes com data na linha de base' : 'a planilha não tem linha de base') + '</div></div>';
+      : '<div class="card"><div class="kpi-t">Desvio médio contra a linha de base</div><div class="kpi-v" style="color:' + (M.dvMed > 0 ? 'var(--bad)' : 'var(--good)') + '">' + (M.dvMed == null ? '—' : sdias(Math.round(M.dvMed))) + '</div><div class="kpi-s">' + (baseD ? 'média dos pacotes com data na linha de base' : 'a planilha não tem linha de base') + '</div></div>';
     var kpis = '<div class="grid4">' +
       '<div class="card"><div class="kpi-t">Pacotes executados</div><div class="kpi-v">' + pc(M.ok, M.tot) + '</div><div class="kpi-s">' + M.ok + ' de ' + M.tot + ' pacotes (serviço × pavimento)</div><div class="bar" style="margin-top:8px"><i style="width:' + (M.tot ? M.prev / M.tot * 100 : 0) + '%;background:var(--line)"></i><i style="width:' + (M.tot ? M.ok / M.tot * 100 : 0) + '%;background:var(--accent)"></i></div></div>' +
       '<div class="card"><div class="kpi-t">Aderência até a data base</div><div class="kpi-v">' + pc(M.prevOk, M.prev) + '</div><div class="kpi-s">' + M.prevOk + ' de ' + M.prev + ' programados até ' + (M.db != null ? fdate(M.db) : '—') + '</div></div>' +
       '<div class="card"><div class="kpi-t">Pacotes atrasados</div><div class="kpi-v" style="color:' + (M.late ? 'var(--bad)' : 'var(--good)') + '">' + M.late + '</div><div class="kpi-s">data já passou e sem “ok”</div></div>' +
       k4 + '</div>';
 
-    var opts = '<option value="-1">Todos os serviços</option>' + A.servicos.map(function (s, i) { return '<option value="' + i + '"' + (S.pa.hl === i ? ' selected' : '') + '>' + esc(s.nome) + '</option>'; }).join('');
+    var opts = '<option value="-1">Todos os serviços</option>' + U.map(function (s, i) { return '<option value="' + i + '"' + (S.pa.hl === i ? ' selected' : '') + '>' + esc(s.nome) + '</option>'; }).join('');
     var tab = function (id, txt) { return '<button type="button" data-a="pav:' + id + '" aria-pressed="' + (S.pa.view === id) + '">' + txt + '</button>'; };
     var bar = '<div class="prj-bar">' +
-      '<span style="display:flex;flex-direction:column;flex:1 1 240px;min-width:0"><b style="font-size:15px">' + esc(D.titulo) + (D.demo ? ' <span class="chip c-muted">exemplo</span>' : '') + '</b><span style="font-size:12.5px;color:var(--muted)">' + (D.demo ? 'Importe a planilha da escadinha da sua obra (.xlsx).' : (D.origem === 'project' ? 'Do cronograma ' : '') + esc(D.arquivo) + ' · ' + A.pavimentos.length + ' pavimentos · ' + A.servicos.length + ' serviços') + ' · data base ' + (M.db != null ? fdate(M.db) : '—') + '</span></span>' +
+      '<span style="display:flex;flex-direction:column;flex:1 1 240px;min-width:0"><b style="font-size:15px">' + esc(D.titulo) + (D.demo ? ' <span class="chip c-muted">exemplo</span>' : '') + '</b><span style="font-size:12.5px;color:var(--muted)">' + (D.demo ? 'Importe a planilha da escadinha da sua obra (.xlsx).' : (D.origem === 'project' ? 'Do cronograma ' : '') + esc(D.arquivo) + (TW ? ' · ' + TW.length + ' torres' : '') + ' · ' + nPav + ' pavimentos · ' + U.length + ' serviços') + ' · data base ' + (M.db != null ? fdate(M.db) : '—') + '</span></span>' +
       '<div class="tabs" role="group" aria-label="Visualização">' + tab('matriz', 'Matriz') + tab('grafico', 'Gráfico') + '</div>' +
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
-      (D.base ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(D.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
+      (baseD ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(baseD.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
       (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
       (D.origem === 'project' || contaReal() ? '' : '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
       (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '')) +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
 
-    var main = '<section class="card" style="display:flex;flex-direction:column;gap:12px' + (S.pa.view === 'matriz' ? ';padding-bottom:0' : '') + '">' + bar +
-      (S.pa.view === 'matriz' ? vPAMatriz(D, M) : vPAGrafico(D, M)) + '</section>';
+    var tsel = TW ? '<div class="torre-sel" role="group" aria-label="Torres"><span class="kpi-t">Torres</span>' +
+      TW.map(function (t, i) { return '<button type="button" data-a="pat:' + i + '" aria-pressed="' + (S.pa.torres.indexOf(t.nome) >= 0) + '">' + esc(t.nome) + '</button>'; }).join('') +
+      (TW.length > 1 ? '<button type="button" class="linkbtn" data-a="pat:*" style="font-size:13px">Ver todas</button>' : '') + '</div>' : '';
+    var main = '<section class="card" style="display:flex;flex-direction:column;gap:12px' + (S.pa.view === 'matriz' ? ';padding-bottom:0' : '') + '">' + bar + tsel +
+      partes.map(function (q) {
+        return (q.tw && q.tw.nome ? '<h3 class="pa-torre">' + esc(q.tw.nome) + '</h3>' : '') + (S.pa.view === 'matriz' ? vPAMatriz(q.D, q.M, q.G) : vPAGrafico(q.D, q.M, q.G));
+      }).join('') + '</section>';
 
     var extras = '';
-    if (D.marcos && D.marcos.length) {
-      var dvc = function (n) { return n == null ? '—' : '<span style="color:' + (n > 0 ? 'var(--bad)' : 'var(--good)') + ';font-weight:600">' + sdias(n) + '</span>'; };
-      extras += '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>Controle de prazo · datas marco</h2></div><div class="scroll-x"><table class="tbl" style="min-width:560px"><thead><tr><th>Marco</th><th>Linha de base</th><th>Mês anterior</th><th>Atual</th><th style="text-align:right">Var. LB</th><th style="text-align:right">Var. mês</th></tr></thead><tbody>' +
-        D.marcos.map(function (m) { return '<tr><td style="font-weight:600">' + esc(m.nome) + '</td><td class="mono">' + fdate(dms(m.lb)) + '</td><td class="mono">' + fdate(dms(m.anterior)) + '</td><td class="mono">' + fdate(dms(m.atual)) + '</td><td class="mono" style="text-align:right">' + dvc(m.var_lb) + '</td><td class="mono" style="text-align:right">' + dvc(m.var_mes) + '</td></tr>'; }).join('') +
-        '</tbody></table></div></section>';
-    }
     if (D.metas && D.metas.length) {
       var p1 = function (v) { return v == null ? '—' : fmt1(v * 100) + '%'; };
       extras += '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>Meta trimestral · acumulado</h2></div><div class="scroll-x"><table class="tbl" style="min-width:420px"><thead><tr><th>Mês</th><th style="text-align:right">Real</th><th style="text-align:right">Meta</th><th style="text-align:right">IDP</th></tr></thead><tbody>' +
@@ -2130,12 +2169,16 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     });
     var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' · ' + n + '</button>'; };
     return '<section class="card med-head">' +
-        '<div class="med-kpi"><div><span class="kpi-t">Real</span><b class="mono">' + fmt1(real) + '%</b></div><div><span class="kpi-t">Previsto</span><b class="mono">' + fmt1(prev) + '%</b></div><div><span class="kpi-t">Desvio</span><b class="mono" style="color:' + (real - prev < -0.05 ? 'var(--bad)' : 'var(--good)') + '">' + (real - prev >= 0 ? '+' : '') + fmt1(real - prev) + '</b></div></div>' +
-        '<div class="med-row"><label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
+        '<div class="med-sum">' +
+          '<div><span class="kpi-t">Real</span><b class="mono">' + fmt1(real) + '%</b></div>' +
+          '<div><span class="kpi-t">Previsto</span><b class="mono">' + fmt1(prev) + '%</b></div>' +
+          '<div><span class="kpi-t">Desvio</span><b class="mono" style="color:' + (real - prev < -0.05 ? 'var(--bad)' : 'var(--good)') + '">' + (real - prev >= 0 ? '+' : '') + fmt1(real - prev) + '</b></div>' +
+          '<div class="med-sd"><label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
+        '</div>' +
+        '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
+        '<input id="medQ" type="search" placeholder="Buscar tarefa, EAP ou pavimento" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa"></div>' +
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
-        '<div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
-        '<input id="medQ" type="search" placeholder="Buscar tarefa, EAP ou pavimento" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
       '</section>' +
       '<div class="med-list">' + (itens || '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</div>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
@@ -2703,6 +2746,111 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       '<p style="font-size:12.5px;color:var(--muted)">“Comprar até” = data em que o pacote começa no cronograma menos o prazo de entrega do fornecedor. Datas e fornecedores de exemplo.</p>';
   }
 
+  /* ---------- Suprimentos da conta real: um pacote de compra por linha resumo do cronograma ---------- */
+  var SUPR = null, supCarregando = false;
+  S.supR = { f: 'todos', torre: '', q: '', msg: '' };
+  function loadSup() {
+    if (!API || supCarregando) return;
+    supCarregando = true;
+    api('/api/suprimentos').then(function (r) { SUPR = r.itens || {}; supCarregando = false; if (!app.hidden) render(); }, function () { supCarregando = false; });
+  }
+  function semAcento(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+  var TORRE_RX = /\b(torre|bloco|edificio|predio)(?:\s+|\s*[-–—:]\s*)(norte|sul|leste|oeste|central|(?!e\b)[a-z](?:\d{1,2})?|\d{1,3})\b/;
+  function torreDe(t) {
+    for (var a = t; a; a = a.parent) {
+      var m = TORRE_RX.exec(semAcento(a.name));
+      if (m) {
+        var w = m[1].charAt(0).toUpperCase() + m[1].slice(1);
+        w = { Edificio: 'Edifício', Predio: 'Prédio' }[w] || w;
+        return w + ' ' + (m[2].length === 1 || /\d$/.test(m[2]) ? m[2].toUpperCase() : m[2].charAt(0).toUpperCase() + m[2].slice(1));
+      }
+    }
+    return '';
+  }
+  function hojeReal() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function supRealModel() {
+    if (!P) return [];
+    if (SUPR == null) loadSup();
+    var A = aggregate(), hoje = hojeReal(), raizes = P.tasks.filter(function (t) { return !t.parent; });
+    var minL = Math.min.apply(null, P.tasks.map(function (t) { return t.lvl; }));
+    return P.tasks.filter(function (t) {
+      // só linhas resumo; a linha que resume a obra inteira fica de fora
+      return t.children.length && t.start != null && !(raizes.length === 1 && t === raizes[0]);
+    }).map(function (t) {
+      var sv = (SUPR && SUPR[t.uid]) || {}, lead = sv.lead != null ? sv.lead : 15, st = sv.st || 'solicitar';
+      var need = t.start, buy = need - lead * 864e5, dias = Math.round((buy - hoje) / 864e5);
+      var feito = aPct(A[t.uid], 'r') >= 99.5, risk;
+      if (st === 'entregue') risk = ['Entregue', 'c-ok', 'ok'];
+      else if (feito) risk = ['Pacote concluído', 'c-muted', 'ok'];
+      else if (st === 'pedido') risk = [need < hoje + 7 * 864e5 ? 'Entrega nesta semana' : 'Aguardando entrega', 'c-info', 'ok'];
+      else if (dias < 0) risk = ['Compra atrasada · ' + (-dias) + ' d', 'c-bad', 'late'];
+      else if (dias <= 7) risk = ['Comprar até ' + fdate(buy).slice(0, 5), 'c-warn', 'week'];
+      else risk = ['No prazo', 'c-muted', 'ok'];
+      return { t: t, uid: t.uid, nivel: t.lvl - minL - (raizes.length === 1 ? 1 : 0), lead: lead, forn: sv.forn || '', st: st, need: need, buy: buy, risk: risk, torre: torreDe(t) };
+    });
+  }
+  function supSalvar(uid, campos) {
+    SUPR = SUPR || {};
+    SUPR[uid] = Object.assign({}, SUPR[uid] || {}, campos);
+    S.supR.msg = '';
+    if (!API) return;
+    api('/api/suprimentos', Object.assign({ uid: uid }, campos)).then(function (r) { SUPR = r.itens || SUPR; }, function (e) { S.supR.msg = 'Não foi possível salvar: ' + e.message; render(); });
+  }
+  function vSupReal() {
+    if (!P) return semPrj('Suprimentos usa as linhas resumo do cronograma: cada linha resumo vira um pacote de compra, com a data de início dela como data de necessidade na obra. Importe o .mpp na tela Project.');
+    var R = S.supR, L = supRealModel(), torres = [];
+    L.forEach(function (i) { if (i.torre && torres.indexOf(i.torre) < 0) torres.push(i.torre); });
+    torres.sort(function (a, b) { return a.localeCompare(b, 'pt-BR', { numeric: true }); });
+    if (R.torre && torres.indexOf(R.torre) < 0) R.torre = '';
+    var B = L.filter(function (i) { return !R.torre || i.torre === R.torre; });
+    var late = B.filter(function (i) { return i.risk[2] === 'late'; }).length;
+    var week = B.filter(function (i) { return i.risk[2] === 'week'; }).length;
+    var done = B.filter(function (i) { return i.st === 'pedido' || i.st === 'entregue'; }).length;
+    var q = semAcento(R.q.trim());
+    var list = B.filter(function (i) {
+      if (R.f === 'late' && i.risk[2] !== 'late') return false;
+      if (R.f === 'week' && i.risk[2] !== 'week') return false;
+      if (R.f === 'ok' && i.st !== 'pedido' && i.st !== 'entregue') return false;
+      if (q && semAcento(i.t.wbs + ' ' + i.t.name + ' ' + (i.t.parent ? i.t.parent.name : '') + ' ' + i.forn).indexOf(q) < 0) return false;
+      return true;
+    });
+    var LIM = 200, mais = list.length - LIM;
+    var rows = list.slice(0, LIM).map(function (i) {
+      var idx = SUP_ST.indexOf(i.st), steps = '';
+      for (var k = 0; k < 4; k++) steps += (k ? '<b class="' + (k <= idx ? 'on' : '') + '"></b>' : '') + '<i class="' + (k <= idx ? 'on' : '') + '"></i>';
+      var acts = '';
+      if (i.st !== 'entregue') acts += '<button type="button" class="btn btn-ghost btn-sm" data-a="rsa:' + i.uid + '">' + (i.st === 'solicitar' ? 'Cotar' : i.st === 'cotacao' ? 'Emitir pedido' : 'Receber') + '</button>';
+      if (idx > 0) acts += '<button type="button" class="linkbtn" data-a="rsb:' + i.uid + '" style="font-size:12.5px" title="Voltar uma etapa">Desfazer</button>';
+      var pai = i.t.parent && i.nivel > 0 ? i.t.parent.name : '';
+      return '<tr><td><span class="sup-nome" style="padding-left:' + Math.min(Math.max(i.nivel, 0), 4) * 14 + 'px"><b>' + esc(i.t.name) + '</b><span>' + esc(i.t.wbs) + (pai ? ' · ' + esc(pai) : '') + '</span></span></td>' +
+        '<td><input class="sup-forn" type="text" maxlength="120" placeholder="Fornecedor" data-sup-forn="' + i.uid + '" value="' + esc(i.forn) + '" aria-label="Fornecedor: ' + esc(i.t.name) + '"></td>' +
+        '<td class="mono">' + fdate(i.need) + '</td>' +
+        '<td style="text-align:right;white-space:nowrap"><input class="sup-lead" type="number" min="0" max="365" inputmode="numeric" data-sup-lead="' + i.uid + '" value="' + i.lead + '" aria-label="Prazo do fornecedor em dias: ' + esc(i.t.name) + '"> d</td>' +
+        '<td class="mono" style="font-weight:600">' + fdate(i.buy) + '</td>' +
+        '<td><span style="display:flex;flex-direction:column;gap:6px"><span class="steps4" aria-hidden="true">' + steps + '</span><span style="font-size:12.5px">' + SUP_LAB[i.st] + '</span></span></td>' +
+        '<td><span class="chip ' + i.risk[1] + '">' + i.risk[0] + '</span></td>' +
+        '<td><div class="sup-actions">' + acts + '</div></td></tr>';
+    }).join('');
+    var tab = function (id, t, n) { return '<button type="button" data-a="rsf:' + id + '" aria-pressed="' + (R.f === id) + '">' + t + ' · ' + n + '</button>'; };
+    var tsel = torres.length ? '<div class="torre-sel" role="group" aria-label="Torre"><span class="kpi-t">Torre</span><button type="button" data-a="rst:" aria-pressed="' + !R.torre + '">Todas</button>' +
+      torres.map(function (t) { return '<button type="button" data-a="rst:' + esc(t) + '" aria-pressed="' + (R.torre === t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' : '';
+    return '<div class="grid4">' +
+        '<div class="card"><div class="kpi-t">Pacotes de compra</div><div class="kpi-v">' + B.length + '</div><div class="kpi-s">um por linha resumo do cronograma</div></div>' +
+        '<div class="card"><div class="kpi-t">Comprar nesta semana</div><div class="kpi-v">' + week + '</div><div class="kpi-s">data limite até ' + fdate(hojeReal() + 7 * 864e5) + '</div></div>' +
+        '<div class="card"><div class="kpi-t">Compras atrasadas</div><div class="kpi-v" style="color:' + (late ? 'var(--bad)' : 'var(--good)') + '">' + late + '</div><div class="kpi-s">risco de parar a produção</div></div>' +
+        '<div class="card"><div class="kpi-t">Pedidos emitidos ou entregues</div><div class="kpi-v">' + done + '</div><div class="bar" style="margin-top:8px"><i style="width:' + (B.length ? done / B.length * 100 : 0) + '%;background:var(--good)"></i></div></div>' +
+      '</div>' +
+      tsel +
+      '<div class="sup-bar"><div class="tabs" role="group" aria-label="Filtro de suprimentos">' + tab('todos', 'Todos', B.length) + tab('week', 'Comprar nesta semana', week) + tab('late', 'Atrasados', late) + tab('ok', 'Pedidos e entregas', done) + '</div>' +
+      '<input id="supQ" type="search" placeholder="Buscar pacote, EAP ou fornecedor" value="' + esc(R.q) + '" aria-label="Buscar pacote"></div>' +
+      (R.msg ? '<p class="note" role="status" style="margin:0">' + esc(R.msg) + '</p>' : '') +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl" style="min-width:1080px"><thead><tr>' +
+        '<th scope="col">Linha resumo do cronograma</th><th scope="col">Fornecedor</th><th scope="col">Na obra</th><th scope="col" style="text-align:right">Prazo</th><th scope="col">Comprar até</th><th scope="col">Etapa</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
+      '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="color:var(--muted);padding:24px 14px">Nenhum pacote neste filtro.</td></tr>') + '</tbody></table></div></section>' +
+      (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + list.length + ' pacotes. Use a busca ou a torre para achar os demais.</p>' : '') +
+      '<p style="font-size:12.5px;color:var(--muted)">Cada linha resumo do cronograma é um pacote de compra. “Na obra” é o início da linha resumo no cronograma importado; “Comprar até” é essa data menos o prazo do fornecedor (15 dias se você não mudar). Prazo, fornecedor e etapa ficam salvos na sua conta.</p>';
+  }
+
   function vCron(M) {
     var weeks = '';
     for (var w = 1; w <= T; w++) weeks += '<span class="' + (w === CUR ? 'cur' : '') + '">' + w + '</span>';
@@ -2739,7 +2887,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
-  var DEMO_TELAS = { sup: 1, cron: 1, lb: 1, res: 1 };
+  var DEMO_TELAS = { cron: 1, lb: 1, res: 1 };
   function contaReal() { return API && !!user && user !== 'demo@custoplano.com.br'; }
   function render() {
     var REAL = contaReal();
@@ -2768,8 +2916,8 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     tag.textContent = CUR === HOJE_W ? 'Dados de exemplo' : (CUR < HOJE_W ? 'Visualizando semana passada' : 'Simulando semana futura');
     tag.className = 'demo-tag plan-only' + (CUR === HOJE_W ? '' : ' alt');
     var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
-    document.getElementById('supCount').textContent = supModel().filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: vSup, cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
+    document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
+    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
@@ -2790,7 +2938,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (qClick(a, el)) return;
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
+      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -2806,6 +2954,12 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         if (kb && !kb.disabled) kb.focus(); else document.getElementById('wkSel').focus();
         return;
       case 'sf': S.supF = a[1]; break;
+      case 'rsf': S.supR.f = a[1]; break;
+      case 'rst': S.supR.torre = a.slice(1).join(':'); break;
+      case 'rsa': case 'rsb':
+        var su = supRealModel().filter(function (i) { return i.uid === a[1]; })[0];
+        if (su) supSalvar(su.uid, { st: SUP_ST[Math.max(0, Math.min(SUP_ST.indexOf(su.st) + (a[0] === 'rsa' ? 1 : -1), 3))] });
+        break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
       case 'cut': S.cu.tab = a[1]; break;
@@ -2825,6 +2979,15 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         return;
       case 'pah': var ih = parseInt(a[1], 10); S.pa.hl = S.pa.hl === ih ? -1 : ih; S.pa.rolar = true; break;
       case 'pacmp': S.pa.cmp = !S.pa.cmp; break;
+      case 'pat':
+        var TWs = (PA && PA.torres) || [];
+        if (a[1] === '*') S.pa.torres = TWs.map(function (t) { return t.nome; });
+        else if (TWs[+a[1]]) {
+          var nt = TWs[+a[1]].nome, jt = (S.pa.torres || []).indexOf(nt);
+          if (jt >= 0) { if (S.pa.torres.length > 1) S.pa.torres.splice(jt, 1); } else S.pa.torres = (S.pa.torres || []).concat([nt]);
+          S.pa.torres.sort(function (x, y) { return TWs.map(function (t) { return t.nome; }).indexOf(x) - TWs.map(function (t) { return t.nome; }).indexOf(y); });
+        }
+        S.pa.hl = -1; break;
       case 'pareset': PA = null; S.pa.hl = -1; S.pa.msg = ''; if (API) api('/api/plano/remover', {}).catch(function () {}); break;
       case 'pxlsx': if (precisaRede()) return; persist(true).then(function () { location.href = '/api/exportar/xlsx'; }); return;
       case 'ptg': P.open[a[1]] = !P.open[a[1]]; break;
@@ -2879,6 +3042,12 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       setTimeout(function () { var f = document.activeElement, fu = f && f.getAttribute ? f.getAttribute('data-meas') : null; render(); if (fu) { var el = body.querySelector('[data-meas="' + fu + '"]'); if (el) { el.focus(); el.select(); } } }, 0);
       return;
     }
+    if (e.target.hasAttribute && e.target.hasAttribute('data-sup-lead')) {
+      supSalvar(e.target.getAttribute('data-sup-lead'), { lead: Math.max(0, Math.min(365, Math.round(numv(e.target.value) || 0))) }); render(); return;
+    }
+    if (e.target.hasAttribute && e.target.hasAttribute('data-sup-forn')) {
+      supSalvar(e.target.getAttribute('data-sup-forn'), { forn: e.target.value.trim().slice(0, 120) }); render(); return;
+    }
     if (e.target.id === 'paHl') { S.pa.hl = parseInt(e.target.value, 10); S.pa.rolar = true; render(); var h2 = document.getElementById('paHl'); if (h2) h2.focus(); return; }
     if (e.target.id === 'pWeight') { P.weight = e.target.value; persist(); render(); return; }
     if (e.target.id === 'pSd') { var v2 = pdate(e.target.value + 'T17:00'); if (v2) { P.statusDate = v2; persist(); render(); } return; }
@@ -2898,6 +3067,11 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     if (e.key === 'Enter' && e.target.hasAttribute && e.target.hasAttribute('data-meas')) { e.preventDefault(); commitMeas(e.target, true); }
   });
   app.addEventListener('input', function (e) {
+    if (e.target.id === 'supQ') {
+      S.supR.q = e.target.value; render();
+      var q3 = document.getElementById('supQ'); if (q3) { q3.focus(); var n3 = q3.value.length; try { q3.setSelectionRange(n3, n3); } catch (er) {} }
+      return;
+    }
     if (e.target.id !== 'medQ') return;
     S.med.q = e.target.value; render();
     var q2 = document.getElementById('medQ'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} }

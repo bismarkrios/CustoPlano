@@ -358,16 +358,37 @@ def _sem_pavimento(nome: str, trecho) -> str:
     return s.strip()
 
 
+_TORRE = re.compile(r"\b(torre|bloco|edificio|predio)(?:\s+|\s*[-–—:]\s*)(norte|sul|leste|oeste|central|(?!e\b)[a-z](?:\d{1,2})?|\d{1,3})\b")
+
+
+def _sem_torre(nome: str) -> str:
+    m = _TORRE.search(_norm_igual(nome))
+    if not m:
+        return nome
+    s = (nome[:m.start()] + " " + nome[m.end():]).strip()
+    return re.sub(r"\s{2,}", " ", re.sub(r"^[\s\-–—:|/.,]+|[\s\-–—:|/.,(]+$", "", s)).strip()
+
+
+def achar_torre(nome: str) -> str | None:
+    """Procura a torre (ou bloco) no nome da tarefa. Devolve o rótulo, ex.: 'Torre A', 'Bloco 2'."""
+    m = _TORRE.search(_norm_igual(nome))
+    if not m:
+        return None
+    return m[1].capitalize().replace("Edificio", "Edifício").replace("Predio", "Prédio") + " " + (m[2].upper() if len(m[2]) == 1 or m[2][-1].isdigit() else m[2].capitalize())
+
+
 def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | None = None) -> dict | None:
     """Monta o plano de ataque (serviço × pavimento) a partir das tarefas do cronograma.
 
     Reconhece as duas formas usuais de montar a EAP: Serviço > Pavimento ou Pavimento > Serviço
     (o pavimento pode estar no nome da tarefa, ex.: 'Alvenaria 3º pav.', ou numa tarefa-resumo acima).
+    Quando a EAP separa torres (ou blocos), cada torre ganha a sua escadinha, do térreo ao último pavimento.
     """
     atual = atual or {}
-    celulas: dict[tuple[str, float], dict] = {}
+    celulas: dict[tuple[str, str, float], dict] = {}
     nomes: dict[str, str] = {}
-    ordem_serv: dict[str, dt.datetime] = {}
+    ordem_serv: dict[tuple[str, str], dt.datetime] = {}
+    ordem_torre: dict[str, dt.datetime] = {}
     for t in p.tarefas:
         if t.filhos or t.marco or not t.inicio:
             continue
@@ -384,43 +405,53 @@ def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | No
                 continue
             n = achado[0]
             servico = t.nome
+        servico = _sem_torre(servico) if servico else servico
         if not servico:
             continue
+        torre, a = None, t
+        while a is not None and not (torre := achar_torre(a.nome)):
+            a = a.pai
+        torre = torre or ""
         chave = norm(servico)
         nomes.setdefault(chave, servico)
-        c = celulas.setdefault((chave, n), {"ini": t.inicio, "lb": t.lb_inicio, "ok": True})
+        c = celulas.setdefault((torre, chave, n), {"ini": t.inicio, "lb": t.lb_inicio, "ok": True})
         c["ini"] = min(c["ini"], t.inicio)
         if t.lb_inicio:
             c["lb"] = min(c["lb"], t.lb_inicio) if c["lb"] else t.lb_inicio
         c["ok"] = c["ok"] and float(atual.get(t.uid, t.pct) or 0) >= 99.5
-        ordem_serv[chave] = min(ordem_serv.get(chave, t.inicio), t.inicio)
+        ordem_serv[(torre, chave)] = min(ordem_serv.get((torre, chave), t.inicio), t.inicio)
+        ordem_torre[torre] = min(ordem_torre.get(torre, t.inicio), t.inicio)
 
-    pavs = sorted({n for _, n in celulas})
-    # serviço que aparece em um pavimento só não forma escadinha
-    servs = [s for s in sorted(ordem_serv, key=lambda s: ordem_serv[s])
-             if sum(1 for (k, _) in celulas if k == s) >= 2]
-    if len(pavs) < 2 or not servs:
-        return None
-
-    def bloco(campo, com_status):
+    def bloco(torre, servs, pavs, campo, com_status):
         return {
             "servicos": [{"nome": nomes[s], "fornecedor": "", "ciclo": None} for s in servs],
             "pavimentos": [{
                 "rotulo": _rotulo_pav(n), "n": n,
-                "datas": [iso(celulas[(s, n)][campo].date()) if (s, n) in celulas and celulas[(s, n)][campo] else None for s in servs],
-                "ok": [bool(celulas.get((s, n), {}).get("ok")) for s in servs] if com_status else None,
+                "datas": [iso(celulas[(torre, s, n)][campo].date()) if (torre, s, n) in celulas and celulas[(torre, s, n)][campo] else None for s in servs],
+                "ok": [bool(celulas.get((torre, s, n), {}).get("ok")) for s in servs] if com_status else None,
             } for n in pavs],
         }
 
-    atual_b = bloco("ini", True)
-    tem_lb = any(c["lb"] for c in celulas.values())
-    marcos = []
-    for t in p.tarefas:
-        if t.marco and t.termino:
-            lb = t.lb_termino.date() if t.lb_termino else None
-            at = t.termino.date()
-            marcos.append({"nome": t.nome, "lb": iso(lb), "anterior": None, "atual": iso(at),
-                           "var_lb": (at - lb).days if lb else None, "var_mes": None})
+    torres = []
+    # torres com nome primeiro (em ordem natural: Torre A, Torre B, Torre 2, Torre 10); tarefas sem torre por último
+    nat = lambda x: [int(k) if k.isdigit() else k for k in re.split(r"(\d+)", x)]
+    for torre in sorted(ordem_torre, key=lambda x: (x == "", nat(x))):
+        # do térreo (e subsolos) até o pavimento mais alto
+        pavs = sorted({n for (tr, _, n) in celulas if tr == torre})
+        # serviço que aparece em um pavimento só não forma escadinha
+        servs = [s for (tr, s) in sorted((k for k in ordem_serv if k[0] == torre), key=lambda k: ordem_serv[k])
+                 if sum(1 for (tr2, k, _) in celulas if tr2 == torre and k == s) >= 2]
+        if len(pavs) < 2 or not servs:
+            continue
+        tem_lb = any(c["lb"] for (tr, _, _), c in celulas.items() if tr == torre)
+        torres.append({
+            "nome": torre or ("Demais pavimentos" if ordem_torre.keys() - {""} else ""),
+            "atual": bloco(torre, servs, pavs, "ini", True),
+            "base": dict(bloco(torre, servs, pavs, "lb", False), rotulo="Linha de base do Project") if tem_lb else None,
+        })
+    if not torres:
+        return None
+
     raiz = [t for t in p.tarefas if t.pai is None]
     fim = max((t.termino for t in raiz if t.termino), default=None)
     fim_lb = max((t.lb_termino for t in raiz if t.lb_termino), default=None)
@@ -430,9 +461,10 @@ def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | No
         "arquivo": p.arquivo, "aba": None, "origem": "project",
         "titulo": p.titulo,
         "data_base": iso((data_status or p.data_status or dt.datetime.now()).date()),
-        "atual": atual_b,
-        "base": dict(bloco("lb", False), rotulo="Linha de base do Project") if tem_lb else None,
-        "marcos": marcos[:12],
+        "atual": torres[0]["atual"],
+        "base": torres[0]["base"],
+        "torres": torres if len(torres) > 1 or torres[0]["nome"] else [],
+        "marcos": [],
         "termino": termino,
         "metas": [],
     }

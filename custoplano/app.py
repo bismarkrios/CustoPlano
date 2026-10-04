@@ -17,6 +17,7 @@ import getpass
 import io
 import json
 import os
+import re
 import secrets
 import threading
 from functools import wraps
@@ -498,6 +499,41 @@ def remover_lancamento():
 def remover_custos():
     banco.remover_custos(session["uid"])
     return jsonify(ok=True)
+
+
+# ------------------------------------------------------------- suprimentos
+SUP_ETAPAS = ("solicitar", "cotacao", "pedido", "entregue")
+
+
+@app.get("/api/suprimentos")
+@logado
+def ver_suprimentos():
+    return jsonify(itens=banco.suprimentos(session["uid"]))
+
+
+@app.post("/api/suprimentos")
+@logado
+def salvar_suprimento():
+    """Grava prazo do fornecedor, fornecedor e etapa da compra de uma linha resumo do cronograma."""
+    d = request.get_json(silent=True) or {}
+    uid = str(d.get("uid") or "")
+    if not re.fullmatch(r"\d{1,9}", uid):
+        return erro("Linha do cronograma inválida.")
+    itens = banco.suprimentos(session["uid"])
+    it = dict(itens.get(uid) or {})
+    if "lead" in d:
+        it["lead"] = max(0, min(365, int(d["lead"])))
+    if "forn" in d:
+        it["forn"] = str(d["forn"] or "").strip()[:120]
+    if "st" in d:
+        if d["st"] not in SUP_ETAPAS:
+            return erro("Etapa inválida.")
+        it["st"] = d["st"]
+    itens[uid] = it
+    if len(itens) > 5000:
+        return erro("Limite de itens de suprimentos atingido.")
+    banco.salvar_suprimentos(session["uid"], itens)
+    return jsonify(itens=itens)
 
 
 # ---------------------------------------------------------------- qualidade

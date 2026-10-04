@@ -6,7 +6,7 @@
 const VERSAO = 'cp-app-v2';
 const DADOS = 'cp-api';
 const CASCA = ['/', '/manifest.webmanifest', '/web/icon.svg', '/web/icon-192.png', '/web/icon-512.png'];
-const API_GUARDADA = ['/api/me', '/api/cronograma', '/api/plano', '/api/historico', '/api/qualidade', '/api/custos'];
+const API_GUARDADA = ['/api/me', '/api/cronograma', '/api/plano', '/api/historico', '/api/qualidade', '/api/custos', '/api/suprimentos'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(CASCA)).then(() => self.skipWaiting()));

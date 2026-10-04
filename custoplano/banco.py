@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS planos_ataque (
     dados         TEXT NOT NULL,                -- JSON lido da planilha (plano_ataque.ler_plano)
     atualizado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS suprimentos (
+    usuario_id    INTEGER PRIMARY KEY REFERENCES usuarios(id) ON DELETE CASCADE,
+    dados         TEXT NOT NULL,                -- JSON: {uid da linha resumo: {lead, forn, st}}
+    atualizado_em TEXT NOT NULL
+);
 """
 
 
@@ -186,6 +191,22 @@ def plano(usuario_id: int):
 def remover_plano(usuario_id: int) -> None:
     with conectar() as con:
         con.execute("DELETE FROM planos_ataque WHERE usuario_id = ?", (usuario_id,))
+
+
+# --------------------------------------------------------------- suprimentos
+def suprimentos(usuario_id: int) -> dict:
+    with conectar() as con:
+        r = con.execute("SELECT dados FROM suprimentos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    return json.loads(r["dados"]) if r else {}
+
+
+def salvar_suprimentos(usuario_id: int, dados: dict) -> None:
+    with conectar() as con:
+        con.execute(
+            """INSERT INTO suprimentos (usuario_id, dados, atualizado_em) VALUES (?, ?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET dados=excluded.dados, atualizado_em=excluded.atualizado_em""",
+            (usuario_id, json.dumps(dados, ensure_ascii=False), agora()),
+        )
 
 
 # -------------------------------------------------------------------- custos
