@@ -636,7 +636,8 @@ def _exportar(c, p, formato: str, sufixo: str):
     sd = para_data(c["data_status"])
     base = f"{nome_base(c['arquivo'])}_{sufixo}_{sd:%Y-%m-%d}"
     if formato == "xml":
-        return download(p.exportar_xml(atual, sd), base + ".xml", "application/xml")
+        forn = p.fornecedores({k: v.get("forn", "") for k, v in banco.suprimentos(session["uid"]).items()})
+        return download(p.exportar_xml(atual, sd, forn), base + ".xml", "application/xml")
     if formato == "csv":
         return download(p.exportar_csv(atual, anterior, sd, c["peso"]), base + ".csv", "text/csv; charset=utf-8")
     if formato == "xlsx":

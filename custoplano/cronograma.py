@@ -387,8 +387,65 @@ class Projeto:
         return a[chave] / a["w"] if a and a["w"] > 0 else 0.0
 
     # --------------------------------------------------------------- exportar
-    def exportar_xml(self, atual: dict, data_status: dt.datetime) -> str:
-        """XML para abrir no MS Project com a medição aplicada."""
+    def fornecedores(self, por_resumo: dict) -> dict:
+        """Fornecedor de cada tarefa: o da linha resumo mais próxima acima dela (ou dela mesma)."""
+        out = {}
+        for t in self.tarefas:
+            a = t
+            while a is not None and not (por_resumo.get(a.uid) or "").strip():
+                a = a.pai
+            if a is not None:
+                out[t.uid] = por_resumo[a.uid].strip()
+        return out
+
+    def _coluna_texto(self, alias: str) -> str:
+        """FieldID de um campo Texto do Project com esse nome; cria a definição no primeiro Texto livre."""
+        ea = _filho(self.raiz, "ExtendedAttributes")
+        if ea is None:
+            ea = ET.Element(Q + "ExtendedAttributes")
+            pos = list(self.raiz).index(_filho(self.raiz, "Tasks"))
+            for nome in ("Calendars", "Tasks"):
+                k = _filho(self.raiz, nome)
+                if k is not None:
+                    pos = list(self.raiz).index(k)
+                    break
+            self.raiz.insert(pos, ea)
+        usados = {}
+        for d in ea.findall(Q + "ExtendedAttribute"):
+            usados[_txt(d, "FieldID")] = _txt(d, "Alias") or _txt(d, "FieldName")
+        for fid, nome in usados.items():
+            if nome.strip().lower() == alias.lower():
+                return fid
+        em_tarefas = {_txt(x, "FieldID") for x in self.raiz.iter(Q + "ExtendedAttribute")}
+        for i in range(10):  # Texto1 a Texto10
+            fid = str(188743731 + 3 * i)
+            if fid not in usados and fid not in em_tarefas:
+                d = ET.SubElement(ea, Q + "ExtendedAttribute")
+                for k, v in (("FieldID", fid), ("FieldName", f"Text{i + 1}"), ("Alias", alias)):
+                    ET.SubElement(d, Q + k).text = v
+                return fid
+        raise ErroCronograma("Não há campo Texto livre no cronograma para a coluna " + alias + ".")
+
+    def _texto_tarefa(self, t: Tarefa, fid: str, valor: str) -> None:
+        el = t.el
+        for x in el.findall(Q + "ExtendedAttribute"):
+            if _txt(x, "FieldID") == fid:
+                el.remove(x)
+        if not valor:
+            return
+        x = ET.Element(Q + "ExtendedAttribute")
+        ET.SubElement(x, Q + "FieldID").text = fid
+        ET.SubElement(x, Q + "Value").text = valor
+        filhos = list(el)
+        pos = next((i for i, k in enumerate(filhos) if k.tag in (Q + "Baseline", Q + "OutlineCode", Q + "TimephasedData")), len(filhos))
+        el.insert(pos, x)
+
+    def exportar_xml(self, atual: dict, data_status: dt.datetime, fornecedores: dict | None = None) -> str:
+        """XML para abrir no MS Project com a medição aplicada (e a coluna Fornecedor, se houver)."""
+        if fornecedores:
+            fid = self._coluna_texto("Fornecedor")
+            for t in self.tarefas:
+                self._texto_tarefa(t, fid, fornecedores.get(t.uid, ""))
         for t in self.tarefas:
             if t.filhos:
                 continue

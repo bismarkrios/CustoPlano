@@ -451,6 +451,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 .prj-real .prj-row.sum>span:nth-child(n+3){font-weight:500}
 .pct-in{width:58px;min-height:26px;padding:2px 6px;font-family:var(--mono);font-size:12px;text-align:right}
 .prj-real .prj-row{grid-template-columns:44px 300px 60px 80px 80px 60px 66px minmax(0,1fr)}
+.prj-real .prj-row.forn{grid-template-columns:44px 300px 150px 60px 80px 80px 60px 66px minmax(0,1fr)}
 .prj-bar select{width:auto;min-height:36px;padding:4px 8px}
 
 /* Escolha de área e qualidade */
@@ -1742,6 +1743,8 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     var grid = 'background-image:none';
     var visible = P.tasks.filter(function (t) { for (var p = t.parent; p; p = p.parent) if (!P.open[p.uid]) return false; return true; });
     var caret = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
+    // coluna Fornecedor: aparece quando há fornecedor em Suprimentos; cada tarefa herda o da linha resumo mais próxima
+    var FO = fornecedores(), comForn = Object.keys(FO).length > 0;
     var rows = visible.map(function (t) {
       var sum = t.children.length > 0, a = A[t.uid];
       var pr = sum ? aPct(a, 'r') : (P.meas[t.uid] || 0), pb = sum ? aPct(a, 'b') : (P.base[t.uid] || 0);
@@ -1758,9 +1761,10 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         ? '<button type="button" class="caret" data-a="ptg:' + t.uid + '" aria-expanded="' + !!P.open[t.uid] + '" aria-label="' + (P.open[t.uid] ? 'Recolher ' : 'Expandir ') + esc(t.name) + '">' + caret + '</button>'
         : '<span style="width:22px;flex-shrink:0;display:inline-flex;justify-content:center">' + (changed ? '<i class="sw" style="background:var(--accent);border-radius:50%;width:8px;height:8px" title="Medido nesta medição"></i>' : '') + '</span>';
       var pad = Math.max(0, t.lvl - 1) * 14;
-      return '<div class="prj-row' + (sum ? ' sum' : '') + '">' +
+      return '<div class="prj-row' + (sum ? ' sum' : '') + (comForn ? ' forn' : '') + '">' +
         '<span class="num">' + esc(t.id) + '</span>' +
         '<span><span class="prj-name" style="padding-left:' + pad + 'px">' + nameCell + '<span style="overflow:hidden;text-overflow:ellipsis" title="' + esc(t.name) + '"><span class="mono" style="color:var(--muted);margin-right:6px">' + esc(t.wbs) + '</span>' + esc(t.name) + '</span></span></span>' +
+        (comForn ? '<span title="' + esc(FO[t.uid] || '') + '"' + (sum ? '' : ' style="font-weight:400"') + '>' + esc(FO[t.uid] || '') + '</span>' : '') +
         '<span>' + (t.ms ? '0 d' : fmt1(t.durH / 8) + ' d') + '</span><span>' + fdate(t.start).slice(0, 8) + '</span><span>' + fdate(t.finish).slice(0, 8) + '</span>' +
         '<span class="mono" style="text-align:right;color:var(--muted)">' + (a && a.w ? fmt1(P.weight === 'dur' ? a.w / 8 : a.w) : '—') + '</span>' +
         '<span style="text-align:right">' + pctCell + '</span>' +
@@ -1799,8 +1803,8 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
           S.hist.map(function (h) { return '<tr><td class="mono">' + esc(h.data_status.split('-').reverse().join('/')) + '</td><td class="mono">' + esc(h.fechado_em.replace('T', ' ').slice(0, 16)) + '</td><td class="mono">' + fmt1(h.avanco_real) + '%</td><td class="mono">' + fmt1(h.avanco_prev) + '%</td><td><a href="/api/historico/' + h.id + '/xml">XML</a> · <a href="/api/historico/' + h.id + '/csv">CSV</a> · <a href="/api/historico/' + h.id + '/xlsx">Excel</a></td></tr>'; }).join('') +
           '</tbody></table></div></details>' : '') +
       '</section>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="min-width:' + (690 + tlW) + 'px">' +
-        '<div class="prj-row head"><span class="num">Id</span><span>Nome da tarefa</span><span>Dur.</span><span>Início</span><span>Término</span><span style="text-align:right">Peso</span><span style="text-align:right">%</span>' + head + '</div>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="min-width:' + (690 + (comForn ? 150 : 0) + tlW) + 'px">' +
+        '<div class="prj-row head' + (comForn ? ' forn' : '') + '"><span class="num">Id</span><span>Nome da tarefa</span>' + (comForn ? '<span>Fornecedor</span>' : '') + '<span>Dur.</span><span>Início</span><span>Término</span><span style="text-align:right">Peso</span><span style="text-align:right">%</span>' + head + '</div>' +
         rows +
       '</div></div></section>' +
       '<p style="font-size:12.5px;color:var(--muted)">Barra azul: tarefa, com a parte escura = % concluído. Traço cinza: linha de base. Linha amarela: data de status. O avanço dos grupos é a média das tarefas ponderada pelo peso escolhido. As medições ficam salvas neste navegador.</p>';
@@ -2844,6 +2848,14 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
       return { t: t, uid: t.uid, nivel: t.lvl - minL - (raizes.length === 1 ? 1 : 0), lead: lead, forn: sv.forn || '', st: st, need: need, buy: buy, risk: risk, torre: torreDe(t) };
     });
   }
+  function fornecedores() {
+    var out = {};
+    if (!P || !SUPR) return out;
+    P.tasks.forEach(function (t) {
+      for (var a = t; a; a = a.parent) { var f = SUPR[a.uid] && (SUPR[a.uid].forn || '').trim(); if (f) { out[t.uid] = f; return; } }
+    });
+    return out;
+  }
   function supSalvar(uid, campos) {
     SUPR = SUPR || {};
     SUPR[uid] = Object.assign({}, SUPR[uid] || {}, campos);
@@ -2903,7 +2915,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         '<th scope="col">Linha resumo do cronograma</th><th scope="col">Fornecedor</th><th scope="col">Na obra</th><th scope="col" style="text-align:right">Prazo</th><th scope="col">Comprar até</th><th scope="col">Etapa</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
       '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="color:var(--muted);padding:24px 14px">Nenhum pacote neste filtro.</td></tr>') + '</tbody></table></div></section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + list.length + ' pacotes. Use a busca ou a torre para achar os demais.</p>' : '') +
-      '<p style="font-size:12.5px;color:var(--muted)">Cada linha resumo do cronograma é um pacote de compra. “Na obra” é o início da linha resumo no cronograma importado; “Comprar até” é essa data menos o prazo do fornecedor (15 dias se você não mudar). Prazo, fornecedor e etapa ficam salvos na sua conta.</p>';
+      '<p style="font-size:12.5px;color:var(--muted)">Cada linha resumo do cronograma é um pacote de compra. “Na obra” é o início da linha resumo no cronograma importado; “Comprar até” é essa data menos o prazo do fornecedor (15 dias se você não mudar). Prazo, fornecedor e etapa ficam salvos na sua conta. O fornecedor aparece na coluna Fornecedor da tela Project, na linha resumo e em todas as tarefas abaixo dela, e vai junto no .xml exportado para o MS Project.</p>';
   }
 
   function vCron(M) {
