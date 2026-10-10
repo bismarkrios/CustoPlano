@@ -1187,6 +1187,14 @@ footer.site a{color:var(--ink)}
     show('login'); window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route);
+  // Enter na barra de endereço com o mesmo /#sistema não recarrega a página (só dispara popstate): volta ao Painel, como no F5
+  var hashAntes = location.hash;
+  window.addEventListener('popstate', function () {
+    var h = location.hash;
+    if (h === hashAntes && (h === '#sistema' || h === '#qualidade') && user) { S.screen = h === '#qualidade' ? 'qp' : 'painel'; S.sel = null; route(); }
+    hashAntes = h;
+  });
+  window.addEventListener('hashchange', function () { hashAntes = location.hash; });
   // clicar num link para a tela em que já está (ex.: "Entrar" com #entrar no endereço) também precisa funcionar
   document.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('a[href^="#"]');
