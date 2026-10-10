@@ -46,7 +46,7 @@ python app.py
 ## Criar o acesso de um cliente
 
 ```bat
-flask --app app criar-usuario cliente@construtora.com.br --nome "Residencial Rubi"
+flask --app app criar-usuario cliente@construtora.com.br --nome "Residencial Exemplo"
 flask --app app trocar-senha cliente@construtora.com.br
 flask --app app listar-usuarios
 ```

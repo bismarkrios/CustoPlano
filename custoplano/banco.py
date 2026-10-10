@@ -80,6 +80,11 @@ def conectar() -> sqlite3.Connection:
 def iniciar() -> None:
     with conectar() as con:
         con.executescript(ESQUEMA)
+        # o cronograma de exemplo antigo tinha o nome de uma obra real; troca nas cópias já importadas
+        con.execute(
+            "UPDATE cronogramas SET xml = replace(replace(xml, 'Rubi – Obra teste', 'Residencial Exemplo – Torre A'), 'Rubi teste.xml', 'Obra de exemplo.xml') "
+            "WHERE arquivo = 'cronograma_exemplo.xml' AND instr(xml, 'Rubi') > 0"
+        )
 
 
 def agora() -> str:

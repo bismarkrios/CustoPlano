@@ -612,7 +612,7 @@ COMP_EXEMPLO = [
 
 
 def exemplo(projeto=None, atual: dict | None = None) -> bytes:
-    """Orçamento de exemplo ligado ao cronograma de exemplo (Rubi – Obra teste)."""
+    """Orçamento de exemplo ligado ao cronograma de exemplo (Residencial Exemplo – Torre A)."""
     itens = [["1.1", "Serviços preliminares", None, None, None, None, None, None, None],
              ["1.1.1", "Canteiro de obras", "vb", 1, "C-CANT", None, "1.1.1", None, None],
              ["1.1.2", "Locação da obra", "m²", 420, "C-LOC", None, "1.1.2", None, None],
