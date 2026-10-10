@@ -57,6 +57,8 @@ jobs:
           assert r.status_code == 200, f"página inicial respondeu {r.status_code}"
           r = c.get("/manual")
           assert r.status_code == 200 and b"pay.kiwify.com.br" in r.data, f"página do manual respondeu {r.status_code}"
+          r = c.get("/privacidade")
+          assert r.status_code == 200 and "13.709".encode() in r.data, f"página de privacidade respondeu {r.status_code}"
           print("site OK")
           PY
 

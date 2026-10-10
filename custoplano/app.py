@@ -206,6 +206,14 @@ def pagina_manual():
     return r
 
 
+@app.get("/privacidade")
+def pagina_privacidade():
+    """Política de privacidade e termos de uso (LGPD)."""
+    r = send_from_directory(PASTA_WEB, "privacidade.html", mimetype="text/html")
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
 @app.get("/web/<path:arquivo>")
 def estaticos(arquivo):
     return send_from_directory(PASTA_WEB, arquivo)

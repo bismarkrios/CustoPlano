@@ -64,7 +64,7 @@ p{margin:0}
 .brand b{font-family:var(--display);font-stretch:112%;font-weight:800;font-size:20px;letter-spacing:-.01em}
 .brand small{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .menu{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
-.menu a{color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;padding:10px 12px;border-radius:6px}
+.menu a{color:var(--ink);text-decoration:none;font-size:15px;font-weight:500;padding:10px 12px;border-radius:6px;white-space:nowrap}
 .menu a:hover{background:var(--surface)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:4px;font-family:var(--body);font-weight:600;font-size:16px;text-decoration:none;border:2px solid transparent;cursor:pointer}
 .btn-primary{background:var(--accent);color:var(--accent-ink)}
@@ -212,6 +212,21 @@ form .btn{grid-column:1/-1;justify-self:start}
 
 footer.site{border-top:1px solid var(--line);padding-block:28px;font-size:14px;color:var(--muted)}
 footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer.site .rodape{display:flex;gap:8px 20px;flex-wrap:wrap}
+footer.site a{color:var(--ink)}
+
+/* Telas do sistema */
+.telas{display:flex;flex-direction:column;gap:18px;min-width:0}
+.telas-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:2px solid var(--ink)}
+.telas-tabs button{font:inherit;font-size:15.5px;font-weight:600;color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-2px;padding:10px 14px;cursor:pointer}
+.telas-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.telas-tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.tela{margin:0;display:flex;flex-direction:column;gap:12px}
+.tela-img{border:1px solid var(--line);background:var(--surface);box-shadow:6px 6px 0 color-mix(in srgb,var(--ink) 12%,transparent);overflow:hidden}
+.tela-img img{display:block;width:100%;height:auto}
+.tela figcaption{color:var(--muted);font-size:16px;max-width:64ch}
+.telas-cta{display:flex;gap:12px 20px;align-items:center;flex-wrap:wrap}
+.telas-cta span{color:var(--muted);font-size:15px;flex:1 1 260px}
 .btn-login{border-color:var(--line);color:var(--ink);background:var(--surface)}
 .btn-login:hover{border-color:var(--ink)}
 .top .actions{display:flex;gap:8px;align-items:center}
@@ -657,9 +672,10 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     </a>
     <nav class="menu" aria-label="Seções">
       <a href="#servicos">Serviços</a>
-      <a href="#metodo">Como trabalhamos</a>
+      <a href="#telas">O sistema</a>
       <a href="#qualidade">Qualidade</a>
       <a href="#duvidas">Dúvidas</a>
+      <a href="/manual">Manual</a>
     </nav>
     <div class="actions">
       <a class="btn btn-login" href="#entrar">
@@ -678,7 +694,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
         <p class="lede">Montamos o plano junto com a engenharia da obra, vamos ao canteiro toda semana e medimos o que foi feito de verdade. O cronograma continua no seu Project. A medição, as fichas de qualidade e o custo realizado ficam num sistema que o engenheiro abre no celular, mesmo sem sinal.</p>
         <div class="ctas">
           <a class="btn btn-primary" href="#contato">Pedir um diagnóstico da obra</a>
-          <a class="txt" href="#servicos">O que a gente faz</a>
+          <a class="txt" href="#demo">Ver o sistema funcionando</a>
         </div>
         <p class="aside">Trabalhamos com construtoras de pequeno e médio porte, em obra nova ou já em andamento.</p>
       </div>
@@ -780,6 +796,38 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
           <li><b>Prazo, custo e qualidade no mesmo lugar.</b><span>Sem um sistema para planejar, outro para custo e outro para as FVS.</span></li>
           <li><b>Tem gente nossa na obra.</b><span>O sistema vem junto com a consultoria. Ninguém recebe uma senha e fica sozinho para aprender.</span></li>
         </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="telas">
+    <div class="wrap sec">
+      <header>
+        <h2>O sistema por dentro</h2>
+        <p>Telas reais da obra de demonstração. Você pode abrir e mexer, sem cadastro.</p>
+      </header>
+      <div class="telas">
+        <div class="telas-tabs" role="tablist" aria-label="Telas do sistema">
+          <button type="button" role="tab" id="tt-painel" aria-controls="tp-painel" aria-selected="true">Painel e curva S</button>
+          <button type="button" role="tab" id="tt-pa" aria-controls="tp-pa" aria-selected="false" tabindex="-1">Escadinha por torre</button>
+          <button type="button" role="tab" id="tt-sup" aria-controls="tp-sup" aria-selected="false" tabindex="-1">Suprimentos</button>
+        </div>
+        <figure class="tela" role="tabpanel" id="tp-painel" aria-labelledby="tt-painel">
+          <div class="tela-img"><img src="/web/telas/painel.jpg" width="1280" height="760" alt="Painel da obra com avanço físico real contra o previsto, PPC da semana, restrições abertas e curva S" loading="lazy"></div>
+          <figcaption>Avanço real contra o previsto, PPC da semana, restrições que vencem e a curva S, tudo puxado do cronograma do MS Project.</figcaption>
+        </figure>
+        <figure class="tela" role="tabpanel" id="tp-pa" aria-labelledby="tt-pa" hidden>
+          <div class="tela-img"><img src="/web/telas/pa.jpg" width="1280" height="760" alt="Plano de ataque: matriz de serviços por pavimento com as datas, executados em verde e atrasados em vermelho" loading="lazy"></div>
+          <figcaption>A escadinha sai do próprio cronograma: um quadro por torre, do térreo à cobertura, com o que foi executado, o que atrasou e o desvio contra a linha de base. Dá para imprimir e levar para a reunião.</figcaption>
+        </figure>
+        <figure class="tela" role="tabpanel" id="tp-sup" aria-labelledby="tt-sup" hidden>
+          <div class="tela-img"><img src="/web/telas/sup.jpg" width="1280" height="760" alt="Suprimentos: lista de materiais com data na obra, prazo do fornecedor, data limite de compra e situação" loading="lazy"></div>
+          <figcaption>Cada pacote do cronograma vira uma compra com data limite: a data em que o serviço começa menos o prazo do fornecedor. O fornecedor também volta para o MS Project numa coluna própria.</figcaption>
+        </figure>
+        <div class="telas-cta">
+          <a class="btn btn-primary" href="#demo">Abrir a obra de demonstração</a>
+          <span>Funciona no computador e no celular. A medição de campo continua funcionando sem sinal.</span>
+        </div>
       </div>
     </div>
   </section>
@@ -913,7 +961,12 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 <footer class="site">
   <div class="wrap">
     <span>Custo Plano Consultoria · planejamento, controle e qualidade de obras</span>
-    <span><a href="#entrar">Área do cliente</a></span>
+    <nav class="rodape" aria-label="Rodapé">
+      <a href="/manual">Manual do Engenheiro de Obra</a>
+      <a href="#demo">Obra de demonstração</a>
+      <a href="/privacidade">Privacidade e termos</a>
+      <a href="#entrar">Área do cliente</a>
+    </nav>
   </div>
 </footer>
 </div>
@@ -1085,6 +1138,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
+    if (h === 'demo') { abrirDemo(); return; }
     if (h === 'entrar' || h === 'area') { show(user ? 'hub' : 'login'); window.scrollTo(0, 0); return; }
     if (h === 'sistema' || h === 'qualidade') {
       if (!user) { show('login'); window.scrollTo(0, 0); return; }
@@ -1116,6 +1170,25 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
     enter(em.value.trim());
   });
   if (API) { document.getElementById('lg-note').textContent = 'Acesso com o e-mail e a senha fornecidos pela Custo Plano.'; if (!window.CP_DEMO) { document.getElementById('lg-demo').hidden = true; document.querySelector('.divider').hidden = true; } }
+  function abrirDemo() {
+    if (user) { location.hash = 'sistema'; return; }
+    if (API && !window.CP_DEMO) { location.hash = 'contato'; return; }
+    if (API) { show('login'); window.scrollTo(0, 0); api('/api/login', { demo: true }).then(function (r) { enter(r.email); location.hash = 'sistema'; }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
+    enter('demo@custoplano.com.br'); location.hash = 'sistema';
+  }
+  (function () {
+    var tabs = [].slice.call(document.querySelectorAll('.telas-tabs [role="tab"]'));
+    function sel(t) {
+      tabs.forEach(function (x) { var on = x === t; x.setAttribute('aria-selected', on ? 'true' : 'false'); x.tabIndex = on ? 0 : -1; document.getElementById(x.getAttribute('aria-controls')).hidden = !on; });
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { sel(t); });
+      t.addEventListener('keydown', function (e) {
+        var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return;
+        var n = tabs[(i + d + tabs.length) % tabs.length]; sel(n); n.focus(); e.preventDefault();
+      });
+    });
+  })();
   document.getElementById('lg-demo').addEventListener('click', function () {
     if (API) { api('/api/login', { demo: true }).then(function (r) { enter(r.email); }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
     enter('demo@custoplano.com.br');
