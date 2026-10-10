@@ -2095,21 +2095,88 @@ footer.site a{color:var(--ink)}
   function kpi(t, v, sub, cor) { return '<div class="card"><div class="kpi-t">' + t + '</div><div class="kpi-v"' + (cor ? ' style="color:' + cor + '"' : '') + '>' + v + '</div><div class="kpi-s">' + sub + '</div></div>'; }
   function vPainelReal() {
     if (!P) return semPrj('O painel é calculado a partir do cronograma da obra. Importe o .mpp na tela Project.');
+    if (CPD == null) loadCP();
     var A = aggregate(), real = aPct(A.total, 'r'), prev = aPct(A.total, 'p'), sd = P.statusDate, dia = 864e5;
     var fs = folhas().filter(function (t) { return !t.ms; });
     var atras = fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd && (P.meas[t.uid] || 0) < 100; })
       .sort(function (a, b) { return fimLB(a) - fimLB(b); });
     var raiz = P.tasks.filter(function (t) { return !t.parent; });
+    var ini = Math.min.apply(null, raiz.map(function (t) { return Math.min(t.start || Infinity, t.bStart || Infinity); }));
     var fim = Math.max.apply(null, raiz.map(function (t) { return t.finish || 0; }));
     var fimB = Math.max.apply(null, raiz.map(function (t) { return t.bFinish || 0; }));
     var varFim = fimB ? Math.round((fim - fimB) / dia) : null;
     var dv = real - prev;
+    // semana atual (pela data de status) para o PPC e os pacotes
+    var d0 = new Date(sd), seg0 = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia, sem0 = isoDay(seg0);
+    var pac = cpSemana(seg0), pOk = 0;
+    pac.forEach(function (t) { if (cpEstado(sem0, t).st === 'ok') pOk++; });
+    var ppc = pac.length ? Math.round(pOk / pac.length * 100) : null;
+
     var html = '<div class="grid4">' +
-      kpi('Avanço físico', fmt1(real) + '%', 'previsto ' + fmt1(prev) + '% em ' + fdate(sd), null) +
-      kpi('Desvio de avanço', (dv > 0 ? '+' : '') + fmt1(dv) + ' p.p.', dv < -0.05 ? 'atrás do previsto' : 'em dia ou adiantado', dv < -0.05 ? 'var(--bad)' : 'var(--good)') +
-      kpi('Tarefas atrasadas', atras.length, 'término já passou e não chegaram a 100%', atras.length ? 'var(--bad)' : 'var(--good)') +
-      kpi('Término da obra', fdate(fim), fimB ? 'linha de base ' + fdate(fimB) + ' · <b style="color:' + (varFim > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(varFim) + '</b>' : 'sem linha de base salva no Project', null) +
+      '<div class="card"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + fmt1(real) + '%</div><div class="kpi-s">previsto ' + fmt1(prev) + '% · <b style="color:' + (dv < -0.05 ? 'var(--bad)' : 'var(--good)') + '">' + (dv > 0 ? '+' : '') + fmt1(dv) + ' p.p.</b></div>' +
+        '<div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, prev) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, real) + '%;background:var(--accent)"></i></div></div>' +
+      '<div class="card"><div class="kpi-t">PPC · semana de ' + fdate(seg0).slice(0, 5) + '</div><div class="kpi-v"' + (ppc != null && ppc < 80 ? ' style="color:var(--bad)"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pac.length + ' pacotes concluídos · meta 80%</div><button class="more" type="button" data-a="nav:cp">Apontar no curto prazo →</button></div>' +
+      '<div class="card"><div class="kpi-t">Tarefas atrasadas</div><div class="kpi-v" style="color:' + (atras.length ? 'var(--bad)' : 'var(--good)') + '">' + atras.length + '</div><div class="kpi-s">término já passou e não chegaram a 100%</div><button class="more" type="button" data-a="nav:med">Fazer a medição →</button></div>' +
+      '<div class="card"><div class="kpi-t">Término da obra</div><div class="kpi-v" style="font-size:24px">' + fdate(fim) + '</div><div class="kpi-s">' + (fimB ? 'linha de base ' + fdate(fimB) + ' · <b style="color:' + (varFim > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(varFim) + '</b>' : 'sem linha de base salva no Project') + '</div><button class="more" type="button" data-a="nav:pa">Plano de ataque →</button></div>' +
       '</div>';
+
+    // Curva S: previsto pela linha de base; real pelas medições fechadas + a medição atual
+    var W = 640, H = 200, N = 48, tot = 0, dp = '';
+    fs.forEach(function (t) { tot += wOf(t); });
+    var X = function (ms) { return Math.max(0, Math.min(W, (ms - ini) / ((fim > ini ? fim : ini + dia) - ini) * W)); };
+    var Y = function (v) { return H - Math.max(0, Math.min(100, v)) / 100 * H; };
+    for (var k = 0; k <= N; k++) {
+      var at = ini + (fim - ini) * k / N, sp = 0;
+      fs.forEach(function (t) { sp += wOf(t) * plannedPct(t, at); });
+      dp += (k ? ' L' : 'M') + X(at).toFixed(1) + ' ' + Y(tot ? sp / tot : 0).toFixed(1);
+    }
+    var pts = [[ini, 0]].concat(((API && S.hist) || []).map(function (h) { return [Date.parse(h.data_status + 'T17:00:00Z'), +h.avanco_real]; }).filter(function (q) { return q[0] < sd; }), [[sd, real]]).sort(function (a, b) { return a[0] - b[0]; });
+    var dr = pts.map(function (q, n) { return (n ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1); }).join(' ');
+    var hx = X(sd).toFixed(1);
+    var curva = '<section class="card"><div class="card-head"><h2>Curva S · avanço físico acumulado</h2>' +
+        '<span class="legend-row"><span><i class="sw" style="background:var(--muted);height:2px;width:16px"></i>Previsto</span><span><i class="sw" style="background:var(--accent);height:3px;width:16px"></i>Real</span></span></div>' +
+      '<svg class="curve" viewBox="-44 -12 700 250" style="width:100%;height:auto;display:block" role="img" aria-label="Curva S: previsto ' + fmt1(prev) + '%, real ' + fmt1(real) + '% na data de status">' +
+        [0, 50, 100, 150, 200].map(function (y, n) { return '<line x1="0" x2="640" y1="' + y + '" y2="' + y + '" stroke="var(--line)"></line><text x="-10" y="' + (y + 4) + '" text-anchor="end">' + (100 - n * 25) + '%</text>'; }).join('') +
+        '<text x="0" y="222">' + fdate(ini) + '</text><text x="640" y="222" text-anchor="end">' + fdate(fim) + '</text>' +
+        '<line x1="' + hx + '" x2="' + hx + '" y1="-6" y2="200" stroke="var(--ink)" stroke-dasharray="2 3"></line>' +
+        (hx > 70 && hx < 570 ? '<text x="' + hx + '" y="222" text-anchor="middle" style="fill:var(--ink);font-weight:600">Hoje · ' + fdate(sd).slice(0, 5) + '</text>' : '') +
+        '<path d="' + dp + '" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"></path>' +
+        '<path d="' + dr + '" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"></path>' +
+        '<circle cx="' + hx + '" cy="' + Y(real).toFixed(1) + '" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"></circle>' +
+        '<text x="' + (+hx + (hx > 560 ? -10 : 10)) + '" y="' + (Y(real) - 8).toFixed(1) + '" text-anchor="' + (hx > 560 ? 'end' : 'start') + '" style="fill:var(--ink);font-weight:700">' + fmt1(real) + '%</text>' +
+      '</svg></section>';
+
+    // pacotes da semana (mesma lista do curto prazo)
+    var chip = function (t) {
+      var e = cpEstado(sem0, t);
+      if (e.st === 'ok') return '<span class="chip c-ok">Concluída</span>';
+      if (e.st === 'nok') return '<span class="chip c-bad">Não concluída</span>';
+      return (P.meas[t.uid] || 0) > 0 ? '<span class="chip c-info">Em andamento</span>' : '<span class="chip c-muted">A iniciar</span>';
+    };
+    var cores = ['var(--pa0)', 'var(--pa2)', 'var(--pa3)', 'var(--pa1)', 'var(--pa4)', 'var(--pa5)'], corDe = {};
+    var corS = function (nome) { if (!(nome in corDe)) corDe[nome] = cores[Object.keys(corDe).length % cores.length]; return corDe[nome]; };
+    var LIMP = 8;
+    var pacotes = '<section class="card"><div class="card-head"><h2>Pacotes da semana</h2><button class="more" type="button" data-a="nav:cp">Curto prazo →</button></div>' +
+      (pac.length ? pac.slice(0, LIMP).map(function (t) {
+        var serv = servDe(t), local = [t._tr, t._pv != null ? rotPav(t._pv) : ''].filter(Boolean).join(' · ') || (t.parent ? t.parent.name : '');
+        return '<div class="list-row"><i class="sw" style="background:' + corS(serv) + '"></i><div class="grow"><span>' + esc(serv) + '</span><span>' + esc(local) + '</span></div>' + chip(t) + '</div>';
+      }).join('') + (pac.length > LIMP ? '<p class="kpi-s" style="margin:6px 0 0">e mais ' + (pac.length - LIMP) + ' no curto prazo</p>' : '')
+        : '<p class="kpi-s">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>';
+    html += '<div class="grid-2-1">' + curva + pacotes + '</div>';
+
+    // avanço por etapa (linhas resumo logo abaixo da obra)
+    var etapas = raiz.length === 1 ? raiz[0].children : raiz;
+    etapas = etapas.filter(function (t) { return A[t.uid] && A[t.uid].w > 0; }).slice(0, 14);
+    if (etapas.length) {
+      html += '<section class="card"><div class="card-head"><h2>Avanço por etapa</h2><span class="kpi-s">real × previsto em ' + fdate(sd) + '</span></div><div class="svc-prog">' +
+        etapas.map(function (t, n) {
+          var r = aPct(A[t.uid], 'r'), pv = aPct(A[t.uid], 'p'), d = r - pv, cor = cores[n % cores.length];
+          var nota = r >= 99.5 ? 'concluída' : (pv <= 0 && r <= 0 ? 'não iniciada' : (d < -0.5 ? fmt1(-d) + ' p.p. atrás' : 'no ritmo'));
+          return '<div title="Previsto ' + fmt1(pv) + '%"><span style="display:flex;align-items:center;gap:6px;font-weight:500;min-width:0"><i class="sw" style="background:' + cor + '"></i><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(t.name) + '</span></span>' +
+            '<div class="bar" style="height:6px;position:relative"><i style="width:' + Math.min(100, r) + '%;background:' + cor + '"></i><i style="left:' + Math.min(99, pv) + '%;width:2px;background:var(--ink);border-radius:0"></i></div>' +
+            '<span class="mono" style="color:' + (d < -0.5 && r < 99.5 ? 'var(--bad)' : 'var(--muted)') + '">' + fmt1(r) + '% · ' + nota + '</span></div>';
+        }).join('') + '</div></section>';
+    }
     if (CU && CU.totais) {
       var T = CU.totais, br = function (v) { return 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR'); };
       html += '<div class="grid4">' +
@@ -2130,7 +2197,6 @@ footer.site a{color:var(--ink)}
       '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>Próximos marcos</h2></div>' +
       (tabM ? '<div class="scroll-x"><table class="tbl" style="min-width:360px"><thead><tr><th>Marco</th><th>Data</th><th style="text-align:right">Contra a LB</th></tr></thead><tbody>' + tabM + '</tbody></table></div>' : '<p class="kpi-s" style="padding:10px 18px 16px">Nenhum marco à frente no cronograma.</p>') + '</section>' +
       '</div>';
-    html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:med">Fazer a medição</button><button type="button" class="btn btn-ghost" data-a="nav:cp">Curto prazo</button><button type="button" class="btn btn-ghost" data-a="nav:pa">Plano de ataque</button></div>';
     return html;
   }
   /* Curto prazo da conta real: mesmo formato da demonstração, com os pacotes da semana tirados do cronograma */
@@ -2139,7 +2205,7 @@ footer.site a{color:var(--ink)}
   function loadCP() {
     if (!API || cpCarregando) return;
     cpCarregando = true;
-    api('/api/curtoprazo').then(function (r) { CPD = r.semanas || {}; cpCarregando = false; if (!app.hidden && S.screen === 'cp') render(); }, function () { cpCarregando = false; CPD = CPD || {}; });
+    api('/api/curtoprazo').then(function (r) { CPD = r.semanas || {}; cpCarregando = false; if (!app.hidden && (S.screen === 'cp' || S.screen === 'painel')) render(); }, function () { cpCarregando = false; CPD = CPD || {}; });
   }
   function cpSalvar(sem, uid, st, causa) {
     CPD = CPD || {}; var w = CPD[sem] = CPD[sem] || {};
