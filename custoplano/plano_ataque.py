@@ -435,7 +435,11 @@ def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | No
     torres = []
     # torres com nome primeiro (em ordem natural: Torre A, Torre B, Torre 2, Torre 10); tarefas sem torre por último
     nat = lambda x: [int(k) if k.isdigit() else k for k in re.split(r"(\d+)", x)]
+    # quando a EAP tem torres, a escadinha fica só com os serviços das torres (o que está fora delas sai)
+    tem_torre = bool(ordem_torre.keys() - {""})
     for torre in sorted(ordem_torre, key=lambda x: (x == "", nat(x))):
+        if tem_torre and not torre:
+            continue
         # do térreo (e subsolos) até o pavimento mais alto
         pavs = sorted({n for (tr, _, n) in celulas if tr == torre})
         # serviço que aparece em um pavimento só não forma escadinha
