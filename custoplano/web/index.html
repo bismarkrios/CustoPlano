@@ -578,6 +578,8 @@ footer.site a{color:var(--ink)}
 .ml-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
 .ml-row{border-bottom:1px solid var(--line);border-left:4px solid transparent}
 .ml-row.changed{border-left-color:var(--blue);background:color-mix(in srgb,var(--blue) 5%,var(--surface))}
+.ml-torre{font-size:15px;font-weight:800;color:var(--ink);padding:14px 14px 8px;background:var(--soft);border-bottom:1px solid var(--line);border-top:2px solid var(--ink)}
+.ml-torre:first-child,.ml-head+.ml-torre{border-top:0}
 .ml-grp{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 14px 6px;background:var(--surface);border-bottom:1px solid var(--line)}
 .ml-nome{display:flex;flex-direction:column;min-width:0}
 .ml-nome b{font-weight:600;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
@@ -2248,7 +2250,7 @@ footer.site a{color:var(--ink)}
   document.getElementById('paFile').addEventListener('change', function (e) { paImport(e.target.files[0]); e.target.value = ''; });
 
   /* ---------- Medição pelo celular (funciona sem internet) ---------- */
-  S.med = { f: 'prev', q: '' };
+  S.med = { f: 'prev', q: '', torre: '', pav: '' };
   S.mod = 'plan';
   S.sync = '';
   function semRede() { return API && typeof navigator !== 'undefined' && navigator.onLine === false; }
@@ -2298,7 +2300,22 @@ footer.site a{color:var(--ink)}
     }
     var A = aggregate(), real = aPct(A.total, 'r'), prev = aPct(A.total, 'p');
     var q = S.med.q.trim().toLowerCase(), f = S.med.f;
-    var folhas = P.tasks.filter(function (t) { return !t.children.length; });
+    // separa por torre e, dentro dela, por pavimento (do subsolo à cobertura)
+    var folhas = P.tasks.filter(function (t) { return !t.children.length; }).map(function (t, i) { t._i = i; t._tr = torreDe(t); t._pv = pavDe(t); return t; });
+    var torres = [], pavs = [];
+    folhas.forEach(function (t) { if (t._tr && torres.indexOf(t._tr) < 0) torres.push(t._tr); });
+    torres.sort(natural);
+    if (S.med.torre && torres.indexOf(S.med.torre) < 0) S.med.torre = '';
+    folhas = folhas.filter(function (t) { return !S.med.torre || t._tr === S.med.torre; });
+    folhas.forEach(function (t) { if (t._pv != null && pavs.indexOf(t._pv) < 0) pavs.push(t._pv); });
+    pavs.sort(function (a, b) { return a - b; });
+    if (S.med.pav !== '' && pavs.indexOf(+S.med.pav) < 0) S.med.pav = '';
+    if (S.med.pav !== '') folhas = folhas.filter(function (t) { return t._pv === +S.med.pav; });
+    var porLocal = torres.length > 0 || pavs.length > 1;
+    if (porLocal) folhas.sort(function (a, b) {
+      return (a._tr ? 0 : 1) - (b._tr ? 0 : 1) || natural(a._tr, b._tr) ||
+        (a._pv == null ? 1 : 0) - (b._pv == null ? 1 : 0) || (a._pv || 0) - (b._pv || 0) || a._i - b._i;
+    });
     var cont = { prev: 0, and: 0, todas: folhas.length };
     var lista = folhas.filter(function (t) {
       var a = P.meas[t.uid] || 0, pp = plannedPct(t, P.statusDate);
@@ -2310,15 +2327,20 @@ footer.site a{color:var(--ink)}
       return true;
     });
     var LIM = 120, mais = lista.length - LIM;
-    var grupo = null, itens = '';
+    var grupo = null, torreAt = null, itens = '';
     lista.slice(0, LIM).forEach(function (t) {
-      var g = [t.parent && t.parent.parent ? t.parent.parent.name : '', t.parent ? t.parent.name : ''].filter(Boolean).join(' › ');
+      var g, nome = t.name;
+      if (porLocal) {
+        if (torres.length && t._tr !== torreAt) { torreAt = t._tr; grupo = null; itens += '<div class="ml-torre">' + esc(t._tr || 'Fora das torres') + '</div>'; }
+        g = t._pv != null ? rotPav(t._pv) : 'Outros serviços';
+        if (t._pv != null || t._tr) nome = servDe(t);
+      } else g = [t.parent && t.parent.parent ? t.parent.parent.name : '', t.parent ? t.parent.name : ''].filter(Boolean).join(' › ');
       if (g !== grupo) { grupo = g; itens += '<div class="ml-grp">' + esc(g || 'Tarefas') + '</div>'; }
       var a = Math.round(P.meas[t.uid] || 0), pp = plannedPct(t, P.statusDate), ant = Math.round(P.base[t.uid] || 0);
       var atras = pp - a > 0.5;
       var q5 = [0, 25, 50, 75, 100].map(function (v) { return '<button type="button" data-a="mset:' + t.uid + ':' + v + '" aria-pressed="' + (a === v) + '">' + v + '%</button>'; }).join('');
       itens += '<div class="ml-row' + (a !== ant ? ' changed' : '') + '">' +
-        '<div class="ml-nome"><b>' + esc(t.name) + '</b><span class="mono">' + esc(t.wbs) + (atras ? ' · <em>abaixo do previsto</em>' : '') + '</span></div>' +
+        '<div class="ml-nome"><b>' + esc(nome) + '</b><span class="mono">' + esc(t.wbs) + (atras ? ' · <em>abaixo do previsto</em>' : '') + '</span></div>' +
         '<div class="ml-num mono" data-l="Previsto">' + fmt1(pp) + '%</div>' +
         '<div class="ml-num mono" data-l="Anterior">' + ant + '%</div>' +
         '<div class="ml-dt mono" data-l="Período">' + fdate(t.start).slice(0, 5) + ' → ' + fdate(t.finish).slice(0, 5) + '</div>' +
@@ -2338,6 +2360,10 @@ footer.site a{color:var(--ink)}
         '</div>' +
         '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
         '<input id="medQ" type="search" placeholder="Buscar tarefa, EAP ou pavimento" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa"></div>' +
+        (torres.length ? '<div class="torre-sel" role="group" aria-label="Torre"><span class="kpi-t">Torre</span><button type="button" data-a="mto:" aria-pressed="' + !S.med.torre + '">Todas</button>' +
+          torres.map(function (x) { return '<button type="button" data-a="mto:' + esc(x) + '" aria-pressed="' + (S.med.torre === x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '') +
+        (pavs.length > 1 ? '<div class="torre-sel" role="group" aria-label="Pavimento"><span class="kpi-t">Pavimento</span><button type="button" data-a="mpv:" aria-pressed="' + (S.med.pav === '') + '">Todos</button>' +
+          pavs.map(function (n) { return '<button type="button" data-a="mpv:' + n + '" aria-pressed="' + (S.med.pav !== '' && +S.med.pav === n) + '">' + esc(rotPav(n)) + '</button>'; }).join('') + '</div>' : '') +
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '</section>' +
@@ -2961,6 +2987,38 @@ footer.site a{color:var(--ink)}
     }
     return '';
   }
+  // pavimento no nome da tarefa ou numa tarefa-resumo acima (mesmas regras do plano de ataque)
+  var PAV_RX = [
+    [/\b(?:pav(?:to|imento)?\.?\s*)?tipo\s*(\d{1,3})\b/, function (m) { return +m[1]; }],
+    [/\b(\d{1,3})\s*o?\s*(?:pav(?:to|imento)?|andar|pvto)\b\.?/, function (m) { return +m[1]; }],
+    [/\b(?:pav(?:to|imento)?|andar|pvto|piso)\.?\s*(\d{1,3})\b/, function (m) { return +m[1]; }],
+    [/\b(\d{1,3})\s*o?\s*subsolo\b|\bsubsolo\s*(\d{0,2})\b/, function (m) { return -(+(m[1] || m[2]) || 1); }],
+    [/\bterreo\b/, function () { return 0; }], [/\bmezanino\b/, function () { return 0.5; }],
+    [/\bcobertura\b/, function () { return 1000; }], [/\batico\b/, function () { return 1001; }],
+    [/\bbarrilete\b/, function () { return 1002; }], [/\bcasa de maquinas\b/, function () { return 1003; }]
+  ];
+  function achaPav(nome) {
+    var t = semAcento(nome).replace(/º|ª/g, 'o');
+    for (var i = 0; i < PAV_RX.length; i++) { var m = PAV_RX[i][0].exec(t); if (m) return { n: PAV_RX[i][1](m), m: m }; }
+    return null;
+  }
+  function rotPav(n) {
+    if (n === 0) return 'Térreo'; if (n === 0.5) return 'Mezanino'; if (n < 0) return 'Subsolo ' + (-n);
+    return { 1000: 'Cobertura', 1001: 'Ático', 1002: 'Barrilete', 1003: 'Casa de máquinas' }[n] || n + 'º pavimento';
+  }
+  function pavDe(t) { for (var a = t; a; a = a.parent) { var r = achaPav(a.name); if (r) return r.n; } return null; }
+  // nome do serviço sem o pavimento e sem a torre ("Pav. 3" debaixo de "Alvenaria" vira "Alvenaria")
+  function servDe(t) {
+    var limpa = function (nome) {
+      var r = achaPav(nome), out = nome;
+      if (r) out = nome.slice(0, r.m.index) + ' ' + nome.slice(r.m.index + r.m[0].length);
+      var tm = TORRE_RX.exec(semAcento(out)); if (tm) out = out.slice(0, tm.index) + ' ' + out.slice(tm.index + tm[0].length);
+      return out.replace(/\(\s*\)|\[\s*\]/g, ' ').replace(/^[\s\-–—:|\/.,]+|[\s\-–—:|\/.,(]+$/g, '').replace(/\s{2,}/g, ' ').trim();
+    };
+    for (var a = t; a; a = a.parent) { var n = limpa(a.name); if (n) return n; }
+    return t.name;
+  }
+  function natural(a, b) { return String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' }); }
   function hojeReal() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); }
   function supRealModel() {
     if (!P) return [];
@@ -3181,6 +3239,8 @@ footer.site a{color:var(--ink)}
         break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
+      case 'mto': S.med.torre = a.slice(1).join(':'); S.med.pav = ''; break;
+      case 'mpv': S.med.pav = a[1]; break;
       case 'cut': S.cu.tab = a[1]; break;
       case 'cuit': S.cu.open[a[1]] = !S.cu.open[a[1]]; break;
       case 'cuex': if (precisaRede()) return; S.cu.msg = 'Carregando o exemplo…'; render(); cuSet(api('/api/custos/exemplo', {})).then(function () { loadPrj(); }); return;
