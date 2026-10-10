@@ -546,7 +546,8 @@ footer.site a{color:var(--ink)}
 .med-sum .med-sd input{min-height:34px;padding:2px 8px;width:100%}
 .med-filt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .med-filt .med-tabs{flex:1 1 320px;width:auto}
-.med-filt #medQ{flex:1 1 220px;width:auto;min-height:42px}
+.med-filt #medQ{flex:1 1 200px;width:auto;min-height:42px}
+.med-sel{flex:1 1 160px;min-height:42px;width:auto;padding:0 10px;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px}
 @media (max-width:560px){.med-sum{grid-template-columns:repeat(3,minmax(0,1fr))}.med-sum .med-sd{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);flex-direction:row;align-items:center;justify-content:space-between}.med-sum .med-sd input{width:auto}}
 .med-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .med-kpi div{display:flex;flex-direction:column}
@@ -574,7 +575,7 @@ footer.site a{color:var(--ink)}
 .med-pc{font-family:var(--mono);font-size:16px;color:var(--muted)}
 /* medição em linhas */
 .ml-list{padding:0;overflow:hidden}
-.ml-head,.ml-row{display:grid;grid-template-columns:minmax(200px,2.4fr) 72px 72px 104px minmax(80px,1fr) 176px 220px;gap:12px;align-items:center;padding:8px 14px}
+.ml-head,.ml-row{display:grid;grid-template-columns:minmax(180px,2.4fr) 68px 68px 72px minmax(70px,1fr) 168px minmax(170px,210px);gap:12px;align-items:center;padding:8px 14px}
 .ml-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
 .ml-row{border-bottom:1px solid var(--line);border-left:4px solid transparent}
 .ml-row.changed{border-left-color:var(--blue);background:color-mix(in srgb,var(--blue) 5%,var(--surface))}
@@ -598,7 +599,6 @@ footer.site a{color:var(--ink)}
   .ml-nome,.ml-bar{grid-column:1/-1}
   .ml-num,.ml-dt{grid-column:span 2;font-size:12px;white-space:nowrap}
   .ml-num::before,.ml-dt::before{content:attr(data-l) " ";color:var(--muted);font-size:10.5px}
-  .ml-dt::before{content:""}
   .ml-ctl,.ml-quick{grid-column:span 3}
   .ml-ctl .ml-step{min-height:40px;min-width:0;flex:0 0 40px;font-size:13px}.ml-ctl .ml-in{flex:1;min-width:0;width:auto;min-height:40px}
   .ml-quick{gap:3px}.ml-quick button{min-height:40px;font-size:10.5px}
@@ -2343,7 +2343,7 @@ footer.site a{color:var(--ink)}
         '<div class="ml-nome"><b>' + esc(nome) + '</b><span class="mono">' + esc(t.wbs) + (atras ? ' · <em>abaixo do previsto</em>' : '') + '</span></div>' +
         '<div class="ml-num mono" data-l="Previsto">' + fmt1(pp) + '%</div>' +
         '<div class="ml-num mono" data-l="Anterior">' + ant + '%</div>' +
-        '<div class="ml-dt mono" data-l="Período">' + fdate(t.start).slice(0, 5) + ' → ' + fdate(t.finish).slice(0, 5) + '</div>' +
+        '<div class="ml-dt mono" data-l="Término">' + fdate(t.finish) + '</div>' +
         '<div class="ml-bar med-bar" aria-hidden="true"><i style="width:' + a + '%"></i><b style="left:' + Math.min(100, pp) + '%"></b></div>' +
         '<div class="ml-ctl"><button type="button" class="ml-step" data-a="mstep:' + t.uid + ':-10" aria-label="Menos 10%">−10</button>' +
         '<input class="ml-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + a + '" aria-label="% concluído: ' + esc(t.name) + '"><span class="med-pc">%</span>' +
@@ -2359,15 +2359,17 @@ footer.site a{color:var(--ink)}
           '<div class="med-sd"><label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
         '</div>' +
         '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
-        '<input id="medQ" type="search" placeholder="Buscar tarefa, EAP ou pavimento" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa"></div>' +
-        (torres.length ? '<div class="torre-sel" role="group" aria-label="Torre"><span class="kpi-t">Torre</span><button type="button" data-a="mto:" aria-pressed="' + !S.med.torre + '">Todas</button>' +
-          torres.map(function (x) { return '<button type="button" data-a="mto:' + esc(x) + '" aria-pressed="' + (S.med.torre === x) + '">' + esc(x) + '</button>'; }).join('') + '</div>' : '') +
-        (pavs.length > 1 ? '<div class="torre-sel" role="group" aria-label="Pavimento"><span class="kpi-t">Pavimento</span><button type="button" data-a="mpv:" aria-pressed="' + (S.med.pav === '') + '">Todos</button>' +
-          pavs.map(function (n) { return '<button type="button" data-a="mpv:' + n + '" aria-pressed="' + (S.med.pav !== '' && +S.med.pav === n) + '">' + esc(rotPav(n)) + '</button>'; }).join('') + '</div>' : '') +
+        '<input id="medQ" type="search" placeholder="Buscar tarefa ou EAP" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
+        (torres.length ? '<select id="medTorre" class="med-sel" aria-label="Torre"><option value="">Todas as torres</option>' +
+          torres.map(function (x) { return '<option value="' + esc(x) + '"' + (S.med.torre === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') + '</select>' : '') +
+        (pavs.length > 1 ? '<select id="medPav" class="med-sel" aria-label="Pavimento"><option value="">Todos os pavimentos</option>' +
+          pavs.map(function (n) { return '<option value="' + n + '"' + (S.med.pav !== '' && +S.med.pav === n ? ' selected' : '') + '>' + esc(rotPav(n)) + '</option>'; }).join('') + '</select>' : '') +
+        '</div>' +
+
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '</section>' +
-      '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Período</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
+      '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
       (API ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
@@ -3239,8 +3241,6 @@ footer.site a{color:var(--ink)}
         break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
-      case 'mto': S.med.torre = a.slice(1).join(':'); S.med.pav = ''; break;
-      case 'mpv': S.med.pav = a[1]; break;
       case 'cut': S.cu.tab = a[1]; break;
       case 'cuit': S.cu.open[a[1]] = !S.cu.open[a[1]]; break;
       case 'cuex': if (precisaRede()) return; S.cu.msg = 'Carregando o exemplo…'; render(); cuSet(api('/api/custos/exemplo', {})).then(function () { loadPrj(); }); return;
@@ -3319,6 +3319,8 @@ footer.site a{color:var(--ink)}
     if (again) again.focus({ preventScroll: true });
   });
   app.addEventListener('change', function (e) {
+    if (e.target.id === 'medTorre') { S.med.torre = e.target.value; S.med.pav = ''; render(); return; }
+    if (e.target.id === 'medPav') { S.med.pav = e.target.value; render(); return; }
     var k = e.target.getAttribute('data-cause');
     if (k) { S.causes[k] = e.target.value; render(); var s2 = body.querySelector('[data-cause="' + k + '"]'); if (s2) s2.focus(); }
     if (e.target.hasAttribute && e.target.hasAttribute('data-meas')) {
