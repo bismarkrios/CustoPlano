@@ -1140,6 +1140,7 @@ footer.site a{color:var(--ink)}
     if (body instanceof FormData) o.body = body;
     else if (body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
     return fetch(path, o).catch(function () { var er = new Error('Sem conexão com a internet.'); er.offline = true; throw er; }).then(function (r) {
+      if (r.status === 401 && path !== '/api/login' && path !== '/api/me' && user) sessaoExpirou();
       return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.erro || ('Erro ' + r.status)); return j; });
     });
   }
@@ -1153,6 +1154,8 @@ footer.site a{color:var(--ink)}
   function route() {
     var h = (location.hash || '').replace('#', '');
     if (h === 'demo') { abrirDemo(); return; }
+    // "Entrar" / "Área do cliente" com a sessão aberta vai direto para o sistema; o seletor de áreas fica em #area
+    if (h === 'entrar' && user) { location.replace('#sistema'); route(); return; }
     if (h === 'entrar' || h === 'area') { show(user ? 'hub' : 'login'); window.scrollTo(0, 0); return; }
     if (h === 'sistema' || h === 'qualidade') {
       if (!user) { show('login'); window.scrollTo(0, 0); return; }
@@ -1169,10 +1172,22 @@ footer.site a{color:var(--ink)}
   function enter(email) {
     user = email || 'demo@custoplano.com.br';
     if (API) { loadPrj(); } else { try { sessionStorage.setItem('cp_user', user); } catch (e) {} }
-    location.hash = 'area';
+    // depois do login, abre a área pedida (#sistema ou #qualidade); de qualquer outro lugar, o sistema
+    var h = (location.hash || '').replace('#', '');
+    if (h !== 'sistema' && h !== 'qualidade') location.replace('#sistema');
     route();
   }
+  function sessaoExpirou() {
+    user = null;
+    var m = document.getElementById('lg-msg'); m.textContent = 'Sua sessão terminou. Entre de novo para continuar de onde parou.'; m.hidden = false;
+    show('login'); window.scrollTo(0, 0);
+  }
   window.addEventListener('hashchange', route);
+  // clicar num link para a tela em que já está (ex.: "Entrar" com #entrar no endereço) também precisa funcionar
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (a && a.getAttribute('href') === location.hash && /^#(entrar|area|sistema|qualidade|demo)$/.test(location.hash)) { e.preventDefault(); route(); }
+  });
 
   document.getElementById('loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
