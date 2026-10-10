@@ -198,6 +198,14 @@ def inicio():
     return r
 
 
+@app.get("/manual")
+def pagina_manual():
+    """Página de venda do ebook (os anúncios e o site apontam para cá)."""
+    r = send_from_directory(PASTA_WEB, "manual.html", mimetype="text/html")
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
 @app.get("/web/<path:arquivo>")
 def estaticos(arquivo):
     return send_from_directory(PASTA_WEB, arquivo)
