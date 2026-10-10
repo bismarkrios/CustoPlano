@@ -552,6 +552,41 @@ def salvar_suprimento():
     return jsonify(itens=itens)
 
 
+# --------------------------------------------------------------- curto prazo
+CP_CAUSAS = ("Material", "Mão de obra", "Projeto", "Equipamento", "Clima", "Predecessora", "Qualidade")
+
+
+@app.get("/api/curtoprazo")
+@logado
+def ver_curto_prazo():
+    return jsonify(semanas=banco.curto_prazo(session["uid"]))
+
+
+@app.post("/api/curtoprazo")
+@logado
+def salvar_curto_prazo():
+    """Grava o apontamento de um pacote na semana: concluído, não concluído (com a causa) ou sem apontamento."""
+    d = request.get_json(silent=True) or {}
+    sem, uid = str(d.get("semana") or ""), str(d.get("uid") or "")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", sem) or not re.fullmatch(r"\d{1,9}", uid):
+        return erro("Semana ou tarefa inválida.")
+    st, causa = d.get("st") or "", d.get("causa") or ""
+    if st not in ("", "ok", "nok") or (causa and causa not in CP_CAUSAS):
+        return erro("Apontamento inválido.")
+    dados = banco.curto_prazo(session["uid"])
+    semana = dados.setdefault(sem, {})
+    if st:
+        semana[uid] = {"st": st, "causa": causa if st == "nok" else ""}
+    else:
+        semana.pop(uid, None)
+    if not semana:
+        dados.pop(sem, None)
+    if len(dados) > 520 or sum(len(v) for v in dados.values()) > 50000:
+        return erro("Limite de apontamentos atingido.")
+    banco.salvar_curto_prazo(session["uid"], dados)
+    return jsonify(semanas=dados)
+
+
 # ---------------------------------------------------------------- qualidade
 def _ql(fn):
     try:

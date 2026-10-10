@@ -298,6 +298,8 @@ footer.site a{color:var(--ink)}
 .card-head h2{flex:1}
 .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .grid-2-1{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:14px;align-items:start}
+.cp-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cp-sem{font-size:15px;color:var(--ink)}
 .split{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
 .kpi-t{font-size:13px;color:var(--muted)}
 .kpi-v{font-family:var(--mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -365,7 +367,7 @@ footer.site a{color:var(--ink)}
 .ppc-card .kpi-v{font-size:42px}
 .ppc-card .bar{background:var(--panel-line)}
 .hist{display:flex;align-items:flex-end;gap:6px;height:140px}
-.hist div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
+.hist div{flex:1;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
 .hist i{width:100%;border-radius:2px 2px 0 0;background:var(--line);display:block}
 .hist i.now{background:var(--accent)}
 .hist span{font-family:var(--mono);font-size:10px;color:var(--muted)}
@@ -1335,7 +1337,7 @@ footer.site a{color:var(--ink)}
     painel: ['Painel da obra', 'Prazo, avanço físico e custos, tudo calculado a partir do cronograma importado.'],
     cus: ['Custos', 'Orçamento, cronograma físico-financeiro e custo orçado × realizado, a partir das colunas de custo do cronograma.'],
     sup: ['Suprimentos', 'Compras puxadas pelas linhas resumo do cronograma: a data de início de cada linha resumo menos o prazo do fornecedor.'],
-    cp: ['Planejamento de curto prazo', 'Tarefas do cronograma nas próximas três semanas, o que ainda falta para liberar cada uma e o PPC da semana passada.']
+    cp: ['Planejamento de curto prazo', 'Pacotes do cronograma previstos na semana. Aponte a execução e o PPC é recalculado na hora.']
   };
   var HEADS = {
     painel: ['Painel da obra', 'Visão geral de prazo, avanço físico e produção da semana.'],
@@ -2123,44 +2125,88 @@ footer.site a{color:var(--ink)}
     html += '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:med">Fazer a medição</button><button type="button" class="btn btn-ghost" data-a="nav:cp">Curto prazo</button><button type="button" class="btn btn-ghost" data-a="nav:pa">Plano de ataque</button></div>';
     return html;
   }
+  /* Curto prazo da conta real: mesmo formato da demonstração, com os pacotes da semana tirados do cronograma */
+  var CPD = null, cpCarregando = false;
+  S.cpw = 0;
+  function loadCP() {
+    if (!API || cpCarregando) return;
+    cpCarregando = true;
+    api('/api/curtoprazo').then(function (r) { CPD = r.semanas || {}; cpCarregando = false; if (!app.hidden && S.screen === 'cp') render(); }, function () { cpCarregando = false; CPD = CPD || {}; });
+  }
+  function cpSalvar(sem, uid, st, causa) {
+    CPD = CPD || {}; var w = CPD[sem] = CPD[sem] || {};
+    if (st) w[uid] = { st: st, causa: st === 'nok' ? (causa || '') : '' }; else delete w[uid];
+    render();
+    if (precisaRede()) return;
+    api('/api/curtoprazo', { semana: sem, uid: uid, st: st, causa: causa || '' }).then(function (r) { CPD = r.semanas || {}; }, function (e) { S.prjMsg = 'Não foi possível salvar o apontamento: ' + e.message; render(); });
+  }
+  function cpSemana(a) {
+    // pacotes da semana: tarefas do cronograma com execução prevista entre segunda e domingo
+    var b = a + 7 * 864e5;
+    return folhas().filter(function (t) { return !t.ms && t.start != null && t.finish != null && t.start < b && t.finish >= a; })
+      .map(function (t) { t._tr = torreDe(t); t._pv = pavDe(t); return t; })
+      .sort(function (x, y) { return natural(x._tr, y._tr) || (x._pv == null ? 1e9 : x._pv) - (y._pv == null ? 1e9 : y._pv) || x.start - y.start; });
+  }
+  function cpEstado(sem, t) {
+    var r = CPD && CPD[sem] && CPD[sem][t.uid];
+    if (r) return r;
+    return (P.meas[t.uid] || 0) >= 100 && fimLB(t) <= Date.parse(sem) + 7 * 864e5 ? { st: 'ok', causa: '', auto: true } : { st: '', causa: '' };
+  }
   function vCPReal() {
     if (!P) return semPrj('O curto prazo é montado a partir do cronograma da obra. Importe o .mpp na tela Project.');
-    var dia = 864e5, sd = P.statusDate, d0 = new Date(sd);
-    var seg = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia;
-    var fs = folhas().filter(function (t) { return !t.ms && t.start != null && t.finish != null; });
-    var feito = function (t) { return (P.meas[t.uid] || 0) >= 100; };
-    // PPC: tarefas que a linha de base mandava terminar na semana passada
-    var pIni = seg - 7 * dia, pFim = seg;
-    var prog = fs.filter(function (t) { var f = fimLB(t); return f != null && f >= pIni && f < pFim; });
-    var ppcOk = prog.filter(feito).length;
-    var semanas = [0, 1, 2].map(function (k) {
-      var a = seg + k * 7 * dia, b = a + 7 * dia;
-      // esta semana: tudo que já devia ter começado e não terminou (inclui atrasadas); depois, só o que começa na semana
-      var lista = fs.filter(function (t) { return !feito(t) && t.start < b && (k === 0 || t.start >= a); }).sort(function (x, y) { return x.start - y.start; });
-      return { a: a, b: b, lista: lista };
-    });
-    var pend = 0;
-    var corpo = semanas.map(function (w, k) {
-      var linhas = w.lista.map(function (t) {
-        var falta = t.pred.map(function (u) { return P.byUid[u]; }).filter(function (q) { return q && (P.meas[q.uid] || 0) < 100; });
-        if (falta.length) pend++;
-        var atr = fimLB(t) != null && fimLB(t) < sd;
-        var st = atr ? '<span class="chip c-bad">atrasada</span> ' : '';
-        st += falta.length ? '<span class="chip c-warn" title="' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '<span class="chip c-ok">liberada</span>';
-        return '<tr><td><span class="mono" style="color:var(--muted)">' + esc(t.wbs) + '</span> ' + esc(nomeT(t)) +
-          (falta.length ? '<div class="kpi-s">falta: ' + esc(falta.slice(0, 3).map(nomeT).join(', ')) + (falta.length > 3 ? '…' : '') + '</div>' : '') + '</td>' +
-          '<td class="mono">' + fdate(t.start) + '</td><td class="mono">' + fdate(t.finish) + '</td><td class="mono" style="text-align:right">' + fmt1(P.meas[t.uid] || 0) + '%</td><td>' + st + '</td></tr>';
-      }).join('');
-      return '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 0"><h2>' + (k === 0 ? 'Esta semana' : k === 1 ? 'Próxima semana' : 'Daqui a duas semanas') + ' · ' + fdate(w.a) + ' a ' + fdate(w.b - dia) + '</h2></div>' +
-        (linhas ? '<div class="scroll-x"><table class="tbl" style="min-width:560px"><thead><tr><th>Tarefa</th><th>Início</th><th>Término</th><th style="text-align:right">Medido</th><th>Situação</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' : '<p class="kpi-s" style="padding:10px 18px 16px">Nenhuma tarefa aberta nesta semana.</p>') + '</section>';
+    if (CPD == null) loadCP();
+    var dia = 864e5, d0 = new Date(P.statusDate);
+    var seg0 = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia;
+    var a = seg0 + S.cpw * 7 * dia, sem = isoDay(a);
+    var lista = cpSemana(a), FN = fornecedores(), cores = ['var(--pa0)', 'var(--pa2)', 'var(--pa3)', 'var(--pa1)', 'var(--pa4)', 'var(--pa5)'], corDe = {};
+    var ok = 0, nok = 0, cc = {};
+    var rows = lista.map(function (t) {
+      var e = cpEstado(sem, t), serv = servDe(t);
+      if (!(serv in corDe)) corDe[serv] = cores[Object.keys(corDe).length % cores.length];
+      if (e.st === 'ok') ok++;
+      if (e.st === 'nok') { nok++; var k = e.causa || '—'; cc[k] = (cc[k] || 0) + 1; }
+      var local = [t._tr, t._pv != null ? rotPav(t._pv) : ''].filter(Boolean).join(' · ') || (t.parent ? t.parent.name : '—');
+      var falta = t.pred.map(function (u) { return P.byUid[u]; }).filter(function (q) { return q && (P.meas[q.uid] || 0) < 100; });
+      var sel = e.st === 'nok' ? '<select data-cpcausa="' + t.uid + '" aria-label="Causa do não cumprimento: ' + esc(serv) + '"><option value="">Selecione a causa</option>' +
+        Object.keys(CAUSAS).map(function (k) { return '<option value="' + k + '"' + (e.causa === k ? ' selected' : '') + '>' + CAUSAS[k] + '</option>'; }).join('') + '</select>' : '<span style="color:var(--muted)">—</span>';
+      return '<tr><td><span style="display:flex;align-items:center;gap:10px;font-weight:500"><i class="sw" style="background:' + corDe[serv] + '"></i><span>' + esc(serv) +
+          (falta.length ? ' <span class="chip c-warn" title="Aguarda: ' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '') + '</span></span></td>' +
+        '<td>' + esc(local) + '</td><td>' + esc(FN[t.uid] || '—') + '</td>' +
+        '<td><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
     }).join('');
-    var ppc = prog.length ? Math.round(ppcOk / prog.length * 100) : null;
-    return '<div class="grid4">' +
-      kpi('PPC da semana passada', ppc == null ? '—' : ppc + '%', prog.length ? ppcOk + ' de ' + prog.length + ' tarefas que deviam terminar' : 'nenhuma tarefa devia terminar', ppc == null ? null : (ppc < 80 ? 'var(--bad)' : 'var(--good)')) +
-      kpi('Tarefas nas 3 semanas', semanas.reduce(function (n, w) { return n + w.lista.length; }, 0), 'abertas, a partir de ' + fdate(seg), null) +
-      kpi('Aguardando liberação', pend, 'predecessoras ainda não concluídas', pend ? 'var(--warn, #B07816)' : 'var(--good)') +
-      kpi('Data de status', fdate(sd), 'mude na tela Medição', null) +
-      '</div>' + corpo;
+    var tot = lista.length, ppc = tot ? Math.round(ok / tot * 100) : 0;
+    // histórico: semanas anteriores que tiveram apontamento
+    var hist = [];
+    for (var k = 8; k >= 1; k--) {
+      var ak = a - k * 7 * dia, sk = isoDay(ak);
+      if (!CPD || !CPD[sk]) continue;
+      var lk = cpSemana(ak); if (!lk.length) continue;
+      hist.push({ v: Math.round(lk.filter(function (t) { return cpEstado(sk, t).st === 'ok'; }).length / lk.length * 100), r: fdate(ak).slice(0, 5) });
+    }
+    var keys = Object.keys(cc).sort(function (x, y) { return cc[y] - cc[x]; });
+    var maxC = Math.max.apply(null, [1].concat(keys.map(function (x) { return cc[x]; })));
+    var nav = '<div class="cp-nav"><button type="button" class="btn btn-ghost btn-sm" data-a="cpw:-1" aria-label="Semana anterior">‹</button>' +
+      '<span class="cp-sem"><b>Semana de ' + fdate(a).slice(0, 5) + ' a ' + fdate(a + 6 * dia).slice(0, 5) + '</b>' + (S.cpw === 0 ? ' (atual)' : '') + '</span>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-a="cpw:1" aria-label="Próxima semana">›</button>' +
+      (S.cpw !== 0 ? '<button type="button" class="linkbtn" data-a="cpw:0" style="font-size:13px">Voltar à semana atual</button>' : '') +
+      '<span class="kpi-s" style="margin-left:auto">Semana pela data de status (' + fdate(P.statusDate) + ')</span></div>';
+    return nav + (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
+      '<div class="split"><section class="card" style="padding:0;overflow:hidden">' +
+        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:860px"><thead><tr><th scope="col">Pacote</th><th scope="col">Local</th><th scope="col">Responsável</th><th scope="col" style="width:240px">Execução</th><th scope="col" style="width:200px">Causa do não cumprimento</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+          : '<p class="kpi-s" style="padding:18px">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>' +
+      '<aside style="display:flex;flex-direction:column;gap:14px">' +
+        '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? ppc + '%' : '—') + '</span>' +
+          '<div class="bar"><i style="width:' + ppc + '%;background:var(--accent)"></i><i style="left:80%;width:2px;background:var(--panel-ink);border-radius:0"></i></div>' +
+          '<span style="font-size:12.5px;color:var(--panel-muted)">' + ok + ' de ' + tot + ' concluídos · meta 80% · ' + (tot - ok - nok) + ' sem apontamento</span></div>' +
+        '<section class="card"><div class="card-head"><h2>Histórico do PPC</h2></div>' +
+          (hist.length ? '' : '<p class="kpi-s" style="margin:0 0 8px">As semanas apontadas aparecem aqui.</p>') + '<div class="hist">' +
+          hist.map(function (h) { return '<div><span>' + h.v + '%</span><i style="height:' + Math.max(h.v, 2) + '%"></i><span>' + h.r + '</span></div>'; }).join('') +
+          '<div><span style="color:var(--ink);font-weight:600">' + (tot ? ppc + '%' : '—') + '</span><i class="now" style="height:' + Math.max(ppc, 2) + '%"></i><span style="color:var(--ink);font-weight:600">' + fdate(a).slice(0, 5) + '</span></div>' +
+        '</div></section>' +
+        '<section class="card"><div class="card-head"><h2>Causas de não cumprimento</h2></div>' +
+          (keys.length ? keys.map(function (x) { return '<div style="display:grid;grid-template-columns:130px 1fr 18px;gap:10px;align-items:center;font-size:13px;padding:4px 0"><span>' + (x === '—' ? 'Sem causa informada' : CAUSAS[x]) + '</span><div class="bar"><i style="width:' + Math.round(cc[x] / maxC * 100) + '%;background:var(--bad)"></i></div><span class="mono" style="text-align:right">' + cc[x] + '</span></div>'; }).join('')
+            : '<p style="font-size:13.5px;color:var(--muted)">Marque um pacote como “Não concluída” e informe a causa.</p>') +
+        '</section></aside></div>';
   }
   function vPrjVazio() {
     return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Importe o cronograma da obra</b><p style="color:var(--muted);font-size:14px">Envie o .mpp direto do MS Project (ou um .xml salvo pelo Project). A EAP, as datas, a linha de base e o peso vêm do arquivo, e a medição e os custos passam a usar este cronograma.</p>' +
@@ -3143,7 +3189,7 @@ footer.site a{color:var(--ink)}
   }
   function sairJa() {
     if (API) api('/api/logout', {}).catch(function () {});
-    user = null; P = null; PA = null; CU = null; Q = null; S.q.form = null; S.sync = ''; kvSet('pend', null); kvSet('qout', null);
+    user = null; P = null; PA = null; CU = null; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; kvSet('pend', null); kvSet('qout', null);
     if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
     location.hash = 'entrar'; route();
   }
@@ -3221,6 +3267,11 @@ footer.site a{color:var(--ink)}
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
+      case 'cpw': S.cpw = a[1] === '0' ? 0 : S.cpw + (+a[1]); break;
+      case 'cpok': case 'cpnok':
+        var dC = new Date(P.statusDate), segC = Date.UTC(dC.getUTCFullYear(), dC.getUTCMonth(), dC.getUTCDate()) - ((dC.getUTCDay() + 6) % 7) * 864e5;
+        var semC = isoDay(segC + S.cpw * 7 * 864e5), tC = P.byUid[a[1]], eC = tC ? cpEstado(semC, tC) : { st: '' }, alvo = a[0] === 'cpok' ? 'ok' : 'nok';
+        cpSalvar(semC, a[1], eC.st === alvo && !eC.auto ? '' : alvo, eC.causa); return;
       case 'ok': var t1 = M.tasks.filter(function (t) { return t.key === a[1]; })[0]; setSt(a[1], t1.st === 'feito' ? 'andamento' : 'feito'); break;
       case 'nok': var t2 = M.tasks.filter(function (t) { return t.key === a[1]; })[0]; setSt(a[1], t2.st === 'atrasado' ? 'andamento' : 'atrasado'); break;
       case 'filtro': S.filtro = a[1]; break;
@@ -3321,6 +3372,10 @@ footer.site a{color:var(--ink)}
   app.addEventListener('change', function (e) {
     if (e.target.id === 'medTorre') { S.med.torre = e.target.value; S.med.pav = ''; render(); return; }
     if (e.target.id === 'medPav') { S.med.pav = e.target.value; render(); return; }
+    if (e.target.hasAttribute && e.target.hasAttribute('data-cpcausa')) {
+      var dX = new Date(P.statusDate), segX = Date.UTC(dX.getUTCFullYear(), dX.getUTCMonth(), dX.getUTCDate()) - ((dX.getUTCDay() + 6) % 7) * 864e5;
+      cpSalvar(isoDay(segX + S.cpw * 7 * 864e5), e.target.getAttribute('data-cpcausa'), 'nok', e.target.value); return;
+    }
     var k = e.target.getAttribute('data-cause');
     if (k) { S.causes[k] = e.target.value; render(); var s2 = body.querySelector('[data-cause="' + k + '"]'); if (s2) s2.focus(); }
     if (e.target.hasAttribute && e.target.hasAttribute('data-meas')) {
