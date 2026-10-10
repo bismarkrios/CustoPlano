@@ -3167,7 +3167,7 @@ footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:
 
 /* Contato do site. Preencha para ativar o envio e mostrar os dados na página.
    whatsapp: só números, com DDI e DDD (ex.: 5571999998888). manual: link de venda do ebook. */
-var CONTATO = { whatsapp: '', email: '', manual: '' };
+var CONTATO = { whatsapp: '', email: '', manual: 'https://pay.kiwify.com.br/UjBdBCu' };
 (function () {
   var info = document.getElementById('infoContato'), h = '';
   if (CONTATO.whatsapp) h += '<div><span>WhatsApp</span><b><a href="https://wa.me/' + CONTATO.whatsapp + '">' + CONTATO.whatsapp.replace(/^55(\d\d)(\d{4,5})(\d{4})$/, '($1) $2-$3') + '</a></b></div>';
