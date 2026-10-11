@@ -308,8 +308,8 @@ footer.site a{color:var(--ink)}
 .pn-curve text{font-family:var(--body);font-size:11.5px}
 .pn-curve .pn-v,.pn-curve .pn-vp,.pn-curve .pn-hoje{paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
 .pn-curve .pn-hoje{fill:var(--ink);font-weight:600}
-.pn-curve .pn-v{fill:var(--ink);font-weight:700;font-size:12px}
-.pn-curve .pn-vp{fill:var(--muted);font-weight:600;font-size:11px}
+.pn-curve .pn-v{fill:var(--ink);font-weight:700;font-size:13px}
+.pn-curve .pn-vp{fill:var(--muted);font-weight:600;font-size:12.5px}
 .pn-et{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 32px}
 .pn-et-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,2fr) 52px 92px;gap:12px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
 .pn-et-n{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -2183,21 +2183,26 @@ footer.site a{color:var(--ink)}
       return '<line x1="' + x + '" x2="' + x + '" y1="200" y2="205" stroke="var(--muted)"></line>' + (n % passo === 0 ? '<text x="' + x + '" y="220" text-anchor="middle">' + lab + '</text>' : '');
     }).join('');
     var pts = [[ini, 0]].concat(hist.map(function (h) { return [h.t, h.r]; }), [[sd, real]]);
-    var hx = +X(sd).toFixed(1), yr = Y(real), yp = Y(prev), dir = hx > 520 ? -1 : 1, anc = dir < 0 ? 'end' : 'start';
+    var hx = +X(sd).toFixed(1), yr = Y(real), yp = Y(prev);
+    // valores à direita do gráfico, afastados para não encostar um no outro
+    var lr = yr, lp2 = yp;
+    if (Math.abs(lr - lp2) < 22) { var mid = (lr + lp2) / 2, up = lr <= lp2 ? -1 : 1; lr = mid + up * 11; lp2 = mid - up * 11; }
+    lr = Math.max(4, Math.min(204, lr)); lp2 = Math.max(4, Math.min(204, lp2));
     var curva = '<section class="card"><div class="card-head"><h2>Curva S · avanço físico acumulado</h2>' +
         '<span class="legend-row"><span><i class="sw" style="background:var(--muted);height:2px;width:16px"></i>Previsto (linha de base)</span><span><i class="sw" style="background:var(--accent);height:3px;width:16px"></i>Real medido</span></span></div>' +
-      '<div class="scroll-x"><svg class="curve pn-curve" viewBox="-44 -14 700 252" style="width:100%;height:auto;display:block" role="img" aria-label="Curva S: em ' + fdate(sd) + ' previsto ' + fmt1(prev) + '% e real ' + fmt1(real) + '%">' +
+      '<div class="scroll-x"><svg class="curve pn-curve" viewBox="-44 -14 820 252" style="width:100%;height:auto;display:block" role="img" aria-label="Curva S: em ' + fdate(sd) + ' previsto ' + fmt1(prev) + '% e real ' + fmt1(real) + '%">' +
         [0, 50, 100, 150, 200].map(function (y, n) { return '<line x1="0" x2="640" y1="' + y + '" y2="' + y + '" stroke="var(--line)"></line><text x="-10" y="' + (y + 4) + '" text-anchor="end">' + (100 - n * 25) + '%</text>'; }).join('') +
         eixo +
         '<line x1="' + hx + '" x2="' + hx + '" y1="-8" y2="200" stroke="var(--ink)" stroke-dasharray="2 3"></line>' +
-        '<text x="' + hx + '" y="-1" text-anchor="' + (hx > 590 ? 'end' : hx < 50 ? 'start' : 'middle') + '" class="pn-hoje">status ' + fdate(sd).slice(0, 5) + '</text>' +
         '<path d="' + dp + '" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="6 5"></path>' +
         (hist.length ? '<path d="' + pts.map(function (q, n) { return (n ? 'L' : 'M') + X(q[0]).toFixed(1) + ' ' + Y(q[1]).toFixed(1); }).join(' ') + '" fill="none" stroke="var(--accent)" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"></path>' +
           hist.map(function (h) { return '<circle cx="' + X(h.t).toFixed(1) + '" cy="' + Y(h.r).toFixed(1) + '" r="3.5" fill="var(--accent)"></circle>'; }).join('') : '') +
         '<circle cx="' + hx + '" cy="' + yp.toFixed(1) + '" r="4.5" fill="var(--surface)" stroke="var(--muted)" stroke-width="2"></circle>' +
         '<circle cx="' + hx + '" cy="' + yr.toFixed(1) + '" r="5.5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"></circle>' +
-        '<text x="' + (hx + dir * 10) + '" y="' + (yr + (yr > yp ? 16 : -8)).toFixed(1) + '" text-anchor="' + anc + '" class="pn-v">Real ' + fmt1(real) + '%</text>' +
-        '<text x="' + (hx + dir * 10) + '" y="' + (yp + (yr > yp ? -8 : 16)).toFixed(1) + '" text-anchor="' + anc + '" class="pn-vp">Previsto ' + fmt1(prev) + '%</text>' +
+        '<line x1="' + (hx + 8) + '" x2="652" y1="' + yr.toFixed(1) + '" y2="' + lr.toFixed(1) + '" stroke="var(--accent)" stroke-width="1" stroke-dasharray="2 3" opacity=".55"></line>' +
+        '<line x1="' + (hx + 8) + '" x2="652" y1="' + yp.toFixed(1) + '" y2="' + lp2.toFixed(1) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3" opacity=".55"></line>' +
+        '<text x="658" y="' + (lr + 5).toFixed(1) + '" class="pn-v">Real ' + fmt1(real) + '%</text>' +
+        '<text x="658" y="' + (lp2 + 5).toFixed(1) + '" class="pn-vp">Previsto ' + fmt1(prev) + '%</text>' +
       '</svg></div>' +
       (hist.length ? '' : '<p class="kpi-s" style="margin:4px 0 0">A linha do real se forma a cada medição fechada. Hoje há só a medição atual.</p>') + '</section>';
 
