@@ -163,6 +163,8 @@ def ler_custos(nome_arquivo: str, conteudo: bytes) -> dict:
     if not re.search(r"\.xls[xm]$", nome_arquivo or "", re.I):
         raise ErroCustos("Envie o orçamento em Excel (.xlsx). Baixe o modelo na tela Custos se precisar.")
     try:
+        if not _zip_seguro(conteudo):
+            raise ErroCustos("A planilha é grande demais para ser lida.")
         wb = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=True, read_only=True)
     except Exception:
         raise ErroCustos("Não consegui abrir a planilha. Confira se é um arquivo .xlsx válido.")
@@ -783,3 +785,13 @@ def dados_do_projeto(p) -> dict | None:
         return None
     return {"arquivo": p.arquivo, "origem": "project", "bdi": 0.0, "itens": itens, "composicoes": {},
             "realizado": realizado, "avisos": []}
+
+
+def _zip_seguro(conteudo: bytes, limite: int = 150_000_000) -> bool:
+    """Uma planilha .xlsx é um zip: recusa as que, descompactadas, passariam do limite (zip bomb)."""
+    import zipfile
+    try:
+        with zipfile.ZipFile(io.BytesIO(conteudo)) as z:
+            return sum(i.file_size for i in z.infolist()) <= limite
+    except zipfile.BadZipFile:
+        return True  # o openpyxl dá o erro de arquivo inválido

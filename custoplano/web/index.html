@@ -1669,13 +1669,14 @@ footer.site a{color:var(--ink)}
     kids(kid(root, 'Tasks'), 'Task').forEach(function (el) {
       if (tx(el, 'IsNull') === '1') return;
       var lvl = +tx(el, 'OutlineLevel') || 0, uid = tx(el, 'UID');
+      if (!/^\d{1,9}$/.test(uid)) return; // o MS Project só grava números aqui; qualquer outra coisa é arquivo adulterado
       var t = {
         el: el, uid: uid, id: tx(el, 'ID'), name: tx(el, 'Name') || '(sem nome)', wbs: tx(el, 'WBS') || tx(el, 'OutlineNumber'), lvl: lvl,
         ms: tx(el, 'Milestone') === '1', start: pdate(tx(el, 'Start')), finish: pdate(tx(el, 'Finish')), durH: hrs(tx(el, 'Duration')),
         pct: +tx(el, 'PercentComplete') || 0, phys: +tx(el, 'PhysicalPercentComplete') || 0, bStart: null, bFinish: null, pred: [], ext: {}, children: []
       };
       kids(el, 'Baseline').forEach(function (b) { var n = tx(b, 'Number'); if (n === '' || n === '0') { t.bStart = pdate(tx(b, 'Start')); t.bFinish = pdate(tx(b, 'Finish')); } });
-      kids(el, 'PredecessorLink').forEach(function (p) { t.pred.push(tx(p, 'PredecessorUID')); });
+      kids(el, 'PredecessorLink').forEach(function (p) { var pu = tx(p, 'PredecessorUID'); if (/^\d{1,9}$/.test(pu)) t.pred.push(pu); });
       kids(el, 'ExtendedAttribute').forEach(function (x) { var f = tx(x, 'FieldID'), v = numv(tx(x, 'Value')); if (!isNaN(v)) { t.ext[f] = v; fields[f] = 1; } });
       while (stack.length && stack[stack.length - 1].lvl >= lvl) stack.pop();
       t.parent = stack.length ? stack[stack.length - 1] : null;
@@ -2668,8 +2669,8 @@ footer.site a{color:var(--ink)}
   function vCusOrc() {
     var tot = CU.tipos.reduce(function (s, t) { return s + t.valor; }, 0) || 1;
     var comp = '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="card-head"><h2>Composição do custo direto</h2></div>' +
-      '<div style="display:flex;height:14px;border-radius:3px;overflow:hidden">' + CU.tipos.map(function (t) { return '<i title="' + t.nome + '" style="width:' + (t.valor / tot * 100) + '%;background:' + TIPO_COR[t.tipo] + '"></i>'; }).join('') + '</div>' +
-      '<div class="legend-row">' + CU.tipos.map(function (t) { return '<span><i class="sw" style="background:' + TIPO_COR[t.tipo] + '"></i>' + t.nome + ' <b class="mono" style="color:var(--ink)">' + brl(t.valor) + '</b> (' + fmt1(t.valor / tot * 100) + '%)</span>'; }).join('') + '</div></section>';
+      '<div style="display:flex;height:14px;border-radius:3px;overflow:hidden">' + CU.tipos.map(function (t) { return '<i title="' + esc(t.nome) + '" style="width:' + (t.valor / tot * 100) + '%;background:' + TIPO_COR[t.tipo] + '"></i>'; }).join('') + '</div>' +
+      '<div class="legend-row">' + CU.tipos.map(function (t) { return '<span><i class="sw" style="background:' + TIPO_COR[t.tipo] + '"></i>' + esc(t.nome) + ' <b class="mono" style="color:var(--ink)">' + brl(t.valor) + '</b> (' + fmt1(t.valor / tot * 100) + '%)</span>'; }).join('') + '</div></section>';
     var linhas = '';
     CU.etapas.forEach(function (e) {
       var its = CU.itens.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.etapa === e.chave; });
@@ -2955,7 +2956,7 @@ footer.site a{color:var(--ink)}
         '<div class="kpi-s">' + esc(it.criterio) + '</div>' +
         '<div class="q-sts" role="group" aria-label="Situação do item">' + b('ok', 'Conforme') + b('nc', 'Não conforme') + b('na', 'N/A') + '</div>' +
         (it.status === 'nc' || it.obs ? '<textarea class="q-obs" data-qobs="' + k + '" rows="2" placeholder="' + (it.status === 'nc' ? 'O que está fora do critério? (vira a descrição da NC)' : 'Observação') + '">' + esc(it.obs) + '</textarea>' : '') +
-        '<div class="q-fotos">' + it.fotos.map(function (f, j) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto ' + (j + 1) + ' do item ' + (k + 1) + '"><button type="button" data-a="qfdel:' + k + ':' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
+        '<div class="q-fotos">' + it.fotos.map(function (f, j) { return '<span class="q-th"><img src="' + esc(fotoUrl(f)) + '" alt="Foto ' + (j + 1) + ' do item ' + (k + 1) + '"><button type="button" data-a="qfdel:' + k + ':' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
         '<label class="q-add"><input type="file" accept="image/*" capture="environment" data-qfoto="' + k + '" hidden>+ Foto</label></div></div>';
     }).join('');
     var locs = (Q.locais || []).map(function (l) { return '<option value="' + esc(l) + '">'; }).join('');
@@ -2996,7 +2997,7 @@ footer.site a{color:var(--ink)}
       return '<div class="q-card"><div class="q-card-top"><b>' + (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'Nova NC') + ' · ' + esc(n.servico || 'Sem serviço') + '</b><span class="chip ' + NC_ST[n.status][1] + '">' + NC_ST[n.status][0] + '</span></div>' +
         '<p style="font-size:14.5px;margin:4px 0">' + esc(n.descricao) + '</p>' +
         '<div class="med-info"><span>' + esc(n.local || '—') + '</span><span>Gravidade ' + GRAV[n.gravidade || 'media'] + '</span><span>' + esc(n.origem || '') + '</span>' + (n.responsavel ? '<span>' + esc(n.responsavel) + '</span>' : '<span style="color:var(--bad)">sem responsável</span>') + (n.prazo ? '<span' + (v ? ' style="color:var(--bad);font-weight:600"' : '') + '>prazo ' + isoBr(n.prazo) + (v ? ' (vencido)' : '') + '</span>' : '') + (n.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '') + '</div>' +
-        (n.fotos && n.fotos.length ? '<div class="q-fotos">' + n.fotos.map(function (f) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto da NC" loading="lazy"></span>'; }).join('') + '</div>' : '') +
+        (n.fotos && n.fotos.length ? '<div class="q-fotos">' + n.fotos.map(function (f) { return '<span class="q-th"><img src="' + esc(fotoUrl(f)) + '" alt="Foto da NC" loading="lazy"></span>'; }).join('') + '</div>' : '') +
         (n.pendente ? '' : '<div class="q-acts"><button type="button" class="btn btn-ghost btn-sm" data-a="qncedit:' + n.id + '">' + (n.status === 'fechada' ? 'Ver' : 'Tratar') + '</button></div>') + '</div>';
     }).join('');
     return qMsg() + '<section class="card med-head"><div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qncnova">Registrar não conformidade</button><span style="flex:1"></span><div class="tabs" role="group" aria-label="Filtro">' + tab('abertas', 'Abertas') + tab('tratamento', 'Em tratamento') + tab('fechada', 'Fechadas') + tab('todas', 'Todas') + '</div></div></section>' +
@@ -3017,7 +3018,7 @@ footer.site a{color:var(--ink)}
       '<label class="q-lab">Causa provável<textarea id="ncCausa" rows="2">' + esc(n.causa || '') + '</textarea></label>' +
       '<label class="q-lab">Ação corretiva<textarea id="ncAcao" rows="2" placeholder="O que foi ou será feito para corrigir">' + esc(n.acao || '') + '</textarea></label>' +
       '<div class="q-row2"><label class="q-lab">Situação' + sel('ncSt', NC_ST, n.status || 'aberta') + '</label><label class="q-lab">Verificação de eficácia<input id="ncEfic" value="' + esc(n.eficacia || '') + '" placeholder="Como foi verificado"></label></div>' +
-      '<div class="q-lab">Fotos<div class="q-fotos">' + (n.fotos || []).map(function (f, j) { return '<span class="q-th"><img src="' + fotoUrl(f) + '" alt="Foto ' + (j + 1) + '"><button type="button" data-a="qncfdel:' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
+      '<div class="q-lab">Fotos<div class="q-fotos">' + (n.fotos || []).map(function (f, j) { return '<span class="q-th"><img src="' + esc(fotoUrl(f)) + '" alt="Foto ' + (j + 1) + '"><button type="button" data-a="qncfdel:' + j + '" aria-label="Remover foto">×</button></span>'; }).join('') +
       '<label class="q-add"><input type="file" accept="image/*" capture="environment" data-ncfoto="1" hidden>+ Foto</label></div></div>' +
       '<button type="button" class="btn btn-primary btn-block" data-a="qncsalvar">Salvar</button></section>';
   }

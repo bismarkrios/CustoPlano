@@ -115,6 +115,13 @@ def autenticar(email: str, senha: str):
     return None
 
 
+def versao_senha(uid: int) -> str | None:
+    """Pedaço do hash da senha guardado na sessão: muda quando a senha muda."""
+    with conectar() as con:
+        r = con.execute("SELECT senha_hash FROM usuarios WHERE id = ?", (uid,)).fetchone()
+    return r["senha_hash"][-16:] if r else None
+
+
 def usuario(uid: int):
     with conectar() as con:
         return con.execute("SELECT id, email, nome FROM usuarios WHERE id = ?", (uid,)).fetchone()

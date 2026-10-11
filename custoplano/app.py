@@ -132,24 +132,56 @@ def cabecalhos_seguranca(r: Response) -> Response:
 
 TENTATIVAS: dict[str, list[float]] = {}
 MAX_TENTATIVAS, JANELA = 5, 15 * 60  # 5 erros de senha em 15 minutos bloqueiam o e-mail naquele IP
+MAX_POR_EMAIL = 20  # e 20 erros no mesmo e-mail, vindos de qualquer IP, bloqueiam o e-mail por 15 minutos
 
 
 def _ip() -> str:
-    return (request.headers.get("X-Forwarded-For") or request.remote_addr or "").split(",")[0].strip()
+    # O primeiro IP do X-Forwarded-For é escrito por quem faz o pedido e pode ser inventado; o último
+    # é o que o proxy do Render viu de fato.
+    xff = [x.strip() for x in (request.headers.get("X-Forwarded-For") or "").split(",") if x.strip()]
+    return xff[-1] if xff else (request.remote_addr or "")
 
 
-def _bloqueado(chave: str) -> bool:
+def _bloqueado(chave: str, limite: int = MAX_TENTATIVAS) -> bool:
     agora_s = dt.datetime.now().timestamp()
+    if len(TENTATIVAS) > 20000:  # não deixa a lista crescer sem fim
+        for k in [k for k, v in TENTATIVAS.items() if not v or agora_s - v[-1] >= JANELA]:
+            TENTATIVAS.pop(k, None)
     TENTATIVAS[chave] = [t for t in TENTATIVAS.get(chave, []) if agora_s - t < JANELA]
-    return len(TENTATIVAS[chave]) >= MAX_TENTATIVAS
+    return len(TENTATIVAS[chave]) >= limite
 
 
 # ---------------------------------------------------------------- utilidades
+def sessao_valida() -> bool:
+    """Login vale enquanto a senha for a mesma: trocar a senha derruba as sessões abertas."""
+    uid = session.get("uid")
+    if not uid:
+        return False
+    if session.get("pv") != banco.versao_senha(uid):
+        session.clear()
+        return False
+    return True
+
+
 def logado(f):
     @wraps(f)
     def interno(*a, **k):
-        if not session.get("uid"):
+        if not sessao_valida():
             return jsonify(erro="Faça login para continuar."), 401
+        return f(*a, **k)
+    return interno
+
+
+def ehdemo() -> bool:
+    return bool(session.get("demo"))
+
+
+def sem_demo(f):
+    """Importar arquivos e apagar dados ficam desligados na demonstração, que é aberta a qualquer visitante."""
+    @wraps(f)
+    def interno(*a, **k):
+        if ehdemo():
+            return erro("Na demonstração, importar arquivos e apagar dados fica desligado. Na sua conta funciona normalmente.", 403)
         return f(*a, **k)
     return interno
 
@@ -214,8 +246,17 @@ def inicio():
         html = f.read()
     # avisa o front-end de que há servidor (login real, banco e .mpp)
     html = html.replace("<!--CP_API-->", "<script>window.CP_API = true; window.CP_DEMO = %s;</script>" % ("true" if DEMO else "false"))
+    # Só rodam os scripts do próprio site (com o nonce desta resposta): um texto malicioso que
+    # chegue à página por um arquivo importado não consegue executar código.
+    nonce = secrets.token_urlsafe(16)
+    html = html.replace("<script>", f'<script nonce="{nonce}">')
     r = Response(html, mimetype="text/html")
     r.headers["Cache-Control"] = "no-cache"  # sempre confere se há versão nova do site
+    r.headers["Content-Security-Policy"] = (
+        f"default-src 'self'; script-src 'self' 'nonce-{nonce}'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; "
+        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
     return r
 
 
@@ -265,17 +306,22 @@ def login():
         semear_demo()
     else:
         email, senha = (d.get("email") or "").strip(), d.get("senha") or ""
-    chave = f"{_ip()}|{email.lower()}"
-    if _bloqueado(chave):
+    chave, chave_email = f"{_ip()}|{email.lower()}", f"*|{email.lower()}"
+    if _bloqueado(chave) or _bloqueado(chave_email, MAX_POR_EMAIL):
         return erro("Muitas tentativas de login. Aguarde 15 minutos e tente de novo.", 429)
     u = banco.autenticar(email, senha)
     if not u:
-        TENTATIVAS.setdefault(chave, []).append(dt.datetime.now().timestamp())
+        agora_s = dt.datetime.now().timestamp()
+        TENTATIVAS.setdefault(chave, []).append(agora_s)
+        TENTATIVAS.setdefault(chave_email, []).append(agora_s)
         return erro("E-mail ou senha incorretos.", 401)
     TENTATIVAS.pop(chave, None)
     session.clear()
     session.permanent = True
     session["uid"] = u["id"]
+    session["pv"] = banco.versao_senha(u["id"])
+    if u["email"].lower() == DEMO_EMAIL:
+        session["demo"] = True
     return jsonify(email=u["email"], nome=u["nome"])
 
 
@@ -287,7 +333,7 @@ def logout():
 
 @app.get("/api/me")
 def me():
-    u = banco.usuario(session["uid"]) if session.get("uid") else None
+    u = banco.usuario(session["uid"]) if sessao_valida() else None
     return jsonify(email=u["email"], nome=u["nome"]) if u else jsonify(email=None)
 
 
@@ -305,6 +351,7 @@ def ver_cronograma():
 
 @app.post("/api/importar")
 @logado
+@sem_demo
 def importar():
     arq = request.files.get("arquivo")
     if not arq or not arq.filename:
@@ -314,6 +361,8 @@ def importar():
             _PRJ_CACHE.clear()
             xml = ler_arquivo(arq.filename, arq.read())
             p = Projeto(xml, arq.filename)
+            if any(not re.fullmatch(r"\d{1,9}", t.uid or "") for t in p.tarefas):
+                raise ErroCronograma("O cronograma tem tarefas com identificador (UID) inválido. Salve de novo pelo MS Project e envie outra vez.")
         print(f"Cronograma importado: {arq.filename}, {len(p.tarefas)} tarefas, XML de {len(xml) // 1024} KB", flush=True)
     except ErroCronograma as e:
         return erro(str(e))
@@ -325,6 +374,7 @@ def importar():
 
 @app.post("/api/importar-exemplo")
 @logado
+@sem_demo
 def importar_exemplo():
     """Carrega o cronograma de exemplo para testar a medição sem ter um .mpp à mão."""
     nome = "cronograma_exemplo.xml"
@@ -364,6 +414,7 @@ def fechar():
 
 @app.post("/api/remover")
 @logado
+@sem_demo
 def remover():
     banco.remover_cronograma(session["uid"])
     return jsonify(ok=True)
@@ -397,6 +448,7 @@ def ver_plano():
 
 @app.post("/api/plano/importar")
 @logado
+@sem_demo
 def importar_plano():
     arq = request.files.get("arquivo")
     if not arq or not arq.filename:
@@ -411,6 +463,7 @@ def importar_plano():
 
 @app.post("/api/plano/remover")
 @logado
+@sem_demo
 def remover_plano():
     banco.remover_plano(session["uid"])
     return jsonify(ok=True)
@@ -451,6 +504,7 @@ def ver_custos():
 
 @app.post("/api/custos/importar")
 @logado
+@sem_demo
 def importar_custos():
     arq = request.files.get("arquivo")
     if not arq or not arq.filename:
@@ -465,6 +519,7 @@ def importar_custos():
 
 @app.post("/api/custos/exemplo")
 @logado
+@sem_demo
 def exemplo_custos():
     uid = session["uid"]
     if not banco.cronograma(uid):
@@ -534,6 +589,7 @@ def remover_lancamento():
 
 @app.post("/api/custos/remover")
 @logado
+@sem_demo
 def remover_custos():
     banco.remover_custos(session["uid"])
     return jsonify(ok=True)
@@ -611,6 +667,8 @@ def salvar_curto_prazo():
 
 # ---------------------------------------------------------------- qualidade
 def _ql(fn):
+    if ehdemo() and "data:image" in (request.get_data(as_text=True) or ""):
+        return erro("Na demonstração, o envio de fotos fica desligado. Na sua conta funciona normalmente.", 403)
     try:
         fn()
     except ql.ErroQualidade as e:
@@ -632,6 +690,7 @@ def qualidade_modelo():
 
 @app.post("/api/qualidade/modelo/remover")
 @logado
+@sem_demo
 def qualidade_modelo_remover():
     return _ql(lambda: ql.remover_modelo(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
 
@@ -644,6 +703,7 @@ def qualidade_inspecao():
 
 @app.post("/api/qualidade/inspecao/remover")
 @logado
+@sem_demo
 def qualidade_inspecao_remover():
     return _ql(lambda: ql.remover_inspecao(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
 

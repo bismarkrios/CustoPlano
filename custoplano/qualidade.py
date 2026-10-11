@@ -218,6 +218,7 @@ def garantir_biblioteca(uid: int) -> None:
 # ------------------------------------------------------------------ fotos
 RE_DATAURL = re.compile(r"^data:(image/(?:jpeg|png|webp));base64,(.+)$", re.S)
 MAX_FOTO = 2_500_000
+MAX_FOTOS_CONTA = 300_000_000  # o disco do servidor é dividido entre todas as contas
 
 
 def guardar_foto(con, uid: int, valor: str) -> str | None:
@@ -233,6 +234,9 @@ def guardar_foto(con, uid: int, valor: str) -> str | None:
     dados = base64.b64decode(m.group(2))
     if len(dados) > MAX_FOTO:
         raise ErroQualidade("Foto grande demais (máximo de 2,5 MB).")
+    usado = con.execute("SELECT COALESCE(SUM(LENGTH(dados)), 0) FROM fotos WHERE usuario_id=?", (uid,)).fetchone()[0]
+    if usado + len(dados) > MAX_FOTOS_CONTA:
+        raise ErroQualidade("Limite de fotos da conta atingido (300 MB). Fale com a Custo Plano para ampliar.")
     fid = secrets.token_hex(8)
     con.execute("INSERT INTO fotos (id, usuario_id, mime, dados, criado_em) VALUES (?,?,?,?,?)",
                 (fid, uid, m.group(1), dados, _agora()))
