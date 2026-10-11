@@ -715,6 +715,11 @@ footer.site a{color:var(--ink)}
 :focus-visible{outline-color:var(--blue)}
 .login-side .brand svg rect,.side .brand svg rect{fill:var(--hl)}
 .top .brand svg rect:last-child{fill:var(--blue)}
+.wa-float{position:fixed;right:20px;bottom:20px;z-index:50;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border-radius:26px;background:#1FAF55;color:#fff;font:600 15px var(--body,system-ui);text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.wa-float:hover{background:#18994A}
+.wa-float:focus-visible{outline:3px solid #0B3D1E;outline-offset:3px}
+@media (max-width:520px){.wa-float{width:56px;height:56px;padding:0;justify-content:center;right:14px;bottom:14px}.wa-float span{display:none}}
+@media print{.wa-float{display:none}}
 </style>
 </head>
 <body>
@@ -3638,12 +3643,21 @@ footer.site a{color:var(--ink)}
 
 /* Contato do site. Preencha para ativar o envio e mostrar os dados na página.
    whatsapp: só números, com DDI e DDD (ex.: 5571999998888). manual: página de venda do ebook. */
-var CONTATO = { whatsapp: '', email: '', manual: '/manual' };
+var CONTATO = { whatsapp: '5511988236792', email: '', manual: '/manual' };
 (function () {
   var info = document.getElementById('infoContato'), h = '';
   if (CONTATO.whatsapp) h += '<div><span>WhatsApp</span><b><a href="https://wa.me/' + CONTATO.whatsapp + '">' + CONTATO.whatsapp.replace(/^55(\d\d)(\d{4,5})(\d{4})$/, '($1) $2-$3') + '</a></b></div>';
   if (CONTATO.email) h += '<div><span>E-mail</span><b><a href="mailto:' + CONTATO.email + '">' + CONTATO.email + '</a></b></div>';
   if (h) { info.innerHTML = h; info.hidden = false; }
+  if (CONTATO.whatsapp) {
+    // botão flutuante do WhatsApp, só no site (some junto com ele dentro do sistema)
+    var wa = document.createElement('a');
+    wa.className = 'wa-float'; wa.target = '_blank'; wa.rel = 'noopener';
+    wa.href = 'https://wa.me/' + CONTATO.whatsapp + '?text=' + encodeURIComponent('Olá! Vim pelo site da Custo Plano e quero saber mais.');
+    wa.setAttribute('aria-label', 'Falar no WhatsApp');
+    wa.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91A9.85 9.85 0 0 0 12.04 2zm0 18.15h-.01a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24a8.24 8.24 0 0 1 8.24 8.25c0 4.54-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.8-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23a7.46 7.46 0 0 1-1.38-1.72c-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48a.92.92 0 0 0-.66.31 2.78 2.78 0 0 0-.87 2.07c0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.29z"/></svg><span>WhatsApp</span>';
+    document.getElementById('site').appendChild(wa);
+  }
   var lm = document.getElementById('linkManual');
   if (CONTATO.manual) lm.href = CONTATO.manual;
   else lm.addEventListener('click', function () { document.getElementById('interesse').value = lm.getAttribute('data-interesse'); });
