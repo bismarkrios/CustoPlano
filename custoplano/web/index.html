@@ -2137,8 +2137,8 @@ footer.site a{color:var(--ink)}
     var fimB = Math.max.apply(null, raiz.map(function (t) { return t.bFinish || 0; }));
     var varFim = fimB ? Math.round((fim - fimB) / dia) : null;
     var dv = real - prev;
-    var d0 = new Date(sd), seg0 = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia, sem0 = isoDay(seg0);
-    var pac = cpSemana(seg0), pOk = 0;
+    var per0 = cpPer(sd), sem0 = per0.sem;
+    var pac = cpSemana(per0.a, per0.b), pOk = 0;
     pac.forEach(function (t) { if (cpEstado(sem0, t).st === 'ok') pOk++; });
     var ppc = pac.length ? Math.round(pOk / pac.length * 100) : null;
     var hist = ((API && S.hist) || []).map(function (h) { return { t: Date.parse(h.data_status + 'T17:00:00Z'), r: +h.avanco_real, p: +h.avanco_prev, ds: h.data_status }; })
@@ -2160,7 +2160,7 @@ footer.site a{color:var(--ink)}
     html += '<div class="grid4">' +
       '<div class="card"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + fmt1(real) + '%</div><div class="kpi-s">previsto ' + fmt1(prev) + '% · <b style="color:' + cor(dv >= -0.05) + '">' + sinal(dv) + ' p.p.</b></div>' +
         '<div class="bar" style="margin-top:10px"><i style="width:' + Math.min(100, prev) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, real) + '%;background:var(--accent)"></i></div></div>' +
-      '<div class="card"><div class="kpi-t">PPC da semana · ' + fdate(seg0).slice(0, 5) + ' a ' + fdate(seg0 + 6 * dia).slice(0, 5) + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pac.length + ' pacotes concluídos · meta 80%</div></div>' +
+      '<div class="card"><div class="kpi-t">PPC · ' + cpRot(per0).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pac.length + ' pacotes concluídos · meta 80%</div></div>' +
       '<div class="card"><div class="kpi-t">Tarefas atrasadas</div><div class="kpi-v" style="color:' + cor(!atras.length) + '">' + atras.length + '</div><div class="kpi-s">' + (atras.length ? 'de ' + fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd; }).length + ' que deviam estar prontas' : 'tudo o que devia terminar está pronto') + '</div></div>' +
       '<div class="card"><div class="kpi-t">Prazo final</div><div class="kpi-v" style="color:' + (varFim == null ? 'inherit' : cor(varFim <= 0)) + '">' + (varFim == null ? fdate(fim) : varFim === 0 ? 'No prazo' : (varFim > 0 ? '+' : '−') + Math.abs(varFim) + ' dias') + '</div><div class="kpi-s">' + (fimB ? 'término ' + fdate(fim) + ' · linha de base ' + fdate(fimB) : 'sem linha de base salva no Project') + '</div></div>' +
       '</div>';
@@ -2268,25 +2268,42 @@ footer.site a{color:var(--ink)}
     if (precisaRede()) return;
     api('/api/curtoprazo', { semana: sem, uid: uid, st: st, causa: causa || '' }).then(function (r) { CPD = r.semanas || {}; }, function (e) { S.prjMsg = 'Não foi possível salvar o apontamento: ' + e.message; render(); });
   }
-  function cpSemana(a) {
-    // pacotes da semana: tarefas do cronograma com execução prevista entre segunda e domingo
-    var b = a + 7 * 864e5;
+  // Semana do mês: segunda a domingo, cortada na virada do mês (01 e 02/10 formam a semana 1 de outubro).
+  function cpPer(ms) {
+    var dia = 864e5, d = new Date(ms), y = d.getUTCFullYear(), m = d.getUTCMonth();
+    var hoje = Date.UTC(y, m, d.getUTCDate()), seg = hoje - ((d.getUTCDay() + 6) % 7) * dia;
+    var f = Date.UTC(y, m, 1), segF = f - ((new Date(f).getUTCDay() + 6) % 7) * dia;
+    var a = Math.max(seg, f), b = Math.min(seg + 7 * dia, Date.UTC(y, m + 1, 1));
+    var ate = Math.min(b - dia, seg + 4 * dia); if (ate < a) ate = b - dia;
+    return { a: a, b: b, sem: isoDay(a), seg: isoDay(seg), n: Math.round((seg - segF) / (7 * dia)) + 1, mes: MES[m], ate: ate };
+  }
+  function cpPerAt(off) {
+    var p = cpPer(P.statusDate);
+    for (var i = 0; i < Math.abs(off); i++) p = cpPer(off > 0 ? p.b : p.a - 864e5);
+    return p;
+  }
+  function cpRot(p) { return 'Semana ' + p.n + ' de ' + p.mes + ' · ' + fdate(p.a).slice(0, 5) + (p.ate > p.a ? ' a ' + fdate(p.ate).slice(0, 5) : ''); }
+  function cpSemana(a, b) {
+    // pacotes da semana: tarefas do cronograma com execução prevista dentro da semana do mês
+    b = b || cpPer(a).b;
     return folhas().filter(function (t) { return !t.ms && t.start != null && t.finish != null && t.start < b && t.finish >= a; })
       .map(function (t) { t._tr = torreDe(t); t._pv = pavDe(t); return t; })
       .sort(function (x, y) { return natural(x._tr, y._tr) || (x._pv == null ? 1e9 : x._pv) - (y._pv == null ? 1e9 : y._pv) || x.start - y.start; });
   }
   function cpEstado(sem, t) {
     var r = CPD && CPD[sem] && CPD[sem][t.uid];
+    // apontamento feito antes da semana ser cortada na virada do mês ficou na segunda-feira
+    var sg = !r && CPD && cpPer(Date.parse(sem)).seg;
+    if (sg && sg !== sem && CPD[sg] && CPD[sg][t.uid]) r = CPD[sg][t.uid];
     if (r) return r;
-    return (P.meas[t.uid] || 0) >= 100 && fimLB(t) <= Date.parse(sem) + 7 * 864e5 ? { st: 'ok', causa: '', auto: true } : { st: '', causa: '' };
+    return (P.meas[t.uid] || 0) >= 100 && fimLB(t) <= cpPer(Date.parse(sem)).b ? { st: 'ok', causa: '', auto: true } : { st: '', causa: '' };
   }
   function vCPReal() {
     if (!P) return semPrj('O curto prazo é montado a partir do cronograma da obra. Importe o .mpp na tela Project.');
     if (CPD == null) loadCP();
-    var dia = 864e5, d0 = new Date(P.statusDate);
-    var seg0 = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()) - ((d0.getUTCDay() + 6) % 7) * dia;
-    var a = seg0 + S.cpw * 7 * dia, sem = isoDay(a);
-    var lista = cpSemana(a), FN = fornecedores(), cores = ['var(--pa0)', 'var(--pa2)', 'var(--pa3)', 'var(--pa1)', 'var(--pa4)', 'var(--pa5)'], corDe = {};
+    var dia = 864e5, per = cpPerAt(S.cpw);
+    var a = per.a, sem = per.sem;
+    var lista = cpSemana(a, per.b), FN = fornecedores(), cores = ['var(--pa0)', 'var(--pa2)', 'var(--pa3)', 'var(--pa1)', 'var(--pa4)', 'var(--pa5)'], corDe = {};
     var ok = 0, nok = 0, cc = {};
     var rows = lista.map(function (t) {
       var e = cpEstado(sem, t), serv = servDe(t);
@@ -2299,28 +2316,29 @@ footer.site a{color:var(--ink)}
         Object.keys(CAUSAS).map(function (k) { return '<option value="' + k + '"' + (e.causa === k ? ' selected' : '') + '>' + CAUSAS[k] + '</option>'; }).join('') + '</select>' : '<span style="color:var(--muted)">—</span>';
       return '<tr><td><span style="display:flex;align-items:center;gap:10px;font-weight:500"><i class="sw" style="background:' + corDe[serv] + '"></i><span>' + esc(serv) +
           (falta.length ? ' <span class="chip c-warn" title="Aguarda: ' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '') + '</span></span></td>' +
-        '<td>' + esc(local) + '</td><td>' + esc(FN[t.uid] || '—') + '</td>' +
+        '<td>' + esc(local) + '</td><td>' + esc(FN[t.uid] || '—') + '</td><td class="mono" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
         '<td><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
     }).join('');
     var tot = lista.length, ppc = tot ? Math.round(ok / tot * 100) : 0;
     // histórico: semanas anteriores que tiveram apontamento
     var hist = [];
-    for (var k = 8; k >= 1; k--) {
-      var ak = a - k * 7 * dia, sk = isoDay(ak);
-      if (!CPD || !CPD[sk]) continue;
-      var lk = cpSemana(ak); if (!lk.length) continue;
-      hist.push({ v: Math.round(lk.filter(function (t) { return cpEstado(sk, t).st === 'ok'; }).length / lk.length * 100), r: fdate(ak).slice(0, 5) });
-    }
+    var pk = per, ant = [];
+    for (var k = 0; k < 8; k++) { pk = cpPer(pk.a - dia); ant.unshift(pk); }
+    ant.forEach(function (q) {
+      if (!CPD || !CPD[q.sem]) return;
+      var lk = cpSemana(q.a, q.b); if (!lk.length) return;
+      hist.push({ v: Math.round(lk.filter(function (t) { return cpEstado(q.sem, t).st === 'ok'; }).length / lk.length * 100), r: fdate(q.a).slice(0, 5) });
+    });
     var keys = Object.keys(cc).sort(function (x, y) { return cc[y] - cc[x]; });
     var maxC = Math.max.apply(null, [1].concat(keys.map(function (x) { return cc[x]; })));
     var nav = '<div class="cp-nav"><button type="button" class="btn btn-ghost btn-sm" data-a="cpw:-1" aria-label="Semana anterior">‹</button>' +
-      '<span class="cp-sem"><b>Semana de ' + fdate(a).slice(0, 5) + ' a ' + fdate(a + 6 * dia).slice(0, 5) + '</b>' + (S.cpw === 0 ? ' (atual)' : '') + '</span>' +
+      '<span class="cp-sem"><b>' + cpRot(per) + '</b>' + (S.cpw === 0 ? ' (atual)' : '') + '</span>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-a="cpw:1" aria-label="Próxima semana">›</button>' +
       (S.cpw !== 0 ? '<button type="button" class="linkbtn" data-a="cpw:0" style="font-size:13px">Voltar à semana atual</button>' : '') +
       '<span class="kpi-s" style="margin-left:auto">Semana pela data de status (' + fdate(P.statusDate) + ')</span></div>';
     return nav + (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '<div class="split"><section class="card" style="padding:0;overflow:hidden">' +
-        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:860px"><thead><tr><th scope="col">Pacote</th><th scope="col">Local</th><th scope="col">Responsável</th><th scope="col" style="width:240px">Execução</th><th scope="col" style="width:200px">Causa do não cumprimento</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:960px"><thead><tr><th scope="col">Pacote</th><th scope="col">Local</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col" style="width:240px">Execução</th><th scope="col" style="width:200px">Causa do não cumprimento</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
           : '<p class="kpi-s" style="padding:18px">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>' +
       '<aside style="display:flex;flex-direction:column;gap:14px">' +
         '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? ppc + '%' : '—') + '</span>' +
@@ -3397,8 +3415,7 @@ footer.site a{color:var(--ink)}
       case 'set': setSt(a[1], a[2]); break;
       case 'cpw': S.cpw = a[1] === '0' ? 0 : S.cpw + (+a[1]); break;
       case 'cpok': case 'cpnok':
-        var dC = new Date(P.statusDate), segC = Date.UTC(dC.getUTCFullYear(), dC.getUTCMonth(), dC.getUTCDate()) - ((dC.getUTCDay() + 6) % 7) * 864e5;
-        var semC = isoDay(segC + S.cpw * 7 * 864e5), tC = P.byUid[a[1]], eC = tC ? cpEstado(semC, tC) : { st: '' }, alvo = a[0] === 'cpok' ? 'ok' : 'nok';
+        var semC = cpPerAt(S.cpw).sem, tC = P.byUid[a[1]], eC = tC ? cpEstado(semC, tC) : { st: '' }, alvo = a[0] === 'cpok' ? 'ok' : 'nok';
         cpSalvar(semC, a[1], eC.st === alvo && !eC.auto ? '' : alvo, eC.causa); return;
       case 'ok': var t1 = M.tasks.filter(function (t) { return t.key === a[1]; })[0]; setSt(a[1], t1.st === 'feito' ? 'andamento' : 'feito'); break;
       case 'nok': var t2 = M.tasks.filter(function (t) { return t.key === a[1]; })[0]; setSt(a[1], t2.st === 'atrasado' ? 'andamento' : 'atrasado'); break;
@@ -3501,8 +3518,7 @@ footer.site a{color:var(--ink)}
     if (e.target.id === 'medTorre') { S.med.torre = e.target.value; S.med.pav = ''; render(); return; }
     if (e.target.id === 'medPav') { S.med.pav = e.target.value; render(); return; }
     if (e.target.hasAttribute && e.target.hasAttribute('data-cpcausa')) {
-      var dX = new Date(P.statusDate), segX = Date.UTC(dX.getUTCFullYear(), dX.getUTCMonth(), dX.getUTCDate()) - ((dX.getUTCDay() + 6) % 7) * 864e5;
-      cpSalvar(isoDay(segX + S.cpw * 7 * 864e5), e.target.getAttribute('data-cpcausa'), 'nok', e.target.value); return;
+      cpSalvar(cpPerAt(S.cpw).sem, e.target.getAttribute('data-cpcausa'), 'nok', e.target.value); return;
     }
     var k = e.target.getAttribute('data-cause');
     if (k) { S.causes[k] = e.target.value; render(); var s2 = body.querySelector('[data-cause="' + k + '"]'); if (s2) s2.focus(); }
