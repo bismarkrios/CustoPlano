@@ -1873,14 +1873,15 @@ footer.site a{color:var(--ink)}
     var d0 = new Date(P.min), cur;
     if (monthly) {
       cur = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1);
-      while (cur <= P.max) { var dd = new Date(cur); ticks.push({ at: cur, lab: MES[dd.getUTCMonth()] + '/' + String(dd.getUTCFullYear()).slice(2) }); cur = Date.UTC(dd.getUTCFullYear(), dd.getUTCMonth() + 1, 1); }
+      while (cur <= P.max) { var dd = new Date(cur); ticks.push({ at: cur, lab: MES[dd.getUTCMonth()], ano: dd.getUTCFullYear() }); cur = Date.UTC(dd.getUTCFullYear(), dd.getUTCMonth() + 1, 1); }
     } else {
       var dow = (d0.getUTCDay() + 6) % 7; cur = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate() - dow);
-      while (cur <= P.max) { ticks.push({ at: cur, lab: fdate(cur).slice(0, 5) }); cur += 7 * 864e5; }
+      while (cur <= P.max) { ticks.push({ at: cur, lab: fdate(cur).slice(0, 5), ano: new Date(cur).getUTCFullYear() }); cur += 7 * 864e5; }
     }
     var lp = function (ms) { return Math.max(0, Math.min(100, (ms - P.min) / span * 100)); };
     var tlW = Math.max(640, ticks.length * (monthly ? 44 : 42));
-    var head = '<span class="track" style="position:relative;display:block;height:34px;background:none">' + ticks.map(function (k) { return '<b style="position:absolute;top:10px;left:' + lp(k.at) + '%;padding-left:3px;border-left:1px solid var(--line);height:24px;font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap">' + k.lab + '</b>'; }).join('') + '</span>';
+    // mês (ou dia/mês) em cima e o ano completo embaixo
+    var head = '<span class="track" style="position:relative;display:block;height:40px;background:none">' + ticks.map(function (k) { return '<b style="position:absolute;top:4px;left:' + lp(k.at) + '%;padding-left:4px;border-left:1px solid var(--line);height:36px;display:flex;flex-direction:column;justify-content:center;line-height:1.25;font-family:var(--mono);font-size:10.5px;color:var(--muted);white-space:nowrap"><span style="font-weight:600;color:var(--ink)">' + k.lab + '</span><span style="font-weight:400">' + k.ano + '</span></b>'; }).join('') + '</span>';
     var sdL = lp(P.statusDate);
     var grid = 'background-image:none';
     var visible = P.tasks.filter(function (t) { for (var p = t.parent; p; p = p.parent) if (!P.open[p.uid]) return false; return true; });
