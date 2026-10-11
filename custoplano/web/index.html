@@ -283,7 +283,7 @@ footer.site a{color:var(--ink)}
 .weeknav .iconbtn:disabled{opacity:.35;cursor:default}
 .weeknav .linkbtn{font-size:13.5px;padding:6px 4px}
 @media (max-width:1440px){#wkTag{display:none}}
-@media (min-width:861px){.card-head h2{white-space:nowrap}}
+@media (min-width:861px){.card-head h2{white-space:nowrap}.split aside .card-head h2{white-space:normal}}
 .demo-tag.alt{border-style:solid;border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
@@ -389,8 +389,9 @@ footer.site a{color:var(--ink)}
 .ppc-card{background:var(--panel);color:var(--panel-ink);border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:8px}
 .ppc-card .kpi-v{font-size:42px}
 .ppc-card .bar{background:var(--panel-line)}
-.hist{display:flex;align-items:flex-end;gap:6px;height:140px}
-.hist div{flex:1;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
+.cp-local{display:block;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:2px;white-space:nowrap}
+.hist{display:flex;align-items:flex-end;gap:4px;height:140px}
+.hist div{flex:1;min-width:0;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
 .hist i{width:100%;border-radius:2px 2px 0 0;background:var(--line);display:block}
 .hist i.now{background:var(--accent)}
 .hist span{font-family:var(--mono);font-size:10px;color:var(--muted)}
@@ -2357,15 +2358,15 @@ footer.site a{color:var(--ink)}
       var sel = e.st === 'nok' ? '<select data-cpcausa="' + t.uid + '" aria-label="Causa do não cumprimento: ' + esc(serv) + '"><option value="">Selecione a causa</option>' +
         Object.keys(CAUSAS).map(function (k) { return '<option value="' + k + '"' + (e.causa === k ? ' selected' : '') + '>' + CAUSAS[k] + '</option>'; }).join('') + '</select>' : '<span style="color:var(--muted)">—</span>';
       return '<tr><td><span style="display:flex;align-items:center;gap:10px;font-weight:500"><i class="sw" style="background:' + corDe[serv] + '"></i><span>' + esc(serv) +
-          (falta.length ? ' <span class="chip c-warn" title="Aguarda: ' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '') + '</span></span></td>' +
-        '<td>' + esc(local) + '</td><td>' + esc(FN[t.uid] || '—') + '</td><td class="mono" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
+          (falta.length ? ' <span class="chip c-warn" title="Aguarda: ' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '') + '<span class="cp-local">' + esc(local) + '</span></span></span></td>' +
+        '<td>' + esc(FN[t.uid] || '—') + '</td><td class="mono" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
         '<td><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
     }).join('');
     var tot = lista.length, ppc = tot ? Math.round(ok / tot * 100) : 0;
     // histórico: semanas anteriores que tiveram apontamento
     var hist = [];
     var pk = per, ant = [];
-    for (var k = 0; k < 8; k++) { pk = cpPer(pk.a - dia); ant.unshift(pk); }
+    for (var k = 0; k < 6; k++) { pk = cpPer(pk.a - dia); ant.unshift(pk); }
     ant.forEach(function (q) {
       if (!CPD || !CPD[q.sem]) return;
       var lk = cpSemana(q.a, q.b); if (!lk.length) return;
@@ -2380,7 +2381,7 @@ footer.site a{color:var(--ink)}
       '<span class="kpi-s" style="margin-left:auto">Semana pela data de status (' + fdate(P.statusDate) + ')</span></div>';
     return nav + (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '<div class="split"><section class="card" style="padding:0;overflow:hidden">' +
-        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:960px"><thead><tr><th scope="col">Pacote</th><th scope="col">Local</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col" style="width:240px">Execução</th><th scope="col" style="width:200px">Causa do não cumprimento</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:740px"><thead><tr><th scope="col">Pacote</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col">Execução</th><th scope="col" style="width:176px">Causa</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
           : '<p class="kpi-s" style="padding:18px">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>' +
       '<aside style="display:flex;flex-direction:column;gap:14px">' +
         '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? ppc + '%' : '—') + '</span>' +
@@ -3384,13 +3385,15 @@ footer.site a{color:var(--ink)}
   document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
   var DEMO_TELAS = { cron: 1, lb: 1, res: 1 };
-  function contaReal() { return API && !!user && user !== 'demo@custoplano.com.br'; }
+  // com servidor, a demonstração usa as mesmas telas do cliente (a conta demo recebe uma obra de exemplo no login)
+  function contaReal() { return API && !!user; }
+  function ehDemo() { return user === 'demo@custoplano.com.br'; }
   function render() {
     var REAL = contaReal();
     document.querySelector('#app .app').classList.toggle('real', REAL);
     if (REAL) {
       if (DEMO_TELAS[S.screen]) S.screen = 'prj';
-      document.getElementById('obraNome').textContent = P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado';
+      document.getElementById('obraNome').innerHTML = esc(P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado') + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
     }
     var M = model();
     document.getElementById('navCount').textContent = M.abertas;

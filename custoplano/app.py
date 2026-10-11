@@ -29,6 +29,7 @@ import banco
 from cronograma import ErroCronograma, Projeto, enxugar_xml, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
 import custos as cst
+import demo
 import qualidade as ql
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -94,6 +95,26 @@ if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")
     except Exception:
         banco.trocar_senha(DEMO_EMAIL, DEMO_SENHA)
+
+# A demonstração usa as mesmas telas da área do cliente, com uma obra de exemplo gravada na conta demo.
+# Ela é refeita no login da demo (no máximo a cada 15 minutos), com as datas em torno de hoje.
+_DEMO_SEMEADA = [0.0]
+
+
+def semear_demo(forcar: bool = False) -> None:
+    agora_s = dt.datetime.now().timestamp()
+    if not forcar and agora_s - _DEMO_SEMEADA[0] < 15 * 60:
+        return
+    u = banco.autenticar(DEMO_EMAIL, DEMO_SENHA)
+    if not u:
+        return
+    try:
+        with _PRJ_TRAVA:
+            _PRJ_CACHE.clear()
+            demo.semear(u["id"])
+        _DEMO_SEMEADA[0] = agora_s
+    except Exception as e:  # noqa: BLE001 - a demo nunca pode derrubar o site
+        print(f"Não consegui montar a obra de demonstração: {e}", flush=True)
 
 
 # ------------------------------------------------------------------ segurança
@@ -241,6 +262,7 @@ def login():
         if not DEMO:
             return erro("A obra de demonstração está desativada.", 403)
         email, senha = DEMO_EMAIL, DEMO_SENHA
+        semear_demo()
     else:
         email, senha = (d.get("email") or "").strip(), d.get("senha") or ""
     chave = f"{_ip()}|{email.lower()}"
