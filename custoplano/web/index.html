@@ -495,8 +495,18 @@ footer.site a{color:var(--ink)}
 .pct{font-family:var(--mono);font-size:11.5px}
 .prj-real .prj-row.sum>span:nth-child(n+3){font-weight:500}
 .pct-in{width:58px;min-height:26px;padding:2px 6px;font-family:var(--mono);font-size:12px;text-align:right}
-.prj-real .prj-row{grid-template-columns:44px 300px 60px 80px 80px 60px 66px minmax(0,1fr)}
-.prj-real .prj-row.forn{grid-template-columns:44px 300px 150px 60px 80px 80px 60px 66px minmax(0,1fr)}
+.prj-real .prj-row{grid-template-columns:var(--pcols)}
+.prj-real .prj-row>span.dt{font-variant-numeric:tabular-nums}
+.pcols{position:relative}
+.pcols summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px}
+.pcols summary::-webkit-details-marker{display:none}
+.pcols[open] summary{border-color:var(--ink)}
+.pcols-menu{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(20,30,60,.14);padding:10px 12px;min-width:250px;display:flex;flex-direction:column;gap:2px}
+.pcols-menu label{display:flex;align-items:center;gap:8px;font-size:14px;padding:5px 2px;cursor:pointer}
+.pcols-menu label.fixo{color:var(--muted);cursor:default}
+.pcols-menu .kpi-t{margin:2px 0 4px}
+.pcols-menu input[type=checkbox]{width:16px;height:16px;min-height:0;padding:0;margin:0;flex:none;accent-color:var(--ink);box-shadow:none}
+.pcols-menu label{justify-content:flex-start;text-align:left;font-weight:500;color:var(--ink)}
 .prj-bar select{width:auto;min-height:36px;padding:4px 8px}
 
 /* Escolha de área e qualidade */
@@ -1867,6 +1877,9 @@ footer.site a{color:var(--ink)}
   }
   if (!API) loadPrj();
 
+  // colunas da tela Project: as fixas sempre aparecem; as opcionais o cliente liga na lista "Colunas"
+  var PCOL_OPC = [['dur', 'Duração'], ['bini', 'Início (linha de base)'], ['bfim', 'Término (linha de base)'], ['desv', 'Desvio do término'], ['pred', 'Predecessoras'], ['peso', 'Peso']];
+  S.pcols = (function () { try { var v = JSON.parse(localStorage.getItem('cp-pcols') || 'null'); return Array.isArray(v) ? v : []; } catch (e) { return []; } })();
   function vProjectReal() {
     var A = aggregate(), span = Math.max(P.max - P.min, 864e5), days = span / 864e5;
     var monthly = days > 182, ticks = [];
@@ -1887,7 +1900,16 @@ footer.site a{color:var(--ink)}
     var visible = P.tasks.filter(function (t) { for (var p = t.parent; p; p = p.parent) if (!P.open[p.uid]) return false; return true; });
     var caret = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
     // coluna Fornecedor: aparece quando há fornecedor em Suprimentos; cada tarefa herda o da linha resumo mais próxima
-    var FO = fornecedores(), comForn = Object.keys(FO).length > 0;
+    var FO = fornecedores();
+    var LARG = { dur: 64, bini: 90, bfim: 90, desv: 96, pred: 110, peso: 66 }, liga = function (k) { return S.pcols.indexOf(k) >= 0; };
+    var colsW = [44, 300, 160].concat(liga('dur') ? [LARG.dur] : [], [90, 90], ['bini', 'bfim', 'desv', 'pred', 'peso'].filter(liga).map(function (k) { return LARG[k]; }), [66]);
+    var pcolsCss = colsW.map(function (w) { return w + 'px'; }).join(' ') + ' minmax(0,1fr)', pcolsSoma = colsW.reduce(function (x, y) { return x + y; }, 0);
+    var hOpc = function (lista) { return lista.filter(liga).map(function (k) { var r = { dur: 'Dur.', bini: 'Início LB', bfim: 'Término LB', desv: 'Desvio', pred: 'Predec.', peso: 'Peso' }[k]; return '<span' + (k === 'peso' || k === 'desv' ? ' style="text-align:right"' : '') + '>' + r + '</span>'; }).join(''); };
+    var colMenu = '<details class="pcols" id="pcols"' + (S.pcolsOpen ? ' open' : '') + '><summary>Colunas' + (S.pcols.length ? ' · +' + S.pcols.length : '') + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary><div class="pcols-menu">' +
+      '<span class="kpi-t">Sempre visíveis</span>' + ['Id', 'Nome da tarefa', 'Fornecedor', 'Início', 'Término', '%'].map(function (n) { return '<label class="fixo"><input type="checkbox" checked disabled> ' + n + '</label>'; }).join('') +
+      '<span class="kpi-t" style="margin-top:8px">Opcionais</span>' + PCOL_OPC.map(function (o) { return '<label><input type="checkbox" data-pcol="' + o[0] + '"' + (liga(o[0]) ? ' checked' : '') + '> ' + o[1] + '</label>'; }).join('') +
+      (S.pcols.length ? '<button type="button" class="linkbtn" data-a="pcolpad" style="font-size:13px;align-self:flex-start;margin-top:6px">Voltar ao padrão</button>' : '') +
+      '</div></details>';
     var rows = visible.map(function (t) {
       var sum = t.children.length > 0, a = A[t.uid];
       var pr = sum ? aPct(a, 'r') : (P.meas[t.uid] || 0), pb = sum ? aPct(a, 'b') : (P.base[t.uid] || 0);
@@ -1904,12 +1926,21 @@ footer.site a{color:var(--ink)}
         ? '<button type="button" class="caret" data-a="ptg:' + t.uid + '" aria-expanded="' + !!P.open[t.uid] + '" aria-label="' + (P.open[t.uid] ? 'Recolher ' : 'Expandir ') + esc(t.name) + '">' + caret + '</button>'
         : '<span style="width:22px;flex-shrink:0;display:inline-flex;justify-content:center">' + (changed ? '<i class="sw" style="background:var(--accent);border-radius:50%;width:8px;height:8px" title="Medido nesta medição"></i>' : '') + '</span>';
       var pad = Math.max(0, t.lvl - 1) * 14;
-      return '<div class="prj-row' + (sum ? ' sum' : '') + (comForn ? ' forn' : '') + '">' +
+      var desv = t.bFinish != null && t.finish != null ? Math.round((t.finish - t.bFinish) / 864e5) : null;
+      var cel = {
+        dur: '<span>' + (t.ms ? '0 d' : fmt1(t.durH / 8) + ' d') + '</span>',
+        bini: '<span class="dt">' + (t.bStart != null ? fdate(t.bStart) : '—') + '</span>',
+        bfim: '<span class="dt">' + (t.bFinish != null ? fdate(t.bFinish) : '—') + '</span>',
+        desv: '<span style="text-align:right;color:' + (desv == null ? 'var(--muted)' : desv > 0 ? 'var(--bad)' : 'var(--good)') + '">' + (desv == null ? '—' : sdias(desv)) + '</span>',
+        pred: '<span title="' + esc(t.pred.map(function (u) { return P.byUid[u] ? P.byUid[u].name : ''; }).join(', ')) + '">' + esc(t.pred.map(function (u) { return P.byUid[u] ? P.byUid[u].id : ''; }).filter(Boolean).join('; ')) + '</span>',
+        peso: '<span class="mono" style="text-align:right;color:var(--muted)">' + (a && a.w ? fmt1(P.weight === 'dur' ? a.w / 8 : a.w) : '—') + '</span>'
+      };
+      var opc = function (lista) { return lista.filter(function (k) { return S.pcols.indexOf(k) >= 0; }).map(function (k) { return cel[k]; }).join(''); };
+      return '<div class="prj-row' + (sum ? ' sum' : '') + '">' +
         '<span class="num">' + esc(t.id) + '</span>' +
         '<span><span class="prj-name" style="padding-left:' + pad + 'px">' + nameCell + '<span style="overflow:hidden;text-overflow:ellipsis" title="' + esc(t.name) + '"><span class="mono" style="color:var(--muted);margin-right:6px">' + esc(t.wbs) + '</span>' + esc(t.name) + '</span></span></span>' +
-        (comForn ? '<span title="' + esc(FO[t.uid] || '') + '"' + (sum ? '' : ' style="font-weight:400"') + '>' + esc(FO[t.uid] || '') + '</span>' : '') +
-        '<span>' + (t.ms ? '0 d' : fmt1(t.durH / 8) + ' d') + '</span><span>' + fdate(t.start).slice(0, 8) + '</span><span>' + fdate(t.finish).slice(0, 8) + '</span>' +
-        '<span class="mono" style="text-align:right;color:var(--muted)">' + (a && a.w ? fmt1(P.weight === 'dur' ? a.w / 8 : a.w) : '—') + '</span>' +
+        '<span title="' + esc(FO[t.uid] || '') + '"' + (sum ? '' : ' style="font-weight:400"') + '>' + esc(FO[t.uid] || '') + '</span>' +
+        opc(['dur']) + '<span class="dt">' + fdate(t.start) + '</span><span class="dt">' + fdate(t.finish) + '</span>' + opc(['bini', 'bfim', 'desv', 'pred', 'peso']) +
         '<span style="text-align:right">' + pctCell + '</span>' +
         '<span class="track" style="' + grid + '">' + bar + '<span class="today" style="left:' + sdL + '%"></span></span></div>';
     }).join('');
@@ -1927,7 +1958,7 @@ footer.site a{color:var(--ink)}
         '<div class="prj-bar">' +
           '<span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(P.title) + '</b><span style="font-size:12.5px;color:var(--muted)">' + esc(P.fileName) + ' · ' + P.tasks.length + ' tarefas</span></span>' +
           '<label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '" style="width:auto;min-height:36px;padding:4px 8px">' +
-          '<label class="kpi-t" for="pWeight">Peso</label>' + wSel +
+          '<label class="kpi-t" for="pWeight">Peso</label>' + wSel + colMenu +
         '</div>' +
         '<div class="prj-bar">' +
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
@@ -1946,8 +1977,8 @@ footer.site a{color:var(--ink)}
           S.hist.map(function (h) { return '<tr><td class="mono">' + esc(h.data_status.split('-').reverse().join('/')) + '</td><td class="mono">' + esc(h.fechado_em.replace('T', ' ').slice(0, 16)) + '</td><td class="mono">' + fmt1(h.avanco_real) + '%</td><td class="mono">' + fmt1(h.avanco_prev) + '%</td><td><a href="/api/historico/' + h.id + '/xml">XML</a> · <a href="/api/historico/' + h.id + '/csv">CSV</a> · <a href="/api/historico/' + h.id + '/xlsx">Excel</a></td></tr>'; }).join('') +
           '</tbody></table></div></details>' : '') +
       '</section>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="min-width:' + (690 + (comForn ? 150 : 0) + tlW) + 'px">' +
-        '<div class="prj-row head' + (comForn ? ' forn' : '') + '"><span class="num">Id</span><span>Nome da tarefa</span>' + (comForn ? '<span>Fornecedor</span>' : '') + '<span>Dur.</span><span>Início</span><span>Término</span><span style="text-align:right">Peso</span><span style="text-align:right">%</span>' + head + '</div>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="--pcols:' + pcolsCss + ';min-width:' + (pcolsSoma + tlW) + 'px">' +
+        '<div class="prj-row head"><span class="num">Id</span><span>Nome da tarefa</span><span>Fornecedor</span>' + hOpc(['dur']) + '<span>Início</span><span>Término</span>' + hOpc(['bini', 'bfim', 'desv', 'pred', 'peso']) + '<span style="text-align:right">%</span>' + head + '</div>' +
         rows +
       '</div></div></section>' +
       '<p style="font-size:12.5px;color:var(--muted)">Barra azul: tarefa, com a parte escura = % concluído. Traço cinza: linha de base. Linha amarela: data de status. O avanço dos grupos é a média das tarefas ponderada pelo peso escolhido. As medições ficam salvas neste navegador.</p>';
@@ -3419,6 +3450,7 @@ footer.site a{color:var(--ink)}
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
+      case 'pcolpad': S.pcols = []; try { localStorage.setItem('cp-pcols', '[]'); } catch (er) {} S.pcolsOpen = true; break;
       case 'cpw': S.cpw = a[1] === '0' ? 0 : S.cpw + (+a[1]); break;
       case 'cpok': case 'cpnok':
         var semC = cpPerAt(S.cpw).sem, tC = P.byUid[a[1]], eC = tC ? cpEstado(semC, tC) : { st: '' }, alvo = a[0] === 'cpok' ? 'ok' : 'nok';
@@ -3520,7 +3552,15 @@ footer.site a{color:var(--ink)}
     var again = body.querySelector('[data-a="' + keep + '"]');
     if (again) again.focus({ preventScroll: true });
   });
+  app.addEventListener('toggle', function (e) { if (e.target.id === 'pcols') S.pcolsOpen = e.target.open; }, true);
+  document.addEventListener('click', function (e) { var d = document.getElementById('pcols'); if (d && d.open && !d.contains(e.target)) { d.open = false; S.pcolsOpen = false; } });
   app.addEventListener('change', function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute('data-pcol')) {
+      var kc = e.target.getAttribute('data-pcol');
+      S.pcols = PCOL_OPC.map(function (o) { return o[0]; }).filter(function (k) { return k === kc ? e.target.checked : S.pcols.indexOf(k) >= 0; });
+      try { localStorage.setItem('cp-pcols', JSON.stringify(S.pcols)); } catch (er) {}
+      S.pcolsOpen = true; render(); var cb = document.querySelector('[data-pcol="' + kc + '"]'); if (cb) cb.focus(); return;
+    }
     if (e.target.id === 'medTorre') { S.med.torre = e.target.value; S.med.pav = ''; render(); return; }
     if (e.target.id === 'medPav') { S.med.pav = e.target.value; render(); return; }
     if (e.target.hasAttribute && e.target.hasAttribute('data-cpcausa')) {
