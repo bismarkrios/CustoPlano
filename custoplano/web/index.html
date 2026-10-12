@@ -1965,7 +1965,7 @@ footer.site a{color:var(--ink)}
         '<div class="prj-bar">' +
           '<span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(P.title) + '</b><span style="font-size:12.5px;color:var(--muted)">' + esc(P.fileName) + ' · ' + P.tasks.length + ' tarefas</span></span>' +
           '<label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '" style="width:auto;min-height:36px;padding:4px 8px">' +
-          '<label class="kpi-t" for="pWeight">Peso</label>' + wSel + colMenu +
+          colMenu +
         '</div>' +
         '<div class="prj-bar">' +
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
