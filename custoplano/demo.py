@@ -196,6 +196,11 @@ def semear(uid: int, hoje: dt.date | None = None) -> None:
         else:
             st = "solicitar"
         sup[str(t["uid"])] = {"lead": lead, "forn": serv[3], "st": st}
+    # linhas resumo acima dos serviços (preliminares e torres) já resolvidas, para não aparecerem como compra pendente
+    for t in tarefas:
+        if t["resumo"] and str(t["uid"]) not in sup and t["nivel"] <= 3:
+            prelim = t["eap"].startswith("1.1")
+            sup[str(t["uid"])] = {"lead": 15, "forn": "Canteiro Locações" if prelim else "Vários", "st": "entregue"}
     # um pacote com a compra atrasada, para o exemplo mostrar o alerta
     atrasaveis = [k for k, v in sup.items() if v["st"] in ("pedido", "cotacao")]
     if atrasaveis:

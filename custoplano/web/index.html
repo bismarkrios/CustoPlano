@@ -173,6 +173,8 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 
 /* Manual */
 .manual{display:grid;grid-template-columns:120px minmax(0,1fr);gap:24px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:22px}
+.livro-capa{width:120px;height:auto;display:block;box-shadow:4px 4px 0 var(--gold)}
+.tol{white-space:nowrap}
 .livro{width:120px;aspect-ratio:170/240;background:#282B59;color:#fff;padding:12px 10px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:4px 4px 0 var(--gold)}
 .livro b{font-family:var(--serif);font-size:15px;line-height:1.1}
 .livro small{font-size:9.5px;font-weight:600;color:#AFC3D9;letter-spacing:.12em;white-space:nowrap}
@@ -214,6 +216,7 @@ footer.site{border-top:1px solid var(--line);padding-block:28px;font-size:14px;c
 footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 footer.site .rodape{display:flex;gap:8px 20px;flex-wrap:wrap}
 footer.site a{color:var(--ink)}
+footer.site .copy{flex-basis:100%;font-size:13px}
 
 /* Telas do sistema */
 .telas{display:flex;flex-direction:column;gap:18px;min-width:0}
@@ -232,6 +235,17 @@ footer.site a{color:var(--ink)}
 .top .actions{display:flex;gap:8px;align-items:center}
 @media (max-width:860px){.top .actions{margin-left:auto}}
 @media (max-width:420px){.top .btn-primary{display:none}}
+/* menu do celular */
+.menu-btn{display:none;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--ink);cursor:pointer;flex:none}
+.menu .so-cel,.lg-curto{display:none}
+@media (max-width:860px){
+  .menu-btn{display:inline-flex}
+  .top.aberto .menu{display:flex;position:absolute;left:0;right:0;top:100%;flex-direction:column;gap:0;margin:0;padding:6px clamp(16px,4vw,40px) 14px;background:var(--ground);border-bottom:1px solid var(--line);box-shadow:0 12px 24px rgba(0,0,0,.08)}
+  .top.aberto .menu a{font-size:17px;padding:14px 4px;border-radius:0;border-bottom:1px solid var(--line)}
+  .top.aberto .menu a:last-child{border-bottom:0}
+  .menu .so-cel{display:block}
+}
+@media (max-width:420px){.lg-full{display:none}.lg-curto{display:inline}}
 @media (max-width:520px){.top .wrap{gap:12px}.brand b{white-space:nowrap;font-size:18px}.brand small{font-size:10px}.btn-login{white-space:nowrap;min-height:42px;padding:0 14px;font-size:14px}}
 
 /* ---------- Tokens extras do sistema ---------- */
@@ -732,18 +746,22 @@ footer.site a{color:var(--ink)}
       <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="var(--s1)"></rect><rect x="12" y="10" width="6" height="18" fill="var(--s1)"></rect><rect x="22" y="2" width="6" height="26" fill="var(--accent)"></rect></svg>
       <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small>Consultoria</small></span>
     </a>
-    <nav class="menu" aria-label="Seções">
+    <nav class="menu" id="menuSite" aria-label="Seções">
       <a href="#servicos">Serviços</a>
       <a href="#telas">O sistema</a>
       <a href="#qualidade">Qualidade</a>
       <a href="#duvidas">Dúvidas</a>
       <a href="/manual">Manual</a>
+      <a class="so-cel" href="#contato">Contato</a>
     </nav>
     <div class="actions">
       <a class="btn btn-login" href="#entrar">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-        Área do cliente</a>
+        <span class="lg-full">Área do cliente</span><span class="lg-curto">Entrar</span></a>
       <a class="btn btn-primary" href="#contato">Contato</a>
+      <button type="button" class="menu-btn" aria-label="Abrir o menu" aria-expanded="false" aria-controls="menuSite">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
     </div>
   </div>
 </header>
@@ -854,7 +872,7 @@ footer.site a{color:var(--ink)}
         <p class="intro">Tem bons sistemas de gestão de obra no mercado. Quase todos pedem que o cronograma seja refeito dentro deles, e a implantação fica por conta de quem já está apertado na obra. Aqui funciona assim:</p>
         <ol class="dif">
           <li><b>O MS Project continua sendo a referência.</b><span>Importamos o .mpp, medimos em campo e devolvemos o arquivo atualizado para o Project.</span></li>
-          <li><b>O plano de ataque vem da sua planilha.</b><span>A escadinha que a obra já usa no Excel entra direto, sem redigitar.</span></li>
+          <li><b>O plano de ataque sai do cronograma.</b><span>A escadinha por torre é montada direto do MS Project. Se a obra já tem a dela no Excel, ela entra também, sem redigitar.</span></li>
           <li><b>Prazo, custo e qualidade no mesmo lugar.</b><span>Sem um sistema para planejar, outro para custo e outro para as FVS.</span></li>
           <li><b>Tem gente nossa na obra.</b><span>O sistema vem junto com a consultoria. Ninguém recebe uma senha e fica sozinho para aprender.</span></li>
         </ol>
@@ -875,15 +893,15 @@ footer.site a{color:var(--ink)}
           <button type="button" role="tab" id="tt-sup" aria-controls="tp-sup" aria-selected="false" tabindex="-1">Suprimentos</button>
         </div>
         <figure class="tela" role="tabpanel" id="tp-painel" aria-labelledby="tt-painel">
-          <div class="tela-img"><img src="/web/telas/painel.jpg" width="1280" height="760" alt="Painel da obra com avanço físico real contra o previsto, PPC da semana, restrições abertas e curva S" loading="lazy"></div>
-          <figcaption>Avanço real contra o previsto, PPC da semana, restrições que vencem e a curva S, tudo puxado do cronograma do MS Project.</figcaption>
+          <div class="tela-img"><img src="/web/telas/painel.jpg?v=2" width="1280" height="760" alt="Painel da obra com data de status, avanço real contra o previsto, término previsto, PPC, tarefas atrasadas e curva S" loading="lazy"></div>
+          <figcaption>Avanço real contra o previsto, término previsto e atraso, PPC, tarefas atrasadas, curva S e os pacotes da semana, tudo puxado do cronograma do MS Project.</figcaption>
         </figure>
         <figure class="tela" role="tabpanel" id="tp-pa" aria-labelledby="tt-pa" hidden>
-          <div class="tela-img"><img src="/web/telas/pa.jpg" width="1280" height="760" alt="Plano de ataque: matriz de serviços por pavimento com as datas, executados em verde e atrasados em vermelho" loading="lazy"></div>
+          <div class="tela-img"><img src="/web/telas/pa.jpg?v=2" width="1280" height="760" alt="Escadinha por torre: serviços por pavimento com as datas, executados, em andamento e atrasados" loading="lazy"></div>
           <figcaption>A escadinha sai do próprio cronograma: um quadro por torre, do térreo à cobertura, com o que foi executado, o que atrasou e o desvio contra a linha de base. Dá para imprimir e levar para a reunião.</figcaption>
         </figure>
         <figure class="tela" role="tabpanel" id="tp-sup" aria-labelledby="tt-sup" hidden>
-          <div class="tela-img"><img src="/web/telas/sup.jpg" width="1280" height="760" alt="Suprimentos: lista de materiais com data na obra, prazo do fornecedor, data limite de compra e situação" loading="lazy"></div>
+          <div class="tela-img"><img src="/web/telas/sup.jpg?v=2" width="1280" height="760" alt="Suprimentos: lista de materiais com data na obra, prazo do fornecedor, data limite de compra e situação" loading="lazy"></div>
           <figcaption>Cada pacote do cronograma vira uma compra com data limite: a data em que o serviço começa menos o prazo do fornecedor. O fornecedor também volta para o MS Project numa coluna própria.</figcaption>
         </figure>
         <div class="telas-cta">
@@ -946,9 +964,9 @@ footer.site a{color:var(--ink)}
             <table>
               <thead><tr><th scope="col">Item verificado</th><th scope="col">Tolerância</th><th scope="col">Resultado</th></tr></thead>
               <tbody>
-                <tr><td>Prumo da parede</td><td>± 3 mm / 2 m</td><td><span class="pill ok">Aprovado</span></td></tr>
-                <tr><td>Nível da fiada de marcação</td><td>± 3 mm</td><td><span class="pill ok">Aprovado</span></td></tr>
-                <tr><td>Espessura da junta horizontal</td><td>10 mm ± 3 mm</td><td><span class="pill nc">Reprovado</span></td></tr>
+                <tr><td>Prumo da parede</td><td class="tol">± 3 mm / 2 m</td><td><span class="pill ok">Aprovado</span></td></tr>
+                <tr><td>Nível da fiada de marcação</td><td class="tol">± 3 mm</td><td><span class="pill ok">Aprovado</span></td></tr>
+                <tr><td>Espessura da junta horizontal</td><td class="tol">10 mm ± 3 mm</td><td><span class="pill nc">Reprovado</span></td></tr>
                 <tr><td>Amarração nos pilares (tela)</td><td>A cada 2 fiadas</td><td><span class="pill ok">Aprovado</span></td></tr>
                 <tr><td>Encunhamento</td><td>Após 7 dias</td><td><span class="pill ok">Aprovado</span></td></tr>
               </tbody>
@@ -966,7 +984,7 @@ footer.site a{color:var(--ink)}
         <h2>Nosso manual</h2>
       </header>
       <div class="manual">
-        <div class="livro" aria-hidden="true"><b>Manual do Engenheiro de Obra</b><small>CUSTO PLANO</small></div>
+        <img class="livro-capa" src="/web/manual/capa.jpg" width="900" height="1271" alt="Capa do Manual do Engenheiro de Obra" loading="lazy">
         <div>
           <h3>Manual do Engenheiro de Obra: Planejamento, Custos e Qualidade</h3>
           <p>O método que usamos nas obras, em 65 páginas: EAP, orçamento com composições, cronograma e linha de base, linha de balanço, valor agregado e qualidade. Vem com modelos de FVS, checklist de restrições e pauta de reunião.</p>
@@ -1028,7 +1046,9 @@ footer.site a{color:var(--ink)}
       <a href="#demo">Obra de demonstração</a>
       <a href="/privacidade">Privacidade e termos</a>
       <a href="#entrar">Área do cliente</a>
+      <a href="https://wa.me/5511988236792" target="_blank" rel="noopener">WhatsApp (11) 98823-6792</a>
     </nav>
+    <small class="copy">© <span id="anoRodape">2026</span> Custo Plano Consultoria</small>
   </div>
 </footer>
 </div>
@@ -2177,9 +2197,11 @@ footer.site a{color:var(--ink)}
     var varFim = fimB ? Math.round((fim - fimB) / dia) : null;
     var dv = real - prev;
     var per0 = cpPer(sd), sem0 = per0.sem;
-    var pac = cpSemana(per0.a, per0.b), pOk = 0;
-    pac.forEach(function (t) { if (cpEstado(sem0, t).st === 'ok') pOk++; });
-    var ppc = pac.length ? Math.round(pOk / pac.length * 100) : null;
+    var pac = cpSemana(per0.a, per0.b);
+    // PPC da última semana fechada: no meio da semana o PPC da semana corrente ainda não diz nada
+    var perF = sd < per0.ate ? cpPer(per0.a - dia) : per0, pacF = cpSemana(perF.a, perF.b), pOk = 0;
+    pacF.forEach(function (t) { if (cpEstado(perF.sem, t).st === 'ok') pOk++; });
+    var ppc = pacF.length ? Math.round(pOk / pacF.length * 100) : null;
     var hist = ((API && S.hist) || []).map(function (h) { return { t: Date.parse(h.data_status + 'T17:00:00Z'), r: +h.avanco_real, p: +h.avanco_prev, ds: h.data_status }; })
       .filter(function (h) { return h.t < sd; }).sort(function (a, b) { return a.t - b.t; });
     var ult = hist.length ? hist[hist.length - 1] : null;
@@ -2199,7 +2221,7 @@ footer.site a{color:var(--ink)}
     html += '<div class="grid4">' +
       '<div class="card"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + fmt1(real) + '%</div><div class="kpi-s">previsto ' + fmt1(prev) + '% · <b style="color:' + cor(dv >= -0.05) + '">' + sinal(dv) + ' p.p.</b></div>' +
         '<div class="bar" style="margin-top:10px"><i style="width:' + Math.min(100, prev) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, real) + '%;background:var(--accent)"></i></div></div>' +
-      '<div class="card"><div class="kpi-t">PPC · ' + cpRot(per0).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pac.length + ' pacotes concluídos · meta 80%</div></div>' +
+      '<div class="card"><div class="kpi-t">PPC · ' + cpRot(perF).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pacF.length + ' pacotes concluídos · meta 80%</div></div>' +
       '<div class="card"><div class="kpi-t">Tarefas atrasadas</div><div class="kpi-v" style="color:' + cor(!atras.length) + '">' + atras.length + '</div><div class="kpi-s">' + (atras.length ? 'de ' + fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd; }).length + ' que deviam estar prontas' : 'tudo o que devia terminar está pronto') + '</div></div>' +
       '<div class="card"><div class="kpi-t">Prazo final</div><div class="kpi-v" style="color:' + (varFim == null ? 'inherit' : cor(varFim <= 0)) + '">' + (varFim == null ? fdate(fim) : varFim === 0 ? 'No prazo' : (varFim > 0 ? '+' : '−') + Math.abs(varFim) + ' dias') + '</div><div class="kpi-s">' + (fimB ? 'término ' + fdate(fim) + ' · linha de base ' + fdate(fimB) : 'sem linha de base salva no Project') + '</div></div>' +
       '</div>';
@@ -3666,6 +3688,21 @@ var CONTATO = { whatsapp: '5511988236792', email: '', manual: '/manual' };
   if (CONTATO.manual) lm.href = CONTATO.manual;
   else lm.addEventListener('click', function () { document.getElementById('interesse').value = lm.getAttribute('data-interesse'); });
 })();
+// menu do celular: abre e fecha pelo botão; tocar num link ou fora dele fecha
+(function () {
+  var topo = document.querySelector('#site .top'), bt = topo && topo.querySelector('.menu-btn');
+  if (!bt) return;
+  function fechar() { topo.classList.remove('aberto'); bt.setAttribute('aria-expanded', 'false'); bt.setAttribute('aria-label', 'Abrir o menu'); }
+  bt.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var abrir = !topo.classList.contains('aberto');
+    topo.classList.toggle('aberto', abrir); bt.setAttribute('aria-expanded', String(abrir)); bt.setAttribute('aria-label', abrir ? 'Fechar o menu' : 'Abrir o menu');
+  });
+  topo.querySelectorAll('.menu a').forEach(function (a) { a.addEventListener('click', fechar); });
+  document.addEventListener('click', function (e) { if (!topo.contains(e.target)) fechar(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
+})();
+(function () { var a = document.getElementById('anoRodape'); if (a) a.textContent = new Date().getFullYear(); })();
 document.getElementById('form').addEventListener('submit', function (e) {
   e.preventDefault();
   var aviso = document.getElementById('aviso');
