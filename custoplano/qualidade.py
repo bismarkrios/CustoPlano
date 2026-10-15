@@ -19,7 +19,7 @@ import banco
 ESQUEMA = """
 CREATE TABLE IF NOT EXISTS fvs_modelos (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    usuario_id  INTEGER NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
     codigo      TEXT NOT NULL,
     servico     TEXT NOT NULL,
     itens       TEXT NOT NULL,              -- JSON [{id, item, criterio}]
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS fvs_modelos (
 );
 CREATE TABLE IF NOT EXISTS inspecoes (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id    INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    usuario_id    INTEGER NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
     cid           TEXT,                     -- id gerado no aparelho (evita duplicar envios offline)
     modelo_id     INTEGER,
     codigo        TEXT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS inspecoes (
 );
 CREATE TABLE IF NOT EXISTS ncs (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    usuario_id   INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    usuario_id   INTEGER NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
     cid          TEXT,
     numero       INTEGER NOT NULL,
     origem       TEXT NOT NULL,             -- FVS | Auditoria | Cliente | Obra
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS ncs (
 );
 CREATE TABLE IF NOT EXISTS fotos (
     id          TEXT PRIMARY KEY,
-    usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    usuario_id  INTEGER NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
     mime        TEXT NOT NULL,
     dados       BLOB NOT NULL,
     criado_em   TEXT NOT NULL

@@ -49,7 +49,7 @@ for c in CARGAS:
         r = anon.post("/api/login", json={"email": email, "senha": senha})
         checar(r.status_code in (401, 429), f"login com {email!r}/{senha!r} respondeu {r.status_code}")
 
-banco.criar_usuario("atacante@teste.com", "senha-forte-123", "Atacante")
+banco.definir_acesso(banco.criar_usuario("atacante@teste.com", "senha-forte-123", "Atacante"), banco.criar_obra("Obra do atacante"), "editor")
 n_usuarios = len(banco.listar_usuarios())
 cli = app.app.test_client()
 assert cli.post("/api/login", json={"email": "atacante@teste.com", "senha": "senha-forte-123"}).status_code == 200

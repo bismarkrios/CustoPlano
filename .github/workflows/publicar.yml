@@ -35,7 +35,7 @@ jobs:
         run: pip install flask openpyxl
 
       - name: Verificar sintaxe
-        run: python -m py_compile app.py banco.py cronograma.py
+        run: python -m py_compile app.py banco.py cronograma.py correio.py
 
       - name: Garantir que nenhuma chave de API está no site (frontend)
         run: |
@@ -67,6 +67,13 @@ jobs:
           CP_BANCO: ${{ runner.temp }}/isolamento.db
           CP_SECRET: teste
         run: python teste_isolamento.py
+
+      - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
+        env:
+          CP_BANCO: ${{ runner.temp }}/obras/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/obras" && python teste_obras.py
 
       - name: Testar a proteção contra SQL injection
         env:

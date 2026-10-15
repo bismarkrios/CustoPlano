@@ -39,16 +39,48 @@ python app.py
 4. Abra **http://localhost:5000** no navegador.
    Clique em **Área do cliente → Ver obra de demonstração** (e-mail `demo@custoplano.com.br`, senha `demo`).
 
-## Criar o acesso de um cliente
+## Obras e acessos dos clientes
 
-```bat
-flask --app app criar-usuario cliente@construtora.com.br --nome "Residencial Exemplo"
-flask --app app trocar-senha cliente@construtora.com.br
-flask --app app listar-usuarios
-```
+Tudo pelo sistema: entre com a conta da equipe (a da variável `CP_ADMIN_EMAIL`) e abra
+**Área do cliente > Administração**.
 
-Cada usuário vê só o próprio cronograma e o próprio histórico de medições.
+- **Obras:** cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade.
+- **Pessoas:** crie o acesso com o e-mail e escolha a obra. O sistema gera um link (vale 7 dias,
+  uso único) para a pessoa criar a própria senha; mande pelo WhatsApp. Uma pessoa pode ter
+  várias obras e troca de obra na Área do cliente.
+- **Edita ou só consulta:** quem só consulta vê tudo e baixa relatórios, mas não grava nada
+  (o servidor recusa).
+- **Esqueceu a senha:** botão "Link de senha" na Administração. Com o e-mail de saída
+  configurado (abaixo), o cliente também pede o link sozinho em "Esqueci minha senha".
+
+Pela linha de comando (no Shell do Render) ainda existem `criar-usuario` (com `--admin` para a
+equipe), `trocar-senha` e `listar-usuarios`.
 Para desligar a obra de demonstração: defina a variável `CP_DEMO=0`.
+
+## Cópias de segurança
+
+- O servidor faz uma cópia completa do banco (todas as obras, com fotos) por dia em
+  `/dados/copias` e guarda as 7 últimas, sem passar de 40% do disco.
+- Antes de apagar uma obra, e antes de converter o banco para obras, sai uma cópia extra
+  (com "-antes-" no nome).
+- Administração > **Baixar cópia agora** gera um `.db.gz` atual. Baixe uma por semana e guarde
+  fora do servidor (computador ou OneDrive).
+- Para restaurar: descompacte o `.db.gz`, pare o serviço e troque `/dados/custoplano.db` pelo
+  arquivo descompactado (Shell do Render), depois reinicie.
+
+## E-mail de saída (esqueci minha senha)
+
+Desligado até as variáveis serem definidas no Render (nunca no código):
+`CP_SMTP_SERVIDOR=smtp.office365.com`, `CP_SMTP_PORTA=587`,
+`CP_SMTP_USUARIO=contato@custoplano.com.br`, `CP_SMTP_SENHA=<senha da conta ou de aplicativo>`.
+No Microsoft 365 é preciso ligar o "SMTP autenticado" da caixa contato@.
+`CP_SITE=https://custoplano.com.br` faz os links usarem o endereço certo.
+
+## Saúde do sistema
+
+`/saude` responde 200 quando o servidor e o banco estão de pé. Use no Render
+(Settings > Health Check Path) e num monitor externo gratuito (ex.: UptimeRobot) para receber
+aviso se o sistema sair do ar.
 
 ## Ciclo de medição
 

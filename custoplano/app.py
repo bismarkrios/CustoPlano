@@ -19,6 +19,7 @@ import json
 import os
 import re
 import secrets
+import shutil
 import threading
 from functools import wraps
 
@@ -26,6 +27,7 @@ import click
 from flask import Flask, Response, abort, jsonify, request, send_from_directory, session
 
 import banco
+import correio
 from cronograma import ErroCronograma, Projeto, enxugar_xml, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
 import custos as cst
@@ -85,16 +87,22 @@ if _adm_email and len(_adm_senha) < 8:
 elif _adm_email:
     _adm = next((u for u in banco.listar_usuarios() if u["email"].lower() == _adm_email), None)
     if _adm is None:
-        banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano")
+        banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano", admin=True)
         print(f"Conta de acesso criada: {_adm_email}", flush=True)
-    elif not banco.autenticar(_adm["email"], _adm_senha):
-        banco.trocar_senha(_adm["email"], _adm_senha)
-        print(f"Senha da conta {_adm_email} atualizada pela CP_ADMIN_SENHA.", flush=True)
+    else:
+        banco.tornar_admin(_adm["id"])  # a conta da CP_ADMIN_EMAIL é da equipe: vê todas as obras
+        if not banco.autenticar(_adm["email"], _adm_senha):
+            banco.trocar_senha(_adm["email"], _adm_senha)
+            print(f"Senha da conta {_adm_email} atualizada pela CP_ADMIN_SENHA.", flush=True)
 if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
     try:
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")
     except Exception:
         banco.trocar_senha(DEMO_EMAIL, DEMO_SENHA)
+if DEMO:
+    _du = banco.usuario_por_email(DEMO_EMAIL)
+    if _du and not banco.obras_do_usuario(_du["id"]):
+        banco.definir_acesso(_du["id"], banco.criar_obra("Obra de demonstração", "Custo Plano"), "editor")
 
 # A demonstração usa as mesmas telas da área do cliente, com uma obra de exemplo gravada na conta demo.
 # Ela é refeita no login da demo (no máximo a cada 15 minutos), com as datas em torno de hoje.
@@ -106,15 +114,40 @@ def semear_demo(forcar: bool = False) -> None:
     if not forcar and agora_s - _DEMO_SEMEADA[0] < 15 * 60:
         return
     u = banco.autenticar(DEMO_EMAIL, DEMO_SENHA)
-    if not u:
+    obras = banco.obras_do_usuario(u["id"]) if u else []
+    if not obras:
         return
     try:
         with _PRJ_TRAVA:
             _PRJ_CACHE.clear()
-            demo.semear(u["id"])
+            demo.semear(obras[0]["id"])
         _DEMO_SEMEADA[0] = agora_s
     except Exception as e:  # noqa: BLE001 - a demo nunca pode derrubar o site
         print(f"Não consegui montar a obra de demonstração: {e}", flush=True)
+
+
+# Cópia de segurança diária do banco inteiro (todas as obras, com fotos) na pasta copias do disco
+# permanente; ficam as 7 últimas. Para guardar fora do servidor: Administração > Baixar cópia.
+def _copias_diarias() -> None:
+    import time
+
+    while True:
+        try:
+            hoje = dt.date.today().isoformat()
+            if not any(c["nome"].startswith("custoplano-" + hoje) for c in banco.listar_copias()):
+                livre = shutil.disk_usage(os.path.dirname(os.path.abspath(banco.CAMINHO))).free
+                if livre < 2 * os.path.getsize(banco.CAMINHO) + 50 * 1024 * 1024:
+                    print("ATENÇÃO: pouco espaço no disco; a cópia de segurança de hoje não foi feita.", flush=True)
+                else:
+                    print(f"Cópia de segurança feita: {os.path.basename(banco.copia_de_seguranca())}", flush=True)
+                    banco.limpar_copias(7)
+        except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa da cópia
+            print(f"Não consegui fazer a cópia de segurança: {e}", flush=True)
+        time.sleep(3600)
+
+
+if os.environ.get("CP_COPIAS_AUTO", "1") == "1":
+    threading.Thread(target=_copias_diarias, name="copias", daemon=True).start()
 
 
 # ------------------------------------------------------------------ segurança
@@ -163,11 +196,57 @@ def sessao_valida() -> bool:
     return True
 
 
+def oid() -> int:
+    """Obra aberta nesta sessão (todos os dados do sistema são da obra, não do login)."""
+    return session["obra"]
+
+
 def logado(f):
+    """Rotas de dados: precisa de login, de uma obra aberta a que o usuário ainda tenha acesso e,
+    para gravar, de acesso de edição (quem tem acesso de leitura só consulta)."""
     @wraps(f)
     def interno(*a, **k):
         if not sessao_valida():
             return jsonify(erro="Faça login para continuar."), 401
+        papel = banco.papel_na_obra(session["uid"], _obra_da_sessao()) if _obra_da_sessao() else None
+        if not papel:
+            return jsonify(erro="Escolha uma obra para continuar.", sem_obra=True), 409
+        if papel == "leitor" and request.method not in ("GET", "HEAD"):
+            return erro("Seu acesso a esta obra é só para consulta. Peça acesso de edição à Custo Plano.", 403)
+        return f(*a, **k)
+    return interno
+
+
+def _obra_da_sessao() -> int | None:
+    """Sessões abertas antes das obras (ou sem obra escolhida) abrem a última obra usada ou a primeira liberada."""
+    if not session.get("obra"):
+        u = banco.usuario(session["uid"])
+        ids = [o["id"] for o in banco.obras_do_usuario(session["uid"])]
+        escolha = u["obra_atual"] if u and u["obra_atual"] in ids else (ids[0] if ids else None)
+        if escolha:
+            session["obra"] = escolha
+    return session.get("obra")
+
+
+def so_logado(f):
+    """Rotas da conta (trocar senha, escolher obra): só precisam de login."""
+    @wraps(f)
+    def interno(*a, **k):
+        if not sessao_valida():
+            return jsonify(erro="Faça login para continuar."), 401
+        return f(*a, **k)
+    return interno
+
+
+def so_admin(f):
+    """Administração (obras, usuários, cópias): só a equipe Custo Plano."""
+    @wraps(f)
+    def interno(*a, **k):
+        if not sessao_valida():
+            return jsonify(erro="Faça login para continuar."), 401
+        u = banco.usuario(session["uid"])
+        if not u or not u["admin"]:
+            return erro("Só a equipe Custo Plano acessa a administração.", 403)
         return f(*a, **k)
     return interno
 
@@ -227,7 +306,7 @@ def projeto_de(c, fresco: bool = False) -> Projeto:
 
 def carregar(fresco: bool = False):
     """Cronograma do usuário logado + Projeto já interpretado."""
-    c = banco.cronograma(session["uid"])
+    c = banco.cronograma(oid())
     if not c:
         return None, None
     return c, projeto_de(c, fresco)
@@ -316,13 +395,33 @@ def login():
         TENTATIVAS.setdefault(chave_email, []).append(agora_s)
         return erro("E-mail ou senha incorretos.", 401)
     TENTATIVAS.pop(chave, None)
+    abrir_sessao(u["id"])
+    return jsonify(conta())
+
+
+def abrir_sessao(uid: int) -> None:
+    """Login: abre a última obra usada (ou a primeira liberada)."""
+    u = banco.usuario(uid)
     session.clear()
     session.permanent = True
-    session["uid"] = u["id"]
-    session["pv"] = banco.versao_senha(u["id"])
+    session["uid"] = uid
+    session["pv"] = banco.versao_senha(uid)
     if u["email"].lower() == DEMO_EMAIL:
         session["demo"] = True
-    return jsonify(email=u["email"], nome=u["nome"])
+    ids = [o["id"] for o in banco.obras_do_usuario(uid)]
+    obra_id = u["obra_atual"] if u["obra_atual"] in ids else (ids[0] if ids else None)
+    if obra_id:
+        session["obra"] = obra_id
+    banco.registrar_entrada(uid, obra_id)
+
+
+def conta() -> dict:
+    """O que o navegador precisa saber do login: quem é, se é da equipe e quais obras pode abrir."""
+    u = banco.usuario(session["uid"])
+    obras = banco.obras_do_usuario(u["id"])
+    atual = next((o for o in obras if o["id"] == _obra_da_sessao()), None)
+    return dict(email=u["email"], nome=u["nome"], admin=bool(u["admin"]), obra=atual, obras=obras,
+                senha_email=bool(smtp_configurado()))
 
 
 @app.post("/api/logout")
@@ -333,15 +432,234 @@ def logout():
 
 @app.get("/api/me")
 def me():
-    u = banco.usuario(session["uid"]) if sessao_valida() else None
-    return jsonify(email=u["email"], nome=u["nome"]) if u else jsonify(email=None)
+    return jsonify(conta()) if sessao_valida() else jsonify(email=None, senha_email=bool(smtp_configurado()))
+
+
+@app.post("/api/obra/abrir")
+@so_logado
+def abrir_obra():
+    obra_id = int((request.get_json(silent=True) or {}).get("id") or 0)
+    if not banco.papel_na_obra(session["uid"], obra_id):
+        return erro("Você não tem acesso a essa obra.", 403)
+    session["obra"] = obra_id
+    banco.registrar_entrada(session["uid"], obra_id)
+    return jsonify(conta())
+
+
+# ---------------------------------------------------------------------- senhas
+SENHA_MIN = 8
+
+
+def _senha_ok(senha: str) -> str | None:
+    if len(senha) < SENHA_MIN:
+        return f"Use uma senha com pelo menos {SENHA_MIN} caracteres."
+    if len(senha) > 200:
+        return "Senha longa demais."
+    return None
+
+
+@app.post("/api/senha/link")
+def verificar_link_senha():
+    """A tela de criar senha confere o link antes de mostrar o formulário."""
+    r = banco.link_senha(str((request.get_json(silent=True) or {}).get("codigo") or ""))
+    if not r:
+        return erro("Este link já foi usado ou venceu. Peça um link novo à Custo Plano.", 400)
+    return jsonify(email=r["email"])
+
+
+@app.post("/api/senha/definir")
+def definir_senha():
+    d = request.get_json(silent=True) or {}
+    senha = str(d.get("senha") or "")
+    if (m := _senha_ok(senha)):
+        return erro(m)
+    chave = f"link|{_ip()}"
+    if _bloqueado(chave, 20):
+        return erro("Muitas tentativas. Aguarde 15 minutos e tente de novo.", 429)
+    uid = banco.usar_link_senha(str(d.get("codigo") or ""), senha)
+    if not uid:
+        TENTATIVAS.setdefault(chave, []).append(dt.datetime.now().timestamp())
+        return erro("Este link já foi usado ou venceu. Peça um link novo à Custo Plano.", 400)
+    abrir_sessao(uid)
+    return jsonify(conta())
+
+
+@app.post("/api/senha/trocar")
+@so_logado
+def trocar_minha_senha():
+    if ehdemo():
+        return erro("A senha da demonstração não pode ser trocada.", 403)
+    d = request.get_json(silent=True) or {}
+    u = banco.usuario(session["uid"])
+    if not banco.autenticar(u["email"], str(d.get("atual") or "")):
+        return erro("A senha atual não confere.", 400)
+    nova = str(d.get("nova") or "")
+    if (m := _senha_ok(nova)):
+        return erro(m)
+    banco.trocar_senha_id(u["id"], nova)
+    session["pv"] = banco.versao_senha(u["id"])  # esta sessão continua; as outras caem
+    return jsonify(ok=True)
+
+
+def smtp_configurado() -> bool:
+    return correio.configurado() is not None
+
+
+def endereco_site() -> str:
+    return os.environ.get("CP_SITE", "").rstrip("/") or request.host_url.rstrip("/")
+
+
+@app.post("/api/senha/esqueci")
+def esqueci_senha():
+    """Manda um link de troca de senha (vale 2 horas). A resposta é a mesma, exista ou não o e-mail."""
+    email = str((request.get_json(silent=True) or {}).get("email") or "").strip()
+    if not smtp_configurado():
+        return erro("Para trocar a senha, peça um link à Custo Plano pelo WhatsApp.", 503)
+    k_ip, k_email = f"esq|{_ip()}", f"esq|*|{email.lower()}"
+    if _bloqueado(k_ip) or _bloqueado(k_email, 3):
+        return erro("Muitos pedidos. Aguarde 15 minutos e tente de novo.", 429)
+    agora_s = dt.datetime.now().timestamp()
+    TENTATIVAS.setdefault(k_ip, []).append(agora_s)
+    TENTATIVAS.setdefault(k_email, []).append(agora_s)
+    u = banco.usuario_por_email(email) if email else None
+    if u and u["email"].lower() != DEMO_EMAIL:
+        codigo = banco.criar_link_senha(u["id"], 2)
+        texto = (f"Olá{(' ' + u['nome']) if u['nome'] else ''},\n\n"
+                 "Para criar uma senha nova, abra o link abaixo (vale por 2 horas e só funciona uma vez):\n\n"
+                 f"{endereco_site()}/#senha={codigo}\n\n"
+                 "Se você não pediu a troca, ignore este e-mail: sua senha atual continua valendo.\n\nCusto Plano")
+        try:
+            correio.enviar(u["email"], "Custo Plano: troca de senha", texto)
+        except Exception as e:  # noqa: BLE001
+            print(f"Não consegui enviar o e-mail de troca de senha: {e}", flush=True)
+            return erro("Não consegui enviar o e-mail agora. Peça um link à Custo Plano pelo WhatsApp.", 502)
+    return jsonify(ok=True, msg="Se este e-mail tiver acesso, você vai receber um link para criar a senha nova.")
+
+
+# ------------------------------------------------------------- administração
+def _email_valido(e: str) -> bool:
+    return bool(re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", e)) and len(e) <= 200
+
+
+@app.get("/api/admin")
+@so_admin
+def admin_painel():
+    d = banco.painel_admin()
+    d["copias"] = banco.listar_copias()[:10]
+    d["eu"] = session["uid"]
+    return jsonify(d)
+
+
+@app.post("/api/admin/obra")
+@so_admin
+def admin_obra():
+    d = request.get_json(silent=True) or {}
+    nome, empresa = str(d.get("nome") or "").strip()[:120], str(d.get("empresa") or "").strip()[:120]
+    if not nome:
+        return erro("Informe o nome da obra.")
+    if d.get("id"):
+        if not banco.obra(int(d["id"])):
+            return erro("Obra não encontrada.", 404)
+        banco.editar_obra(int(d["id"]), nome, empresa)
+        return jsonify(id=int(d["id"]))
+    return jsonify(id=banco.criar_obra(nome, empresa))
+
+
+@app.post("/api/admin/obra/remover")
+@so_admin
+def admin_obra_remover():
+    d = request.get_json(silent=True) or {}
+    o = banco.obra(int(d.get("id") or 0))
+    if not o:
+        return erro("Obra não encontrada.", 404)
+    if str(d.get("confirmar") or "").strip().lower() != o["nome"].strip().lower():
+        return erro("Para apagar, digite o nome da obra exatamente como aparece.")
+    banco.copia_de_seguranca(f"antes-de-apagar-obra-{o['id']}")
+    banco.remover_obra(o["id"])
+    if session.get("obra") == o["id"]:
+        session.pop("obra", None)
+    return jsonify(ok=True)
+
+
+@app.post("/api/admin/usuario")
+@so_admin
+def admin_usuario():
+    """Cria o acesso de uma pessoa e devolve o link para ela criar a própria senha (vale 7 dias)."""
+    d = request.get_json(silent=True) or {}
+    email, nome = str(d.get("email") or "").strip().lower(), str(d.get("nome") or "").strip()[:120]
+    if not _email_valido(email):
+        return erro("Informe um e-mail válido.")
+    if banco.usuario_por_email(email):
+        return erro("Já existe um acesso com esse e-mail.")
+    uid = banco.criar_usuario(email, None, nome)
+    for a in d.get("acessos") or []:
+        if banco.obra(int(a.get("obra_id") or 0)) and a.get("papel") in ("editor", "leitor"):
+            banco.definir_acesso(uid, int(a["obra_id"]), a["papel"])
+    return jsonify(id=uid, link=f"{endereco_site()}/#senha={banco.criar_link_senha(uid, 24 * 7)}")
+
+
+@app.post("/api/admin/acesso")
+@so_admin
+def admin_acesso():
+    d = request.get_json(silent=True) or {}
+    uid, obra_id, papel = int(d.get("usuario_id") or 0), int(d.get("obra_id") or 0), d.get("papel")
+    if not banco.usuario(uid) or not banco.obra(obra_id):
+        return erro("Usuário ou obra não encontrados.", 404)
+    if papel not in ("editor", "leitor", None):
+        return erro("Papel inválido.")
+    banco.definir_acesso(uid, obra_id, papel)
+    return jsonify(ok=True)
+
+
+@app.post("/api/admin/link-senha")
+@so_admin
+def admin_link_senha():
+    """Link novo para a pessoa criar ou trocar a senha (vale 7 dias), para mandar pelo WhatsApp."""
+    u = banco.usuario(int((request.get_json(silent=True) or {}).get("usuario_id") or 0))
+    if not u or u["email"].lower() == DEMO_EMAIL:
+        return erro("Usuário não encontrado.", 404)
+    return jsonify(link=f"{endereco_site()}/#senha={banco.criar_link_senha(u['id'], 24 * 7)}", email=u["email"])
+
+
+@app.post("/api/admin/usuario/remover")
+@so_admin
+def admin_usuario_remover():
+    u = banco.usuario(int((request.get_json(silent=True) or {}).get("id") or 0))
+    if not u:
+        return erro("Usuário não encontrado.", 404)
+    if u["id"] == session["uid"] or u["email"].lower() == DEMO_EMAIL or u["admin"]:
+        return erro("Esse acesso não pode ser removido por aqui.", 403)
+    banco.remover_usuario(u["id"])
+    return jsonify(ok=True)
+
+
+@app.get("/api/admin/copia")
+@so_admin
+def admin_baixar_copia():
+    """Cópia completa e atual do banco (todas as obras, com fotos), para guardar fora do servidor."""
+    caminho = banco.copia_de_seguranca("baixada")
+    r = send_from_directory(banco.pasta_copias(), os.path.basename(caminho), as_attachment=True, mimetype="application/gzip")
+    r.headers["Cache-Control"] = "no-store"
+    return r
+
+
+# ----------------------------------------------------------------------- saúde
+@app.get("/saude")
+def saude():
+    """Para o monitor externo e o Render: 200 só se o banco está respondendo."""
+    try:
+        with banco.conectar() as con:
+            con.execute("SELECT 1 FROM usuarios LIMIT 1").fetchall()
+        return jsonify(ok=True)
+    except Exception:  # noqa: BLE001
+        return jsonify(ok=False), 503
 
 
 # ------------------------------------------------------------------- cronograma
 @app.get("/api/cronograma")
 @logado
 def ver_cronograma():
-    c = banco.cronograma(session["uid"])
+    c = banco.cronograma(oid())
     if not c:
         return jsonify(xml=None)
     return jsonify(xml=c["xml"], fileName=c["arquivo"], weight=c["peso"],
@@ -368,7 +686,7 @@ def importar():
         return erro(str(e))
     hoje = dt.datetime.now().replace(hour=17, minute=0, second=0, microsecond=0)
     sd = p.data_status or hoje
-    banco.salvar_cronograma(session["uid"], arq.filename, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
+    banco.salvar_cronograma(oid(), arq.filename, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
     return ver_cronograma()
 
 
@@ -382,7 +700,7 @@ def importar_exemplo():
         xml = f.read()
     p = Projeto(xml, nome)
     sd = p.data_status or dt.datetime.now().replace(hour=17, minute=0, second=0, microsecond=0)
-    banco.salvar_cronograma(session["uid"], nome, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
+    banco.salvar_cronograma(oid(), nome, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
     return ver_cronograma()
 
 
@@ -390,13 +708,13 @@ def importar_exemplo():
 @logado
 def medicao():
     d = request.get_json(silent=True) or {}
-    if not banco.cronograma(session["uid"]):
+    if not banco.cronograma(oid()):
         return erro("Importe um cronograma primeiro.", 404)
     atual = {str(k): max(0.0, min(100.0, float(v))) for k, v in (d.get("meas") or {}).items()}
     anterior = d.get("base")
     anterior = {str(k): float(v) for k, v in anterior.items()} if isinstance(anterior, dict) else None
     sd = para_data(d.get("statusDate") or dt.date.today().isoformat())
-    banco.salvar_medicao(session["uid"], atual, str(d.get("weight") or "dur"), sd.strftime("%Y-%m-%d"), anterior)
+    banco.salvar_medicao(oid(), atual, str(d.get("weight") or "dur"), sd.strftime("%Y-%m-%d"), anterior)
     return jsonify(ok=True)
 
 
@@ -408,7 +726,7 @@ def fechar():
         return erro("Importe um cronograma primeiro.", 404)
     sd = para_data(c["data_status"])
     A = p.agregar(json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"])
-    banco.fechar_medicao(session["uid"], p.pct(A["total"], "r"), p.pct(A["total"], "p"))
+    banco.fechar_medicao(oid(), p.pct(A["total"], "r"), p.pct(A["total"], "p"))
     return jsonify(ok=True)
 
 
@@ -416,14 +734,14 @@ def fechar():
 @logado
 @sem_demo
 def remover():
-    banco.remover_cronograma(session["uid"])
+    banco.remover_cronograma(oid())
     return jsonify(ok=True)
 
 
 @app.get("/api/historico")
 @logado
 def ver_historico():
-    return jsonify([dict(h) for h in banco.historico(session["uid"])])
+    return jsonify([dict(h) for h in banco.historico(oid())])
 
 
 # -------------------------------------------------- plano de ataque (escadinha)
@@ -442,7 +760,7 @@ def plano_de(uid: int):
 @app.get("/api/plano")
 @logado
 def ver_plano():
-    d, quando = plano_de(session["uid"])
+    d, quando = plano_de(oid())
     return jsonify(plano=d, atualizado_em=quando)
 
 
@@ -457,7 +775,7 @@ def importar_plano():
         dados = ler_plano(arq.filename, arq.read())
     except ErroPlano as e:
         return erro(str(e))
-    banco.salvar_plano(session["uid"], arq.filename, dados)
+    banco.salvar_plano(oid(), arq.filename, dados)
     return ver_plano()
 
 
@@ -465,7 +783,7 @@ def importar_plano():
 @logado
 @sem_demo
 def remover_plano():
-    banco.remover_plano(session["uid"])
+    banco.remover_plano(oid())
     return jsonify(ok=True)
 
 
@@ -499,7 +817,7 @@ def analise_custos(uid: int):
 @app.get("/api/custos")
 @logado
 def ver_custos():
-    return jsonify(custos=analise_custos(session["uid"]))
+    return jsonify(custos=analise_custos(oid()))
 
 
 @app.post("/api/custos/importar")
@@ -513,7 +831,7 @@ def importar_custos():
         dados = cst.ler_custos(arq.filename, arq.read())
     except cst.ErroCustos as e:
         return erro(str(e))
-    banco.salvar_orcamento(session["uid"], arq.filename, dados)
+    banco.salvar_orcamento(oid(), arq.filename, dados)
     return ver_custos()
 
 
@@ -521,7 +839,7 @@ def importar_custos():
 @logado
 @sem_demo
 def exemplo_custos():
-    uid = session["uid"]
+    uid = oid()
     if not banco.cronograma(uid):
         importar_exemplo()
     c, p = carregar()
@@ -539,7 +857,7 @@ def modelo_custos():
 @app.get("/api/custos/financeiro.xlsx")
 @logado
 def exportar_financeiro():
-    a = analise_custos(session["uid"])
+    a = analise_custos(oid())
     if not a:
         return erro("Importe o orçamento primeiro.", 404)
     return download(cst.exportar_xlsx(a), "cronograma_financeiro.xlsx",
@@ -549,14 +867,14 @@ def exportar_financeiro():
 @app.post("/api/custos/lancamento")
 @logado
 def lancar_custo():
-    reg = banco.custos(session["uid"])
+    reg = banco.custos(oid())
     if not reg:
         _, p = carregar()
-        _, dados = orcamento_de(session["uid"], p)
+        _, dados = orcamento_de(oid(), p)
         if not dados:
             return erro("Importe o orçamento antes de lançar custos.", 404)
-        banco.salvar_orcamento(session["uid"], dados.get("arquivo") or "cronograma", dados)
-        reg = banco.custos(session["uid"])
+        banco.salvar_orcamento(oid(), dados.get("arquivo") or "cronograma", dados)
+        reg = banco.custos(oid())
     d = request.get_json(silent=True) or {}
     try:
         data_l = dt.date.fromisoformat(str(d.get("data"))[:10])
@@ -572,18 +890,18 @@ def lancar_custo():
                   "descricao": str(d.get("descricao") or "").strip()[:200], "fornecedor": str(d.get("fornecedor") or "").strip()[:120],
                   "tipo": cst.tipo_de(d.get("tipo")), "valor": round(valor, 2), "origem": "sistema",
                   "criado_em": dt.datetime.now().isoformat(timespec="seconds")})
-    banco.salvar_lancamentos(session["uid"], lista)
+    banco.salvar_lancamentos(oid(), lista)
     return ver_custos()
 
 
 @app.post("/api/custos/lancamento/remover")
 @logado
 def remover_lancamento():
-    reg = banco.custos(session["uid"])
+    reg = banco.custos(oid())
     if not reg:
         return erro("Nada para remover.", 404)
     lid = (request.get_json(silent=True) or {}).get("id")
-    banco.salvar_lancamentos(session["uid"], [x for x in json.loads(reg["lancamentos"]) if x.get("id") != lid])
+    banco.salvar_lancamentos(oid(), [x for x in json.loads(reg["lancamentos"]) if x.get("id") != lid])
     return ver_custos()
 
 
@@ -591,7 +909,7 @@ def remover_lancamento():
 @logado
 @sem_demo
 def remover_custos():
-    banco.remover_custos(session["uid"])
+    banco.remover_custos(oid())
     return jsonify(ok=True)
 
 
@@ -602,7 +920,7 @@ SUP_ETAPAS = ("solicitar", "cotacao", "pedido", "entregue")
 @app.get("/api/suprimentos")
 @logado
 def ver_suprimentos():
-    return jsonify(itens=banco.suprimentos(session["uid"]))
+    return jsonify(itens=banco.suprimentos(oid()))
 
 
 @app.post("/api/suprimentos")
@@ -613,7 +931,7 @@ def salvar_suprimento():
     uid = str(d.get("uid") or "")
     if not re.fullmatch(r"\d{1,9}", uid):
         return erro("Linha do cronograma inválida.")
-    itens = banco.suprimentos(session["uid"])
+    itens = banco.suprimentos(oid())
     it = dict(itens.get(uid) or {})
     if "lead" in d:
         it["lead"] = max(0, min(365, int(d["lead"])))
@@ -626,7 +944,7 @@ def salvar_suprimento():
     itens[uid] = it
     if len(itens) > 5000:
         return erro("Limite de itens de suprimentos atingido.")
-    banco.salvar_suprimentos(session["uid"], itens)
+    banco.salvar_suprimentos(oid(), itens)
     return jsonify(itens=itens)
 
 
@@ -637,7 +955,7 @@ CP_CAUSAS = ("Material", "Mão de obra", "Projeto", "Equipamento", "Clima", "Pre
 @app.get("/api/curtoprazo")
 @logado
 def ver_curto_prazo():
-    return jsonify(semanas=banco.curto_prazo(session["uid"]))
+    return jsonify(semanas=banco.curto_prazo(oid()))
 
 
 @app.post("/api/curtoprazo")
@@ -651,7 +969,7 @@ def salvar_curto_prazo():
     st, causa = d.get("st") or "", d.get("causa") or ""
     if st not in ("", "ok", "nok") or (causa and causa not in CP_CAUSAS):
         return erro("Apontamento inválido.")
-    dados = banco.curto_prazo(session["uid"])
+    dados = banco.curto_prazo(oid())
     semana = dados.setdefault(sem, {})
     if st:
         semana[uid] = {"st": st, "causa": causa if st == "nok" else ""}
@@ -661,7 +979,7 @@ def salvar_curto_prazo():
         dados.pop(sem, None)
     if len(dados) > 520 or sum(len(v) for v in dados.values()) > 50000:
         return erro("Limite de apontamentos atingido.")
-    banco.salvar_curto_prazo(session["uid"], dados)
+    banco.salvar_curto_prazo(oid(), dados)
     return jsonify(semanas=dados)
 
 
@@ -673,51 +991,51 @@ def _ql(fn):
         fn()
     except ql.ErroQualidade as e:
         return erro(str(e))
-    return jsonify(ql.estado(session["uid"]))
+    return jsonify(ql.estado(oid()))
 
 
 @app.get("/api/qualidade")
 @logado
 def ver_qualidade():
-    return jsonify(ql.estado(session["uid"]))
+    return jsonify(ql.estado(oid()))
 
 
 @app.post("/api/qualidade/modelo")
 @logado
 def qualidade_modelo():
-    return _ql(lambda: ql.salvar_modelo(session["uid"], request.get_json(silent=True) or {}))
+    return _ql(lambda: ql.salvar_modelo(oid(), request.get_json(silent=True) or {}))
 
 
 @app.post("/api/qualidade/modelo/remover")
 @logado
 @sem_demo
 def qualidade_modelo_remover():
-    return _ql(lambda: ql.remover_modelo(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
+    return _ql(lambda: ql.remover_modelo(oid(), int((request.get_json(silent=True) or {}).get("id") or 0)))
 
 
 @app.post("/api/qualidade/inspecao")
 @logado
 def qualidade_inspecao():
-    return _ql(lambda: ql.registrar_inspecao(session["uid"], request.get_json(silent=True) or {}))
+    return _ql(lambda: ql.registrar_inspecao(oid(), request.get_json(silent=True) or {}))
 
 
 @app.post("/api/qualidade/inspecao/remover")
 @logado
 @sem_demo
 def qualidade_inspecao_remover():
-    return _ql(lambda: ql.remover_inspecao(session["uid"], int((request.get_json(silent=True) or {}).get("id") or 0)))
+    return _ql(lambda: ql.remover_inspecao(oid(), int((request.get_json(silent=True) or {}).get("id") or 0)))
 
 
 @app.post("/api/qualidade/nc")
 @logado
 def qualidade_nc():
-    return _ql(lambda: ql.salvar_nc(session["uid"], request.get_json(silent=True) or {}))
+    return _ql(lambda: ql.salvar_nc(oid(), request.get_json(silent=True) or {}))
 
 
 @app.get("/api/qualidade/foto/<fid>")
 @logado
 def qualidade_foto(fid):
-    f = ql.foto(session["uid"], fid)
+    f = ql.foto(oid(), fid)
     if not f:
         abort(404)
     r = Response(f["dados"], mimetype=f["mime"])
@@ -730,13 +1048,13 @@ def qualidade_foto(fid):
 def qualidade_inspecao_pdf(iid):
     import relatorio
 
-    i = ql.inspecao(session["uid"], iid)
+    i = ql.inspecao(oid(), iid)
     if not i:
         abort(404)
-    u = banco.usuario(session["uid"])
+    o = banco.obra(oid())
     c, p = carregar()
-    obra = (p.titulo if p else "") or (u["nome"] if u else "") or "Obra"
-    pdf = relatorio.fvs_pdf(i, lambda fid: ql.foto(session["uid"], fid), obra)
+    obra = (p.titulo if p else "") or (o["nome"] if o else "") or "Obra"
+    pdf = relatorio.fvs_pdf(i, lambda fid: ql.foto(oid(), fid), obra)
     return download(pdf, f"{i['codigo']}_{nome_base(i['local'])}_{i['data']}.pdf", "application/pdf")
 
 
@@ -747,13 +1065,13 @@ def relatorio_pdf():
     import relatorio
 
     c, p = carregar()
-    plano, _ = plano_de(session["uid"])
-    cus = analise_custos(session["uid"])
+    plano, _ = plano_de(oid())
+    cus = analise_custos(oid())
     if not c and not plano and not cus:
         return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
-    u = banco.usuario(session["uid"])
-    obra = (p.titulo if p else (plano or {}).get("titulo")) or (u["nome"] if u else "") or "Obra"
-    hist = [dict(h) for h in banco.historico(session["uid"])]
+    o = banco.obra(oid())
+    obra = (p.titulo if p else (plano or {}).get("titulo")) or (o["nome"] if o else "") or "Obra"
+    hist = [dict(h) for h in banco.historico(oid())]
     if c:
         sd = para_data(c["data_status"])
         pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus)
@@ -769,7 +1087,7 @@ def _exportar(c, p, formato: str, sufixo: str):
     sd = para_data(c["data_status"])
     base = f"{nome_base(c['arquivo'])}_{sufixo}_{sd:%Y-%m-%d}"
     if formato == "xml":
-        forn = p.fornecedores({k: v.get("forn", "") for k, v in banco.suprimentos(session["uid"]).items()})
+        forn = p.fornecedores({k: v.get("forn", "") for k, v in banco.suprimentos(oid()).items()})
         return download(p.exportar_xml(atual, sd, forn), base + ".xml", "application/xml")
     if formato == "csv":
         return download(p.exportar_csv(atual, anterior, sd, c["peso"]), base + ".csv", "text/csv; charset=utf-8")
@@ -791,7 +1109,7 @@ def exportar(formato):
 @app.get("/api/historico/<int:mid>/<formato>")
 @logado
 def exportar_historico(mid, formato):
-    c = banco.medicao_fechada(session["uid"], mid)
+    c = banco.medicao_fechada(oid(), mid)
     if not c:
         abort(404)
     return _exportar(c, projeto_de(c, fresco=True), formato, "medicao" if formato == "xml" else "boletim")
@@ -800,13 +1118,14 @@ def exportar_historico(mid, formato):
 # ------------------------------------------------------------ comandos (CLI)
 @app.cli.command("criar-usuario")
 @click.argument("email")
-@click.option("--nome", default="", help="Nome do cliente ou da obra")
-def cmd_criar_usuario(email, nome):
-    """Cria o acesso de um cliente."""
+@click.option("--nome", default="", help="Nome da pessoa")
+@click.option("--admin", is_flag=True, help="Equipe Custo Plano (vê todas as obras)")
+def cmd_criar_usuario(email, nome, admin):
+    """Cria um acesso (as obras de cada pessoa são liberadas na tela Administração)."""
     senha = getpass.getpass("Senha: ")
-    if len(senha) < 6:
-        raise click.ClickException("Use uma senha com pelo menos 6 caracteres.")
-    banco.criar_usuario(email, senha, nome)
+    if len(senha) < 8:
+        raise click.ClickException("Use uma senha com pelo menos 8 caracteres.")
+    banco.criar_usuario(email, senha, nome, admin=admin)
     click.echo(f"Usuário {email} criado.")
 
 

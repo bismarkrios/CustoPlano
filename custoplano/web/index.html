@@ -303,6 +303,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
 .app.real .obra-nome{display:inline}
 .demo-tag{white-space:nowrap;font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px dashed var(--line);padding:4px 8px;border-radius:4px}
+.demo-tag.ro-tag:not([hidden]){display:inline-block;border-style:solid;color:var(--ink)}
 .user{margin-left:auto;display:flex;align-items:center;gap:10px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--ground);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .btn-sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:4px}
@@ -537,6 +538,30 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .hub-card h2{font-size:28px;}
 .hub-card p{color:var(--muted);font-size:15px;flex:1;margin:0}
 .hub-card .go{font-weight:700;color:var(--blue)}
+.hub-conta{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.hub-conta:empty{display:none}
+.hub-conta select{min-height:44px;font-size:16px;padding:6px 10px;max-width:100%}
+.hub-conta .btn{flex-basis:auto}
+.hub-adm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 18px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
+.adm-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.adm-card h2{font-size:22px;margin:0}
+.adm-card p{margin:0;color:var(--muted);font-size:14.5px}
+.adm-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:0;background:transparent}
+.adm-form .btn{min-height:46px}
+.adm-acoes select{width:auto;min-height:36px;padding:4px 8px;font-size:14px}
+.hub-conta select{width:auto;min-width:min(100%,320px)}
+#hubConta .kpi-t{flex-basis:100%;margin-bottom:-6px}
+.adm-form .field{flex:1 1 200px}
+.adm-form select,.adm-tbl select{min-height:40px;padding:4px 8px;background:var(--surface)}
+.adm-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+.adm-tbl{min-width:640px}
+.adm-tbl td{font-size:14px}
+.adm-tbl small{color:var(--muted);display:block}
+.adm-acessos{display:flex;flex-wrap:wrap;gap:6px}
+.adm-acessos .chip button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 6px}
+.adm-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-radius:8px;background:var(--blue-soft)}
+.adm-link input{flex:1 1 260px;min-height:40px;font-family:var(--mono);font-size:12.5px}
+.adm-acoes{display:flex;flex-wrap:wrap;gap:6px}
 .hub-ic{width:50px;height:50px;border-radius:10px;display:grid;place-items:center;background:var(--panel);color:var(--hl)}
 .nav-grp{display:flex;flex-direction:column;gap:2px}
 @media (max-width:860px){.nav-grp{flex-direction:row}}
@@ -1117,6 +1142,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     </header>
     <main class="hub-main wrap">
       <div><p class="eyebrow">Área do cliente</p><h1 style="margin-top:8px">Escolha a área</h1></div>
+      <div id="hubConta" class="hub-conta"></div>
       <div class="hub-grid">
         <a class="hub-card" href="#sistema">
           <span class="hub-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path></svg></span>
@@ -1131,8 +1157,49 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           <span class="go">Entrar na qualidade →</span>
         </a>
       </div>
+      <div id="hubSenha"></div>
       <a class="linkbtn" href="#inicio" style="text-decoration:none;align-self:flex-start">← Voltar ao site</a>
     </main>
+  </div>
+</div>
+
+<!-- ================= CRIAR SENHA (link enviado pela Custo Plano) ================= -->
+<div id="senhaV" hidden>
+  <div class="hub">
+    <header class="hub-top">
+      <a class="brand" href="#inicio" aria-label="Custo Plano, voltar ao site" style="color:var(--panel-ink)">
+        <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="#AFC3D9"></rect><rect x="12" y="10" width="6" height="18" fill="#AFC3D9"></rect><rect x="22" y="2" width="6" height="26" fill="#FFFFFF"></rect></svg>
+        <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small style="color:var(--panel-muted)">Área do cliente</small></span>
+      </a>
+    </header>
+    <main class="hub-main wrap">
+      <div class="login-card" style="margin-inline:auto">
+        <div><p class="eyebrow">Área do cliente</p><h1 style="margin-top:8px">Criar sua senha</h1></div>
+        <p id="sv-email" style="margin:0;color:var(--muted)"></p>
+        <form id="senhaForm" novalidate>
+          <div class="field"><label for="sv-senha">Senha nova (mínimo 8 caracteres)</label><input id="sv-senha" type="password" autocomplete="new-password" minlength="8" required></div>
+          <div class="field"><label for="sv-senha2">Repita a senha</label><input id="sv-senha2" type="password" autocomplete="new-password" minlength="8" required></div>
+          <p class="note" id="sv-msg" role="status" hidden></p>
+          <button class="btn btn-primary btn-block" type="submit">Salvar senha e entrar</button>
+        </form>
+        <a class="linkbtn" href="#entrar" style="text-decoration:none">Ir para o login</a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ================= ADMINISTRAÇÃO (equipe Custo Plano) ================= -->
+<div id="adm" hidden>
+  <div class="hub">
+    <header class="hub-top">
+      <a class="brand" href="#inicio" aria-label="Custo Plano, voltar ao site" style="color:var(--panel-ink)">
+        <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="#AFC3D9"></rect><rect x="12" y="10" width="6" height="18" fill="#AFC3D9"></rect><rect x="22" y="2" width="6" height="26" fill="#FFFFFF"></rect></svg>
+        <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small style="color:var(--panel-muted)">Administração</small></span>
+      </a>
+      <span style="flex:1"></span>
+      <a class="btn btn-ghost btn-sm hub-sair" href="#area" style="text-decoration:none">Voltar</a>
+    </header>
+    <main class="hub-main wrap" id="admBody"></main>
   </div>
 </div>
 
@@ -1185,6 +1252,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         </div>
         <span class="demo-tag plan-only" id="wkTag">Dados de exemplo</span>
         <span class="demo-tag alt" id="netTag" role="status" hidden></span>
+        <span class="demo-tag ro-tag" id="roTag" hidden title="Seu acesso a esta obra é só para consulta">Só consulta</span>
         <div class="user">
           <span class="avatar" id="avatar" aria-hidden="true">CL</span>
           <button class="btn btn-ghost btn-sm" type="button" data-a="logout">Sair</button>
@@ -1202,13 +1270,17 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 (function () {
   /* ---------- Rotas: site / login / sistema ---------- */
   var site = document.getElementById('site'), login = document.getElementById('login'), app = document.getElementById('app'), hub = document.getElementById('hub');
+  var admV = document.getElementById('adm'), senhaV = document.getElementById('senhaV');
+  // conta logada: e-mail, se é da equipe, obra aberta e obras liberadas (vem do /api/me e do login)
+  var CONTA = null, SENHA_EMAIL = false;
   var API = !!window.CP_API;
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
     if (body instanceof FormData) o.body = body;
     else if (body) { o.headers['Content-Type'] = 'application/json'; o.body = JSON.stringify(body); }
     return fetch(path, o).catch(function () { var er = new Error('Sem conexão com a internet.'); er.offline = true; throw er; }).then(function (r) {
-      if (r.status === 401 && path !== '/api/login' && path !== '/api/me' && user) sessaoExpirou();
+      if (r.status === 401 && path !== '/api/login' && path !== '/api/me' && path.indexOf('/api/senha/') !== 0 && user) sessaoExpirou();
+      if (r.status === 409 && user && location.hash !== '#area') location.hash = 'area';  // sem obra aberta (ou acesso retirado): escolher obra
       return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok) throw new Error(j.erro || ('Erro ' + r.status)); return j; });
     });
   }
@@ -1217,16 +1289,24 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 
   function show(view) {
     site.hidden = view !== 'site'; login.hidden = view !== 'login'; app.hidden = view !== 'app'; hub.hidden = view !== 'hub';
-    if (view === 'hub') document.getElementById('hubUser').textContent = user || '';
+    admV.hidden = view !== 'adm'; senhaV.hidden = view !== 'senha';
+    if (view === 'hub') { document.getElementById('hubUser').textContent = user || ''; renderHub(); }
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
     if (h === 'demo') { abrirDemo(); return; }
+    if (h.indexOf('senha=') === 0) { abrirSenha(h.slice(6)); return; }
+    if (h === 'admin') {
+      if (!user) { show('login'); window.scrollTo(0, 0); return; }
+      if (!CONTA || !CONTA.admin) { location.replace('#area'); route(); return; }
+      show('adm'); carregarAdm(); window.scrollTo(0, 0); return;
+    }
     // "Entrar" / "Área do cliente" com a sessão aberta vai direto para o sistema; o seletor de áreas fica em #area
     if (h === 'entrar' && user) { location.replace('#sistema'); route(); return; }
     if (h === 'entrar' || h === 'area') { show(user ? 'hub' : 'login'); window.scrollTo(0, 0); return; }
     if (h === 'sistema' || h === 'qualidade') {
       if (!user) { show('login'); window.scrollTo(0, 0); return; }
+      if (API && CONTA && !CONTA.obra) { location.replace('#area'); route(); return; }  // sem obra aberta: escolher na área do cliente
       S.mod = h === 'qualidade' ? 'qual' : 'plan';
       var ehQ = /^q/.test(S.screen);
       if (S.mod === 'qual' && !ehQ) S.screen = 'qp';
@@ -1239,7 +1319,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   function enter(email) {
     user = email || 'demo@custoplano.com.br';
-    if (API) { loadPrj(); } else { try { sessionStorage.setItem('cp_user', user); } catch (e) {} }
+    if (API) { if (!CONTA || CONTA.obra) loadPrj(); } else { try { sessionStorage.setItem('cp_user', user); } catch (e) {} }
     // depois do login, abre a área pedida (#sistema ou #qualidade); de qualquer outro lugar, o sistema
     var h = (location.hash || '').replace('#', '');
     if (h !== 'sistema' && h !== 'qualidade') location.replace('#sistema');
@@ -1271,14 +1351,14 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (!em.value.trim() || !em.checkValidity()) { msg.textContent = 'Informe um e-mail válido.'; msg.hidden = false; em.focus(); return; }
     if (!pw.value) { msg.textContent = 'Informe a sua senha.'; msg.hidden = false; pw.focus(); return; }
     msg.hidden = true;
-    if (API) { api('/api/login', { email: em.value.trim(), senha: pw.value }).then(function (r) { pw.value = ''; enter(r.email); }, function (err) { msg.textContent = err.message; msg.hidden = false; }); return; }
+    if (API) { api('/api/login', { email: em.value.trim(), senha: pw.value }).then(function (r) { pw.value = ''; CONTA = r; enter(r.email); }, function (err) { msg.textContent = err.message; msg.hidden = false; }); return; }
     enter(em.value.trim());
   });
   if (API) { document.getElementById('lg-note').textContent = 'Acesso com o e-mail e a senha fornecidos pela Custo Plano.'; if (!window.CP_DEMO) { document.getElementById('lg-demo').hidden = true; document.querySelector('.divider').hidden = true; } }
   function abrirDemo() {
     if (user) { location.hash = 'sistema'; return; }
     if (API && !window.CP_DEMO) { location.hash = 'contato'; return; }
-    if (API) { show('login'); window.scrollTo(0, 0); api('/api/login', { demo: true }).then(function (r) { enter(r.email); location.hash = 'sistema'; }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
+    if (API) { show('login'); window.scrollTo(0, 0); api('/api/login', { demo: true }).then(function (r) { CONTA = r; enter(r.email); location.hash = 'sistema'; }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
     enter('demo@custoplano.com.br'); location.hash = 'sistema';
   }
   (function () {
@@ -1295,13 +1375,19 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     });
   })();
   document.getElementById('lg-demo').addEventListener('click', function () {
-    if (API) { api('/api/login', { demo: true }).then(function (r) { enter(r.email); }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
+    if (API) { api('/api/login', { demo: true }).then(function (r) { CONTA = r; enter(r.email); }, function (err) { var m = document.getElementById('lg-msg'); m.textContent = err.message; m.hidden = false; }); return; }
     enter('demo@custoplano.com.br');
   });
   document.getElementById('lg-forgot').addEventListener('click', function () {
-    var msg = document.getElementById('lg-msg');
-    msg.textContent = 'Para redefinir a sua senha, fale com a equipe da Custo Plano.';
+    var msg = document.getElementById('lg-msg'), em = document.getElementById('lg-email');
     msg.hidden = false;
+    if (!API || !SENHA_EMAIL) {
+      msg.innerHTML = 'Para criar uma senha nova, peça um link à Custo Plano pelo <a href="https://wa.me/5511988236792?text=' + encodeURIComponent('Olá! Preciso de um link para trocar a senha do sistema Custo Plano.') + '" target="_blank" rel="noopener">WhatsApp (11) 98823-6792</a>.';
+      return;
+    }
+    if (!em.value.trim() || !em.checkValidity()) { msg.textContent = 'Digite o seu e-mail acima e toque de novo em "Esqueci minha senha".'; em.focus(); return; }
+    msg.textContent = 'Enviando…';
+    api('/api/senha/esqueci', { email: em.value.trim() }).then(function (r) { msg.textContent = r.msg; }, function (err) { msg.textContent = err.message; });
   });
 
   /* ---------- Dados da obra de exemplo ---------- */
@@ -3401,7 +3487,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   function sairJa() {
     if (API) api('/api/logout', {}).catch(function () {});
-    user = null; P = null; PA = null; CU = null; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; kvSet('pend', null); kvSet('qout', null);
+    user = null; CONTA = null; P = null; PA = null; CU = null; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; kvSet('pend', null); kvSet('qout', null);
     if (window.caches) caches.delete('cp-api').catch(function () {}); try { sessionStorage.removeItem('cp_user'); } catch (err) {}
     location.hash = 'entrar'; route();
   }
@@ -3416,7 +3502,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     document.querySelector('#app .app').classList.toggle('real', REAL);
     if (REAL) {
       if (DEMO_TELAS[S.screen]) S.screen = 'prj';
-      document.getElementById('obraNome').innerHTML = esc(P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado') + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
+      var nomeObra = !ehDemo() && CONTA && CONTA.obra ? CONTA.obra.nome + (P ? '' : ' · nenhum cronograma importado') : (P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado');
+      document.getElementById('obraNome').innerHTML = esc(nomeObra) + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
+      document.getElementById('roTag').hidden = !(CONTA && CONTA.obra && CONTA.obra.papel === 'leitor');
     }
     var M = model();
     document.getElementById('navCount').textContent = M.abertas;
@@ -3662,8 +3750,184 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var again = document.getElementById('nr-txt'); if (again) again.focus();
   });
 
+  /* ---------- Conta: obras, administração e senhas ---------- */
+  function limparObra() {
+    P = null; PA = null; CU = null; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; S.hist = []; S.screen = 'painel'; S.sel = null;
+    if (window.caches) caches.delete('cp-api').catch(function () {});
+  }
+  function trocarObra(id, depois) {
+    // registros feitos sem internet pertencem à obra aberta: só troca depois de enviados
+    return Promise.all([kvGet('qout'), kvGet('pend')]).then(function (r) {
+      if ((r[0] || []).length || r[1]) { alert('Há registros feitos sem internet que ainda não foram enviados. Conecte-se à internet e espere o envio antes de trocar de obra.'); renderHub(); return; }
+      return api('/api/obra/abrir', { id: id }).then(function (c) { CONTA = c; limparObra(); loadPrj(); if (depois) depois(); else renderHub(); }, function (e) { alert(e.message); renderHub(); });
+    });
+  }
+  function renderHub() {
+    var box = document.getElementById('hubConta'), sen = document.getElementById('hubSenha');
+    if (!API || !CONTA) { box.innerHTML = ''; sen.innerHTML = ''; return; }
+    var h = '', ob = CONTA.obras || [];
+    if (ob.length > 1) {
+      h += '<label class="kpi-t" for="hubObraSel">Obra</label><select id="hubObraSel">' + ob.map(function (o) {
+        return '<option value="' + o.id + '"' + (CONTA.obra && CONTA.obra.id === o.id ? ' selected' : '') + '>' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + (o.papel === 'leitor' ? ' (consulta)' : '') + '</option>';
+      }).join('') + '</select>';
+    } else if (CONTA.obra && !ehDemo()) {
+      h += '<span class="kpi-t">Obra</span><b>' + esc(CONTA.obra.nome) + '</b>' + (CONTA.obra.papel === 'leitor' ? ' <span class="chip c-muted">só consulta</span>' : '');
+    } else if (!CONTA.obra) {
+      h += '<p class="note" style="margin:0">' + (CONTA.admin ? 'Nenhuma obra cadastrada ainda. Crie a primeira na Administração.' : 'Nenhuma obra foi liberada para o seu acesso ainda. Fale com a Custo Plano.') + '</p>';
+    }
+    if (CONTA.admin) h += '<a class="btn btn-primary btn-sm" href="#admin" style="text-decoration:none">Administração: obras, pessoas e cópias</a>';
+    box.innerHTML = h;
+    var sel = document.getElementById('hubObraSel');
+    if (sel) sel.addEventListener('change', function () { trocarObra(+sel.value); });
+    Array.prototype.forEach.call(document.querySelectorAll('#hub .hub-card'), function (a) { a.hidden = !CONTA.obra; });
+    sen.innerHTML = ehDemo() ? '' : '<details class="hub-adm"><summary class="linkbtn" style="cursor:pointer">Trocar minha senha</summary>' +
+      '<form id="trocaSenha" class="adm-form" style="margin-top:12px;width:100%" novalidate>' +
+      '<div class="field"><label for="ts-atual">Senha atual</label><input id="ts-atual" type="password" autocomplete="current-password" required></div>' +
+      '<div class="field"><label for="ts-nova">Senha nova (mínimo 8)</label><input id="ts-nova" type="password" autocomplete="new-password" minlength="8" required></div>' +
+      '<button class="btn btn-primary" type="submit">Salvar</button><p class="note" id="ts-msg" role="status" hidden></p></form></details>';
+    var f = document.getElementById('trocaSenha');
+    if (f) f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var m = document.getElementById('ts-msg'); m.hidden = false; m.textContent = 'Salvando…';
+      api('/api/senha/trocar', { atual: document.getElementById('ts-atual').value, nova: document.getElementById('ts-nova').value }).then(function () {
+        m.textContent = 'Senha trocada. Nos outros aparelhos será preciso entrar de novo.'; f.reset();
+      }, function (err) { m.textContent = err.message; });
+    });
+  }
+
+  // link de criar/trocar senha: /#senha=CODIGO
+  function abrirSenha(codigo) {
+    show('senha'); window.scrollTo(0, 0);
+    var m = document.getElementById('sv-msg'), f = document.getElementById('senhaForm'), em = document.getElementById('sv-email');
+    m.hidden = true; f.hidden = false; em.textContent = '';
+    f.dataset.codigo = codigo;
+    api('/api/senha/link', { codigo: codigo }).then(function (r) { em.textContent = 'Acesso: ' + r.email; }, function (err) { f.hidden = true; m.textContent = err.message; m.hidden = false; });
+  }
+  document.getElementById('senhaForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var f = this, m = document.getElementById('sv-msg'), s1 = document.getElementById('sv-senha').value, s2 = document.getElementById('sv-senha2').value;
+    m.hidden = false;
+    if (s1.length < 8) { m.textContent = 'Use uma senha com pelo menos 8 caracteres.'; return; }
+    if (s1 !== s2) { m.textContent = 'As duas senhas não são iguais.'; return; }
+    m.textContent = 'Salvando…';
+    api('/api/senha/definir', { codigo: f.dataset.codigo, senha: s1 }).then(function (r) {
+      f.reset(); CONTA = r; history.replaceState(null, '', location.pathname + location.search + '#area'); enter(r.email);
+    }, function (err) { m.textContent = err.message; });
+  });
+
+  // ---------------- administração (equipe Custo Plano)
+  var ADM = null, ADM_LINK = null;
+  function carregarAdm() {
+    var b = document.getElementById('admBody');
+    if (!ADM) b.innerHTML = '<p>Carregando…</p>';
+    return api('/api/admin').then(function (d) { ADM = d; renderAdm(); }, function (err) { b.innerHTML = '<p class="note">' + esc(err.message) + '</p>'; });
+  }
+  function mb(n) { return n ? (n / 1048576).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' MB' : '—'; }
+  function dataHora(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(2, 4) + ' ' + iso.slice(11, 16) : '—'; }
+  function renderAdm() {
+    var d = ADM, nomeObra = {};
+    d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
+    var optObras = d.obras.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + '</option>'; }).join('');
+    var optPapel = '<option value="editor">Edita</option><option value="leitor">Só consulta</option>';
+    var linkBox = ADM_LINK ? '<div class="adm-link" role="status"><span style="flex-basis:100%"><b>' + esc(ADM_LINK.titulo) + '</b> Mande este link para ' + esc(ADM_LINK.email) + '. Ele vale 7 dias e só funciona uma vez.</span>' +
+      '<input type="text" readonly id="admLinkTxt" value="' + esc(ADM_LINK.link) + '" aria-label="Link de acesso">' +
+      '<button class="btn btn-ghost btn-sm" type="button" data-adm="copiar">Copiar</button>' +
+      '<a class="btn btn-primary btn-sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Olá! Este é o seu acesso ao sistema da Custo Plano. Abra o link para criar a sua senha (vale 7 dias): ' + ADM_LINK.link) + '">Enviar pelo WhatsApp</a></div>' : '';
+    var h = '<div><p class="eyebrow">Equipe Custo Plano</p><h1 style="margin-top:8px">Administração</h1></div>' + linkBox;
+    // obras
+    h += '<section class="adm-card"><h2>Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade.</p>' +
+      '<form class="adm-form" id="admObraForm" novalidate><div class="field"><label for="ao-nome">Nome da obra</label><input id="ao-nome" maxlength="120" placeholder="Ex.: Residencial Jardins – Torre A" required></div>' +
+      '<div class="field"><label for="ao-emp">Construtora</label><input id="ao-emp" maxlength="120" placeholder="Ex.: Construtora Exemplo"></div>' +
+      '<button class="btn btn-primary" type="submit">Criar obra</button></form>' +
+      '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Obra</th><th>Cronograma</th><th class="num">Pessoas</th><th class="num">Fotos</th><th></th></tr></thead><tbody>' +
+      (d.obras.length ? d.obras.map(function (o) {
+        return '<tr><td><b>' + esc(o.nome) + '</b><small>' + esc(o.empresa || 'sem construtora') + '</small></td>' +
+          '<td>' + (o.cronograma ? esc(o.cronograma) + '<small>atualizado ' + dataHora(o.atualizado_em) + '</small>' : '<span class="chip c-muted">não importado</span>') + '</td>' +
+          '<td class="num">' + o.usuarios + '</td><td class="num">' + mb(o.bytes_fotos) + '</td>' +
+          '<td><div class="adm-acoes"><button class="btn btn-primary btn-sm" type="button" data-adm="abrir:' + o.id + '">Abrir</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-adm="renomear:' + o.id + '">Renomear</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">Apagar</button></div></td></tr>';
+      }).join('') : '<tr><td colspan="5">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
+    // pessoas
+    h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada.</p>' +
+      '<form class="adm-form" id="admUsuForm" novalidate><div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" maxlength="200" placeholder="engenheiro@construtora.com.br" required></div>' +
+      '<div class="field"><label for="au-nome">Nome</label><input id="au-nome" maxlength="120"></div>' +
+      '<div class="field"><label for="au-obra">Obra</label><select id="au-obra"><option value="">Nenhuma por enquanto</option>' + optObras + '</select></div>' +
+      '<div class="field" style="flex:0 1 160px"><label for="au-papel">Acesso</label><select id="au-papel">' + optPapel + '</select></div>' +
+      '<button class="btn btn-primary" type="submit">Criar acesso</button></form>' +
+      '<p class="note" id="admMsg" role="status" hidden></p>' +
+      '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Pessoa</th><th>Obras</th><th>Último acesso</th><th></th></tr></thead><tbody>' +
+      d.usuarios.map(function (u) {
+        var demo = u.email === 'demo@custoplano.com.br';
+        var obras = u.admin ? '<span class="chip c-info">Equipe: todas as obras</span>' : '<div class="adm-acessos">' + (u.acessos.length ? u.acessos.map(function (a) {
+          return '<span class="chip ' + (a.papel === 'leitor' ? 'c-muted' : 'c-ok') + '">' + esc(nomeObra[a.obra_id] || 'obra ' + a.obra_id) + (a.papel === 'leitor' ? ' · consulta' : ' · edita') +
+            (demo ? '' : '<button type="button" data-adm="tirar:' + u.id + ':' + a.obra_id + '" aria-label="Tirar o acesso a ' + esc(nomeObra[a.obra_id] || '') + '">×</button>') + '</span>';
+        }).join('') : '<span class="chip c-muted">nenhuma obra</span>') + '</div>' +
+          (demo || !d.obras.length ? '' : '<div class="adm-acoes" style="margin-top:8px"><select aria-label="Obra" data-sel="obra:' + u.id + '">' + optObras + '</select><select aria-label="Acesso" data-sel="papel:' + u.id + '">' + optPapel + '</select>' +
+            '<button class="btn btn-ghost btn-sm" type="button" data-adm="liberar:' + u.id + '">Liberar</button></div>');
+        return '<tr><td><b>' + esc(u.nome || u.email) + '</b><small>' + esc(u.email) + '</small></td><td>' + obras + '</td><td>' + dataHora(u.ultimo_login) + '</td>' +
+          '<td><div class="adm-acoes">' + (demo ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="link:' + u.id + '">Link de senha</button>') +
+          (demo || u.admin || u.id === d.eu ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="remover:' + u.id + '">Remover</button>') + '</div></td></tr>';
+      }).join('') + '</tbody></table></div></section>';
+    // cópias
+    h += '<section class="adm-card"><h2>Cópias de segurança</h2><p>O servidor faz uma cópia completa (todas as obras, com fotos) todo dia e guarda as 7 últimas. Uma vez por semana, baixe uma cópia e guarde no seu computador ou no OneDrive: assim os dados ficam salvos mesmo se o servidor tiver um problema.</p>' +
+      '<div class="adm-acoes"><a class="btn btn-primary" href="/api/admin/copia" style="text-decoration:none">Baixar cópia agora</a></div>' +
+      (d.copias.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópias no servidor</th><th class="num">Tamanho</th></tr></thead><tbody>' +
+        d.copias.map(function (c) { return '<tr><td class="mono">' + esc(c.nome) + '</td><td class="num">' + mb(c.bytes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p>Nenhuma cópia ainda; a primeira sai em até uma hora depois de o servidor ligar.</p>') +
+      '</section>';
+    document.getElementById('admBody').innerHTML = h;
+  }
+  function admMsg(t) { var m = document.getElementById('admMsg'); if (m) { m.textContent = t; m.hidden = !t; } }
+  document.getElementById('adm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (e.target.id === 'admObraForm') {
+      var nome = document.getElementById('ao-nome').value.trim();
+      if (!nome) { document.getElementById('ao-nome').focus(); return; }
+      api('/api/admin/obra', { nome: nome, empresa: document.getElementById('ao-emp').value.trim() }).then(carregarAdm, function (err) { alert(err.message); });
+    }
+    if (e.target.id === 'admUsuForm') {
+      var em = document.getElementById('au-email'), ob = document.getElementById('au-obra').value;
+      if (!em.value.trim() || !em.checkValidity()) { admMsg('Informe um e-mail válido.'); em.focus(); return; }
+      api('/api/admin/usuario', { email: em.value.trim(), nome: document.getElementById('au-nome').value.trim(), acessos: ob ? [{ obra_id: +ob, papel: document.getElementById('au-papel').value }] : [] })
+        .then(function (r) { ADM_LINK = { titulo: 'Acesso criado.', email: em.value.trim(), link: r.link }; carregarAdm().then(function () { window.scrollTo(0, 0); }); }, function (err) { admMsg(err.message); });
+    }
+  });
+  document.getElementById('adm').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-adm]'); if (!b) return;
+    var a = b.getAttribute('data-adm').split(':'), id = +a[1];
+    var obra = ADM && ADM.obras.filter(function (o) { return o.id === id; })[0];
+    if (a[0] === 'copiar') { var t = document.getElementById('admLinkTxt'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () { b.textContent = 'Copiado'; }, function () { document.execCommand('copy'); b.textContent = 'Copiado'; }); return; }
+    if (a[0] === 'abrir') { trocarObra(id, function () { location.hash = 'sistema'; }); return; }
+    if (a[0] === 'renomear' && obra) {
+      var n = prompt('Nome da obra', obra.nome); if (n === null || !n.trim()) return;
+      var emp = prompt('Construtora', obra.empresa || ''); if (emp === null) return;
+      api('/api/admin/obra', { id: id, nome: n.trim(), empresa: emp.trim() }).then(carregarAdm, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'apagar' && obra) {
+      var c = prompt('Isto apaga a obra "' + obra.nome + '" e todos os dados dela (cronograma, medições, custos, FVS e fotos). Antes, o sistema guarda uma cópia de segurança.\n\nPara confirmar, digite o nome da obra:');
+      if (c === null) return;
+      api('/api/admin/obra/remover', { id: id, confirmar: c }).then(function () { return api('/api/me').then(function (r) { CONTA = r; if (!r.obra) limparObra(); carregarAdm(); }); }, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'liberar') {
+      var so = document.querySelector('[data-sel="obra:' + id + '"]'), sp = document.querySelector('[data-sel="papel:' + id + '"]');
+      api('/api/admin/acesso', { usuario_id: id, obra_id: +so.value, papel: sp.value }).then(carregarAdm, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'tirar') {
+      if (!confirm('Tirar o acesso desta pessoa a esta obra?')) return;
+      api('/api/admin/acesso', { usuario_id: id, obra_id: +a[2], papel: null }).then(carregarAdm, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'link') {
+      api('/api/admin/link-senha', { usuario_id: id }).then(function (r) { ADM_LINK = { titulo: 'Link de senha criado.', email: r.email, link: r.link }; renderAdm(); window.scrollTo(0, 0); }, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'remover') {
+      if (!confirm('Remover este acesso? A pessoa não entra mais no sistema. Os dados das obras continuam.')) return;
+      api('/api/admin/usuario/remover', { id: id }).then(carregarAdm, function (err) { alert(err.message); });
+    }
+  });
+  window.addEventListener('hashchange', function () { if (location.hash !== '#admin') ADM_LINK = null; });
+
   if (API && 'serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(function () {});
-  if (API) { try { sessionStorage.removeItem('cp_user'); } catch (e) {} user = null; api('/api/me').then(function (r) { user = r.email; route(); if (user) loadPrj(); }, function () { route(); }); }
+  if (API) { try { sessionStorage.removeItem('cp_user'); } catch (e) {} user = null; api('/api/me').then(function (r) { user = r.email; CONTA = r.email ? r : null; SENHA_EMAIL = !!r.senha_email; route(); if (user && CONTA.obra) loadPrj(); }, function () { route(); }); }
   else route();
 })();
 

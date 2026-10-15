@@ -22,7 +22,8 @@ def checar(cond, msg):
 
 def entrar(email):
     if not any(u["email"] == email for u in banco.listar_usuarios()):
-        banco.criar_usuario(email, "senha-forte-123", email)
+        uid = banco.criar_usuario(email, "senha-forte-123", email)
+        banco.definir_acesso(uid, banco.criar_obra("Obra de " + email), "editor")
     c = app.app.test_client()
     assert c.post("/api/login", json={"email": email, "senha": "senha-forte-123"}).status_code == 200
     return c
