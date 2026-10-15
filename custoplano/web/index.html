@@ -1273,6 +1273,14 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   var admV = document.getElementById('adm'), senhaV = document.getElementById('senhaV');
   // conta logada: e-mail, se é da equipe, obra aberta e obras liberadas (vem do /api/me e do login)
   var CONTA = null, SENHA_EMAIL = false;
+  // Papel na obra: o gestor altera tudo; os gerentes consultam tudo e alteram só a sua parte.
+  var PAPEIS = {
+    editor: { nome: 'Gestor da obra', curto: 'edita tudo' },
+    planejamento: { nome: 'Gerente de planejamento', curto: 'planejamento', dica: 'Você consulta tudo e altera cronograma, medições, plano de ataque, curto prazo e suprimentos.' },
+    orcamento: { nome: 'Gerente de orçamento', curto: 'orçamento', dica: 'Você consulta tudo e altera orçamento, custos e suprimentos.' },
+    leitor: { nome: 'Só consulta', curto: 'consulta', dica: 'Seu acesso a esta obra é só para consulta.' }
+  };
+  function papel(p) { return PAPEIS[p] || PAPEIS.leitor; }
   var API = !!window.CP_API;
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
@@ -3504,7 +3512,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       if (DEMO_TELAS[S.screen]) S.screen = 'prj';
       var nomeObra = !ehDemo() && CONTA && CONTA.obra ? CONTA.obra.nome + (P ? '' : ' · nenhum cronograma importado') : (P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado');
       document.getElementById('obraNome').innerHTML = esc(nomeObra) + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
-      document.getElementById('roTag').hidden = !(CONTA && CONTA.obra && CONTA.obra.papel === 'leitor');
+      var pp = CONTA && CONTA.obra && !ehDemo() ? CONTA.obra.papel : 'editor', roTag = document.getElementById('roTag');
+      roTag.hidden = pp === 'editor';
+      if (pp !== 'editor') { roTag.textContent = papel(pp).nome; roTag.title = papel(pp).dica; }
     }
     var M = model();
     document.getElementById('navCount').textContent = M.abertas;
@@ -3768,10 +3778,10 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var h = '', ob = CONTA.obras || [];
     if (ob.length > 1) {
       h += '<label class="kpi-t" for="hubObraSel">Obra</label><select id="hubObraSel">' + ob.map(function (o) {
-        return '<option value="' + o.id + '"' + (CONTA.obra && CONTA.obra.id === o.id ? ' selected' : '') + '>' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + (o.papel === 'leitor' ? ' (consulta)' : '') + '</option>';
+        return '<option value="' + o.id + '"' + (CONTA.obra && CONTA.obra.id === o.id ? ' selected' : '') + '>' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + (o.papel === 'editor' ? '' : ' (' + papel(o.papel).curto + ')') + '</option>';
       }).join('') + '</select>';
     } else if (CONTA.obra && !ehDemo()) {
-      h += '<span class="kpi-t">Obra</span><b>' + esc(CONTA.obra.nome) + '</b>' + (CONTA.obra.papel === 'leitor' ? ' <span class="chip c-muted">só consulta</span>' : '');
+      h += '<span class="kpi-t">Obra</span><b>' + esc(CONTA.obra.nome) + '</b>' + (CONTA.obra.papel === 'editor' ? '' : ' <span class="chip c-muted" title="' + esc(papel(CONTA.obra.papel).dica) + '">' + esc(papel(CONTA.obra.papel).nome) + '</span>');
     } else if (!CONTA.obra) {
       h += '<p class="note" style="margin:0">' + (CONTA.admin ? 'Nenhuma obra cadastrada ainda. Crie a primeira na Administração.' : 'Nenhuma obra foi liberada para o seu acesso ainda. Fale com a Custo Plano.') + '</p>';
     }
@@ -3828,7 +3838,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var d = ADM, nomeObra = {};
     d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
     var optObras = d.obras.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + '</option>'; }).join('');
-    var optPapel = '<option value="editor">Edita</option><option value="leitor">Só consulta</option>';
+    var optPapel = Object.keys(PAPEIS).map(function (k) { return '<option value="' + k + '">' + PAPEIS[k].nome + '</option>'; }).join('');
     var linkBox = ADM_LINK ? '<div class="adm-link" role="status"><span style="flex-basis:100%"><b>' + esc(ADM_LINK.titulo) + '</b> Mande este link para ' + esc(ADM_LINK.email) + '. Ele vale 7 dias e só funciona uma vez.</span>' +
       '<input type="text" readonly id="admLinkTxt" value="' + esc(ADM_LINK.link) + '" aria-label="Link de acesso">' +
       '<button class="btn btn-ghost btn-sm" type="button" data-adm="copiar">Copiar</button>' +
@@ -3849,18 +3859,18 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">Apagar</button></div></td></tr>';
       }).join('') : '<tr><td colspan="5">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
     // pessoas
-    h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada.</p>' +
+    h += '<section class="adm-card"><h2>Pessoas</h2><p>Todos veem a obra inteira e baixam os relatórios. O gestor da obra altera tudo. O gerente de planejamento altera cronograma, medições, plano de ataque, curto prazo e suprimentos. O gerente de orçamento altera orçamento, custos e suprimentos. Quem só consulta não altera nada.</p>' +
       '<form class="adm-form" id="admUsuForm" novalidate><div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" maxlength="200" placeholder="engenheiro@construtora.com.br" required></div>' +
       '<div class="field"><label for="au-nome">Nome</label><input id="au-nome" maxlength="120"></div>' +
       '<div class="field"><label for="au-obra">Obra</label><select id="au-obra"><option value="">Nenhuma por enquanto</option>' + optObras + '</select></div>' +
-      '<div class="field" style="flex:0 1 160px"><label for="au-papel">Acesso</label><select id="au-papel">' + optPapel + '</select></div>' +
+      '<div class="field" style="flex:0 1 220px"><label for="au-papel">Acesso</label><select id="au-papel">' + optPapel + '</select></div>' +
       '<button class="btn btn-primary" type="submit">Criar acesso</button></form>' +
       '<p class="note" id="admMsg" role="status" hidden></p>' +
       '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Pessoa</th><th>Obras</th><th>Último acesso</th><th></th></tr></thead><tbody>' +
       d.usuarios.map(function (u) {
         var demo = u.email === 'demo@custoplano.com.br';
         var obras = u.admin ? '<span class="chip c-info">Equipe: todas as obras</span>' : '<div class="adm-acessos">' + (u.acessos.length ? u.acessos.map(function (a) {
-          return '<span class="chip ' + (a.papel === 'leitor' ? 'c-muted' : 'c-ok') + '">' + esc(nomeObra[a.obra_id] || 'obra ' + a.obra_id) + (a.papel === 'leitor' ? ' · consulta' : ' · edita') +
+          return '<span class="chip ' + (a.papel === 'leitor' ? 'c-muted' : 'c-ok') + '">' + esc(nomeObra[a.obra_id] || 'obra ' + a.obra_id) + ' · ' + papel(a.papel).curto +
             (demo ? '' : '<button type="button" data-adm="tirar:' + u.id + ':' + a.obra_id + '" aria-label="Tirar o acesso a ' + esc(nomeObra[a.obra_id] || '') + '">×</button>') + '</span>';
         }).join('') : '<span class="chip c-muted">nenhuma obra</span>') + '</div>' +
           (demo || !d.obras.length ? '' : '<div class="adm-acoes" style="margin-top:8px"><select aria-label="Obra" data-sel="obra:' + u.id + '">' + optObras + '</select><select aria-label="Acesso" data-sel="papel:' + u.id + '">' + optPapel + '</select>' +

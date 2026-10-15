@@ -60,6 +60,27 @@ checar(dire.post("/api/remover").status_code == 403, "leitor conseguiu apagar o 
 checar(dire.post("/api/curtoprazo", json={}).status_code == 403, "leitor conseguiu gravar o curto prazo")
 checar(eng.get("/api/cronograma").get_json()["xml"] is not None, "o cronograma sumiu")
 
+# ---- gerentes: cada um consulta tudo e altera só a sua parte
+gerentes = {}
+for email, p in (("plan@x.com", "planejamento"), ("orc@x.com", "orcamento")):
+    r = adm.post("/api/admin/usuario", json={"email": email, "acessos": [{"obra_id": o1, "papel": p}]})
+    c = app.app.test_client()
+    c.post("/api/senha/definir", json={"codigo": r.get_json()["link"].split("#senha=")[1], "senha": "senha-gerente-1"})
+    checar(c.get("/api/me").get_json()["obra"]["papel"] == p, f"papel {p} não ficou gravado")
+    gerentes[p] = c
+plan, orc = gerentes["planejamento"], gerentes["orcamento"]
+checar(plan.get("/api/custos").status_code == 200, "gerente de planejamento não consulta custos")
+checar(plan.post("/api/custos/exemplo").status_code == 403, "gerente de planejamento alterou custos")
+checar(plan.post("/api/curtoprazo", json={}).status_code != 403, "gerente de planejamento não grava o curto prazo")
+checar(plan.post("/api/suprimentos", json={}).status_code != 403, "gerente de planejamento não grava suprimentos")
+checar(orc.get("/api/cronograma").get_json()["xml"] is not None, "gerente de orçamento não consulta o cronograma")
+checar(orc.post("/api/custos/exemplo").status_code != 403, "gerente de orçamento não grava custos")
+checar(orc.post("/api/remover").status_code == 403, "gerente de orçamento apagou o cronograma")
+checar(orc.post("/api/curtoprazo", json={}).status_code == 403, "gerente de orçamento alterou o curto prazo")
+checar(orc.post("/api/suprimentos", json={}).status_code != 403, "gerente de orçamento não grava suprimentos")
+checar(orc.post("/api/qualidade/nc", json={}).status_code == 403, "gerente de orçamento alterou a qualidade")
+checar(adm.post("/api/admin/acesso", json={"usuario_id": 1, "obra_id": o1, "papel": "chefe"}).status_code == 400, "aceitou papel inventado")
+
 # ---- ninguém abre obra que não é sua nem entra na administração
 checar(eng.post("/api/obra/abrir", json={"id": o2}).status_code == 403, "engenheiro abriu obra de outra empresa")
 checar(eng.get("/api/admin").status_code == 403, "cliente entrou na administração")

@@ -48,8 +48,7 @@ Tudo pelo sistema: entre com a conta da equipe (a da variável `CP_ADMIN_EMAIL`)
 - **Pessoas:** crie o acesso com o e-mail e escolha a obra. O sistema gera um link (vale 7 dias,
   uso único) para a pessoa criar a própria senha; mande pelo WhatsApp. Uma pessoa pode ter
   várias obras e troca de obra na Área do cliente.
-- **Edita ou só consulta:** quem só consulta vê tudo e baixa relatórios, mas não grava nada
-  (o servidor recusa).
+- **Papéis na obra:** gestor da obra (altera tudo), gerente de planejamento (cronograma, medições, plano de ataque, curto prazo e suprimentos), gerente de orçamento (orçamento, custos e suprimentos) e só consulta. Todos veem a obra inteira e baixam relatórios; o servidor recusa gravação fora da parte de cada um (`PODE_GRAVAR` em app.py).
 - **Esqueceu a senha:** botão "Link de senha" na Administração. Com o e-mail de saída
   configurado (abaixo), o cliente também pede o link sozinho em "Esqueci minha senha".
 
