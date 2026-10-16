@@ -211,32 +211,10 @@ def logado(f):
         papel = banco.papel_na_obra(session["uid"], _obra_da_sessao()) if _obra_da_sessao() else None
         if not papel:
             return jsonify(erro="Escolha uma obra para continuar.", sem_obra=True), 409
-        if request.method not in ("GET", "HEAD") and area_da_rota(request.path) not in PODE_GRAVAR[papel]:
-            if papel == "leitor":
-                return erro("Seu acesso a esta obra é só para consulta. Peça acesso de edição à Custo Plano.", 403)
-            return erro(f"Seu acesso nesta obra é de {PAPEIS[papel]}: você consulta tudo, mas só altera "
-                        f"{PAPEIS_ALTERAM[papel]}.", 403)
+        if papel == "leitor" and request.method not in ("GET", "HEAD"):
+            return erro("Seu acesso a esta obra é só para consulta. Peça acesso de edição à Custo Plano.", 403)
         return f(*a, **k)
     return interno
-
-
-# Papel de cada pessoa na obra. O gestor altera tudo; os gerentes consultam tudo e alteram só a sua parte.
-PAPEIS = {"editor": "Gestor da obra", "planejamento": "Gerente de planejamento",
-          "orcamento": "Gerente de orçamento", "leitor": "Só consulta"}
-PAPEIS_ALTERAM = {"planejamento": "cronograma, medições, plano de ataque, curto prazo e suprimentos",
-                  "orcamento": "orçamento, custos e suprimentos"}
-PODE_GRAVAR = {"editor": {"planejamento", "orcamento", "suprimentos", "qualidade"},
-               "planejamento": {"planejamento", "suprimentos"},
-               "orcamento": {"orcamento", "suprimentos"},
-               "leitor": set()}
-
-
-def area_da_rota(caminho: str) -> str:
-    """Parte do sistema que uma rota de gravação altera."""
-    for prefixo, area in (("/api/custos", "orcamento"), ("/api/suprimentos", "suprimentos"), ("/api/qualidade", "qualidade")):
-        if caminho.startswith(prefixo):
-            return area
-    return "planejamento"
 
 
 def _obra_da_sessao() -> int | None:
@@ -615,7 +593,7 @@ def admin_usuario():
         return erro("Já existe um acesso com esse e-mail.")
     uid = banco.criar_usuario(email, None, nome)
     for a in d.get("acessos") or []:
-        if banco.obra(int(a.get("obra_id") or 0)) and a.get("papel") in PAPEIS:
+        if banco.obra(int(a.get("obra_id") or 0)) and a.get("papel") in ("editor", "leitor"):
             banco.definir_acesso(uid, int(a["obra_id"]), a["papel"])
     return jsonify(id=uid, link=f"{endereco_site()}/#senha={banco.criar_link_senha(uid, 24 * 7)}")
 
@@ -627,7 +605,7 @@ def admin_acesso():
     uid, obra_id, papel = int(d.get("usuario_id") or 0), int(d.get("obra_id") or 0), d.get("papel")
     if not banco.usuario(uid) or not banco.obra(obra_id):
         return erro("Usuário ou obra não encontrados.", 404)
-    if papel is not None and papel not in PAPEIS:
+    if papel not in ("editor", "leitor", None):
         return erro("Papel inválido.")
     banco.definir_acesso(uid, obra_id, papel)
     return jsonify(ok=True)
