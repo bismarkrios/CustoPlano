@@ -59,6 +59,11 @@ jobs:
           assert r.status_code == 200 and b"pay.kiwify.com.br" in r.data, f"página do manual respondeu {r.status_code}"
           r = c.get("/privacidade")
           assert r.status_code == 200 and "13.709".encode() in r.data, f"página de privacidade respondeu {r.status_code}"
+          r = c.get("/robots.txt")
+          assert r.status_code == 200 and b"sitemap.xml" in r.data, f"robots.txt respondeu {r.status_code}"
+          r = c.get("/sitemap.xml")
+          assert r.status_code == 200 and b"custoplano.com.br/manual" in r.data, f"sitemap.xml respondeu {r.status_code}"
+          assert b"application/ld+json" in c.get("/").data, "faltou o cartão da empresa para o Google"
           print("site OK")
           PY
 

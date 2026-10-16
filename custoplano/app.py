@@ -355,6 +355,22 @@ def pagina_privacidade():
     return r
 
 
+@app.get("/robots.txt")
+def robots():
+    """Libera o site para o Google e esconde a área do sistema."""
+    texto = "User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: https://custoplano.com.br/sitemap.xml\n"
+    return Response(texto, mimetype="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    """Páginas públicas para o Google Search Console."""
+    urls = "".join(f"<url><loc>https://custoplano.com.br{p}</loc></url>" for p in ("/", "/manual", "/privacidade"))
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>'
+           f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>')
+    return Response(xml, mimetype="application/xml")
+
+
 @app.get("/web/<path:arquivo>")
 def estaticos(arquivo):
     return send_from_directory(PASTA_WEB, arquivo)
