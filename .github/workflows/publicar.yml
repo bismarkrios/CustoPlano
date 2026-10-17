@@ -86,6 +86,13 @@ jobs:
           CP_SECRET: teste
         run: python teste_injecao.py
 
+      - name: Testar o resumo de engenharia do log (PPC, medição, NCs)
+        env:
+          CP_BANCO: ${{ runner.temp }}/resumo.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: python teste_resumo.py
+
       - name: Testar a imagem Docker
         run: docker build -t custoplano .
 
