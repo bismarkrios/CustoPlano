@@ -181,6 +181,10 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .q-frentes p{margin:0;color:var(--muted)}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.hero-pts{list-style:none;margin:20px 0 26px;padding:0;display:grid;gap:10px;max-width:60ch}
+.hero-pts li{position:relative;padding-left:20px;font-size:15.5px;line-height:1.5;color:var(--muted)}
+.hero-pts li::before{content:"";position:absolute;left:0;top:.6em;width:8px;height:8px;background:var(--gold)}
+.hero-pts b{color:var(--ink);font-weight:600}
 .m-lead{font-size:18px;line-height:1.5;color:var(--ink)}
 .m-sub{margin:18px 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
 .m-inclui{margin:0 0 20px;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
@@ -835,13 +839,19 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Planejamento e controle de obra, a partir do cronograma que você já tem no MS Project</h1>
-        <p class="lede">Montamos o plano junto com a engenharia da obra, vamos ao canteiro toda semana e medimos o que foi feito de verdade. O cronograma continua no seu Project. A medição, as fichas de qualidade e o custo realizado ficam num sistema que o engenheiro abre no celular, mesmo sem sinal.</p>
+        <p class="eyebrow" style="margin-bottom:14px">Gestão integrada de obra · planejamento, custos e qualidade em um só lugar</p>
+        <h1>Planejamento e controle integrados ao seu MS Project</h1>
+        <p class="lede">Preservamos a sua rotina: o seu planejamento continua no MS Project. Unimos a tecnologia de campo à consultoria presencial para garantir que o plano aconteça na prática.</p>
+        <ul class="hero-pts">
+          <li><b>Integração com o MS Project:</b> leitura e atualização do seu arquivo .mpp, sem refazer o cronograma.</li>
+          <li><b>Rotina semanal no canteiro:</b> acompanhamento presencial, medição física real e remoção ativa de restrições.</li>
+          <li><b>Funciona sem internet:</b> aplicativo no celular para FVS, medições e não conformidades (RNC).</li>
+          <li><b>Para pequenas e médias construtoras:</b> obras novas ou em andamento que precisam voltar aos trilhos.</li>
+        </ul>
         <div class="ctas">
           <a class="btn btn-primary" href="#contato">Pedir um diagnóstico da obra</a>
           <a class="txt" href="#demo">Ver o sistema funcionando</a>
         </div>
-        <p class="aside">Trabalhamos com construtoras de pequeno e médio porte, em obra nova ou já em andamento.</p>
       </div>
 
       <figure class="folha" aria-labelledby="lbcap">
