@@ -96,6 +96,14 @@ checar(adm.post("/api/admin/obra/remover", json={"id": o1, "confirmar": "torre n
 checar(banco.cronograma(o1) is None, "os dados da obra apagada ficaram no banco")
 checar(any("antes-de-apagar" in c["nome"] for c in banco.listar_copias()), "não guardou cópia antes de apagar a obra")
 
+# ---- equipe nova: vê todas as obras e entra na administração
+r = adm.post("/api/admin/usuario", json={"email": "socio@custoplano.com.br", "nome": "Sócio", "equipe": True})
+checar(r.status_code == 200, "não criou o acesso de equipe")
+socio = app.app.test_client()
+socio.post("/api/senha/definir", json={"codigo": r.get_json()["link"].split("#senha=")[1], "senha": "senha-do-socio-1"})
+checar(socio.get("/api/admin").status_code == 200, "equipe nova não entrou na administração")
+checar(eng.post("/api/admin/usuario", json={"email": "x@y.com", "equipe": True}).status_code in (401, 403), "cliente criou acesso de equipe")
+
 # ---- cópia baixada abre e tem as tabelas
 r = adm.get("/api/admin/copia")
 checar(r.status_code == 200 and r.data[:2] == b"\x1f\x8b", "a cópia baixada não é um .gz")

@@ -608,6 +608,8 @@ def admin_usuario():
     if banco.usuario_por_email(email):
         return erro("Já existe um acesso com esse e-mail.")
     uid = banco.criar_usuario(email, None, nome)
+    if d.get("equipe") is True:  # equipe Custo Plano: todas as obras e a Administração
+        banco.tornar_admin(uid)
     for a in d.get("acessos") or []:
         if banco.obra(int(a.get("obra_id") or 0)) and a.get("papel") in ("editor", "leitor"):
             banco.definir_acesso(uid, int(a["obra_id"]), a["papel"])

@@ -1792,6 +1792,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   function ptDur(h) { var H = Math.floor(h), Mi = Math.round((h - H) * 60); if (Mi === 60) { H++; Mi = 0; } return 'PT' + H + 'H' + Mi + 'M0S'; }
   function pdate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : null; }
   function fdate(ms) { if (ms == null) return '—'; var d = new Date(ms); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + String(d.getUTCFullYear()).slice(2); }
+  function statusHoje() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 17); }
   function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
   function numv(v) { return v === '' || v == null ? NaN : parseFloat(String(v).replace('%', '').replace(',', '.')); }
   function fmt1(v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); }
@@ -1830,13 +1831,12 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var ends = tasks.map(function (t) { return t.bFinish != null ? Math.max(t.finish, t.bFinish) : t.finish; }).filter(function (x) { return x != null; });
     var base = {}, open = {};
     tasks.forEach(function (t) { base[t.uid] = usePhys ? t.phys : t.pct; if (t.lvl <= minL + 1) open[t.uid] = true; });
-    var sd = pdate(tx(root, 'StatusDate'));
     return {
       doc: doc, root: root, xml: text, fileName: fileName || 'cronograma.xml', title: tx(root, 'Title') || tx(root, 'Name') || (fileName || '').replace(/\.xml$/i, ''),
       tasks: tasks, byUid: byUid, wOpts: wOpts, weight: auto ? auto.id : 'dur', usePhys: usePhys,
       min: Math.min.apply(null, starts), max: Math.max.apply(null, ends),
       base: base, meas: Object.assign({}, base), open: open, edit: false, msg: '',
-      statusDate: sd || Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate(), 17)
+      statusDate: statusHoje()  // sempre abre no dia de hoje; quem quiser outro dia muda à mão
     };
   }
 
@@ -2002,7 +2002,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (!v || !v.xml) { P = null; return; }
     try {
       P = parseProject(v.xml, v.fileName);
-      if (v.meas) P.meas = v.meas; if (v.base) P.base = v.base; if (v.statusDate) P.statusDate = v.statusDate; if (v.weight) P.weight = v.weight;
+      if (v.meas) P.meas = v.meas; if (v.base) P.base = v.base; if (v.weight) P.weight = v.weight;
     } catch (e) { P = null; }
   }
   function loadHist() { if (!API) return; api('/api/historico').then(function (h) { S.hist = h; if (!app.hidden) render(); }).catch(function () {}); }
@@ -2011,7 +2011,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       api('/api/cronograma').then(function (v) {
         applyPrj(v); loadHist();
         return kvGet('pend').then(function (pd) {
-          if (pd && P) { P.meas = Object.assign({}, P.meas, pd.meas); if (pd.statusDate) P.statusDate = pdate(pd.statusDate + 'T17:00') || P.statusDate; if (pd.weight) P.weight = pd.weight; S.sync = 'offline'; }
+          if (pd && P) { P.meas = Object.assign({}, P.meas, pd.meas); if (pd.weight) P.weight = pd.weight; S.sync = 'offline'; }
           if (!app.hidden) render();
           return flushPend();
         });
@@ -3881,11 +3881,11 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">Apagar</button></div></td></tr>';
       }).join('') : '<tr><td colspan="5">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
     // pessoas
-    h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada.</p>' +
+    h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada. A equipe Custo Plano vê todas as obras e esta Administração.</p>' +
       '<form class="adm-form" id="admUsuForm" novalidate><div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" maxlength="200" placeholder="engenheiro@construtora.com.br" required></div>' +
       '<div class="field"><label for="au-nome">Nome</label><input id="au-nome" maxlength="120"></div>' +
       '<div class="field"><label for="au-obra">Obra</label><select id="au-obra"><option value="">Nenhuma por enquanto</option>' + optObras + '</select></div>' +
-      '<div class="field" style="flex:0 1 160px"><label for="au-papel">Acesso</label><select id="au-papel">' + optPapel + '</select></div>' +
+      '<div class="field" style="flex:0 1 200px"><label for="au-papel">Acesso</label><select id="au-papel">' + optPapel + '<option value="equipe">Equipe Custo Plano (todas as obras)</option></select></div>' +
       '<button class="btn btn-primary" type="submit">Criar acesso</button></form>' +
       '<p class="note" id="admMsg" role="status" hidden></p>' +
       '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Pessoa</th><th>Obras</th><th>Último acesso</th><th></th></tr></thead><tbody>' +
@@ -3920,7 +3920,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (e.target.id === 'admUsuForm') {
       var em = document.getElementById('au-email'), ob = document.getElementById('au-obra').value;
       if (!em.value.trim() || !em.checkValidity()) { admMsg('Informe um e-mail válido.'); em.focus(); return; }
-      api('/api/admin/usuario', { email: em.value.trim(), nome: document.getElementById('au-nome').value.trim(), acessos: ob ? [{ obra_id: +ob, papel: document.getElementById('au-papel').value }] : [] })
+      var papel = document.getElementById('au-papel').value, equipe = papel === 'equipe';
+      api('/api/admin/usuario', { email: em.value.trim(), nome: document.getElementById('au-nome').value.trim(), equipe: equipe, acessos: ob && !equipe ? [{ obra_id: +ob, papel: papel }] : [] })
         .then(function (r) { ADM_LINK = { titulo: 'Acesso criado.', email: em.value.trim(), link: r.link }; carregarAdm().then(function () { window.scrollTo(0, 0); }); }, function (err) { admMsg(err.message); });
     }
   });
