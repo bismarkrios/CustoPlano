@@ -181,6 +181,11 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .q-frentes p{margin:0;color:var(--muted)}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.m-lead{font-size:18px;line-height:1.5;color:var(--ink)}
+.m-sub{margin:18px 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.m-inclui{margin:0 0 20px;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.m-inclui li::marker{color:var(--gold)}
+.m-inclui b{color:var(--ink);font-weight:600}
 .q-duo{display:grid;grid-template-columns:1fr;gap:28px;align-items:start}
 .q-dest{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:2px solid var(--ink)}
 .q-dest li{padding:16px 0 16px 16px;border-bottom:1px solid var(--line);border-left:3px solid var(--blue)}
@@ -1062,7 +1067,14 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         <img class="livro-capa" src="/web/manual/capa.jpg" width="900" height="1271" alt="Capa do Manual do Engenheiro de Obra" loading="lazy">
         <div>
           <h3>Manual do Engenheiro de Obra: Planejamento, Custos e Qualidade</h3>
-          <p>O método que usamos nas obras, em 65 páginas: EAP, orçamento com composições, cronograma e linha de base, linha de balanço, valor agregado e qualidade. Vem com modelos de FVS, checklist de restrições e pauta de reunião.</p>
+          <p class="m-lead">O método prático que aplicamos no canteiro, consolidado em um guia objetivo de 65 páginas.</p>
+          <p>Um passo a passo completo cobrindo EAP, orçamento com composições, cronograma, linha de base, linha de balanço, análise de valor agregado e gestão da qualidade.</p>
+          <p class="m-sub">O que acompanha o manual</p>
+          <ul class="m-inclui">
+            <li><b>Modelo prático de FVS:</b> ficha pronta para aplicação e inspeção em campo, já com a conferência do material no recebimento (FVM).</li>
+            <li><b>Checklist de restrições:</b> modelo para mapeamento, prazos e remoção de gargalos operacionais.</li>
+            <li><b>Pauta da reunião semanal:</b> roteiro objetivo para as reuniões de curto prazo com a engenharia e os encarregados.</li>
+          </ul>
           <a class="btn btn-ghost" id="linkManual" href="#contato" data-interesse="Manual do Engenheiro de Obra (ebook)">Quero o manual</a>
         </div>
       </div>
