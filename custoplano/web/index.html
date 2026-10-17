@@ -179,6 +179,13 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .q-frentes p{margin:0;color:var(--muted)}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.q-duo{display:grid;grid-template-columns:1fr;gap:28px;align-items:start}
+.q-dest{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:2px solid var(--ink)}
+.q-dest li{padding:16px 0 16px 16px;border-bottom:1px solid var(--line);border-left:3px solid var(--blue)}
+.q-dest h3{margin:0 0 6px}
+.q-dest p{margin:0;color:var(--muted)}
+.q-sub{margin:8px 0 12px;font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+@media (min-width:861px){.q-duo{grid-template-columns:1fr 1fr;gap:40px}.q-duo .fvs{max-width:none}}
 @media (min-width:861px){.q-frentes{grid-template-columns:1fr 1fr;column-gap:40px}}
 .fvs{background:var(--surface);border:1px solid var(--line);overflow:hidden}
 .fvs header{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -1001,21 +1008,20 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   <section class="block" id="qualidade">
     <div class="wrap sec">
       <header>
-        <h2>Gestão da Qualidade</h2>
+        <h2>Qualidade conferida direto no canteiro</h2>
       </header>
       <div class="quality">
         <div class="txt" style="display:grid;gap:22px">
-          <p class="q-lead">Orientamos e estruturamos o Sistema de Gestão da Qualidade (SGQ) da sua empresa com foco no que funciona no canteiro: processos claros, equipes com autonomia e conformidade com as normas.</p>
+          <p class="q-lead">Estruturamos os procedimentos executivos e as fichas de verificação de serviço e de material (FVS e FVM) para cada serviço e acompanhamos a obra presencialmente até o fechamento definitivo de cada não conformidade.</p>
           <ul class="q-normas" aria-label="Normas atendidas"><li>PBQP-H (SiAC)</li><li>ISO 9001</li><li>Implantação e manutenção</li></ul>
-          <ol class="q-frentes">
-            <li><span class="n">01</span><h3>Processos padronizados</h3><p>Procedimentos executivos e fichas de verificação de serviço e de material (FVS e FVM) simples, objetivas e fáceis de aplicar no dia a dia.</p></li>
-            <li><span class="n">02</span><h3>Controle tecnológico</h3><p>Plano de amostragem, rotina de ensaios de concreto, solos e materiais e rastreabilidade dos laudos técnicos.</p></li>
-            <li><span class="n">03</span><h3>Inspeção e melhoria contínua</h3><p>Análise de causas, tratamento eficaz das não conformidades (RNC) e ações corretivas que não voltam a acontecer.</p></li>
-            <li><span class="n">04</span><h3>Preparação para auditorias</h3><p>Análise crítica do SGQ, auditorias internas e o caminho para conquistar ou manter a certificação no PBQP-H e na ISO 9001.</p></li>
-          </ol>
-          <p>No sistema, a ficha é preenchida no celular, com foto, e o item reprovado só é liberado depois de nova inspeção.</p>
         </div>
-        <figure class="fvs" style="margin:0">
+        <div class="q-duo">
+          <ul class="q-dest">
+            <li><h3>Ideal para implantação e manutenção</h3><p>Serve tanto para quem busca a primeira certificação no PBQP-H (SiAC) e na ISO 9001 quanto para quem já é certificado e precisa manter o padrão sem atrasar a produção.</p></li>
+            <li><h3>Inspeção digital pelo celular</h3><p>As fichas de verificação são preenchidas no celular, direto no aplicativo, com foto e o local exato da obra (pavimento, apartamento, fachada). Funciona mesmo sem internet.</p></li>
+            <li><h3>Rigor na liberação</h3><p>Todo item reprovado abre uma não conformidade com prazo de tratativa. O serviço só é liberado no sistema depois de uma nova inspeção aprovada.</p></li>
+          </ul>
+          <figure class="fvs" style="margin:0" aria-label="Exemplo de ficha de verificação">
           <header><b>FVS · Alvenaria de vedação</b><span>6º pavimento · exemplo</span></header>
           <div class="fvs-table">
             <table>
@@ -1029,8 +1035,18 @@ footer.site .copy{flex-basis:100%;font-size:13px}
               </tbody>
             </table>
           </div>
-          <footer>Junta fora da tolerância: NC aberta para o encarregado, com prazo de 5 dias.</footer>
-        </figure>
+          <footer>Junta fora da tolerância: NC aberta para o encarregado, com prazo de 7 dias.</footer>
+          </figure>
+        </div>
+        <div class="txt">
+          <h3 class="q-sub">Como estruturamos o SGQ</h3>
+          <ol class="q-frentes">
+            <li><span class="n">01</span><h3>Processos padronizados</h3><p>Procedimentos executivos e fichas de verificação de serviço e de material (FVS e FVM) simples, objetivas e fáceis de aplicar no dia a dia.</p></li>
+            <li><span class="n">02</span><h3>Controle tecnológico</h3><p>Plano de amostragem, rotina de ensaios de concreto, solos e materiais e rastreabilidade dos laudos técnicos.</p></li>
+            <li><span class="n">03</span><h3>Inspeção e melhoria contínua</h3><p>Análise de causas, tratamento eficaz das não conformidades (RNC) e ações corretivas que não voltam a acontecer.</p></li>
+            <li><span class="n">04</span><h3>Preparação para auditorias</h3><p>Análise crítica do SGQ, auditorias internas e o caminho para conquistar ou manter a certificação no PBQP-H e na ISO 9001.</p></li>
+          </ol>
+        </div>
       </div>
     </div>
   </section>
