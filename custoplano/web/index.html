@@ -1296,7 +1296,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     </nav>
     <div class="app-main">
       <header class="app-top">
-        <span class="obra-nome plan-only" id="obraNome"></span>
+        <span class="obra-nome" id="obraNome"></span>
         <label for="obraSel" class="kpi-t plan-only">Obra</label>
         <select id="obraSel" class="plan-only">
           <option>Residencial Aurora – Torre A</option>
@@ -3237,20 +3237,23 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     });
     return ks;
   }
-  // FVS sugerida pelo nome da tarefa e de todas as linhas resumo acima dela
+  // FVS sugerida pelo nome da própria tarefa; se ele não indicar nenhuma, pelas linhas resumo acima, da mais próxima para cima
   function fvsAuto(t) {
     if (!Q || !Q.modelos.length) return null;
-    var nomes = [servDe(t)];
-    for (var a = t; a; a = a.parent) nomes.push(a.name);
-    var txt = ' ' + semAcento(nomes.join(' ')).replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ') + ' ';
-    var tem = function (p) { return txt.indexOf(' ' + p.trim()) >= 0; };
-    var best = null, bs = 0;
-    Q.modelos.forEach(function (m) {
-      var s = 0, forte = false;
-      fvsChaves(m).forEach(function (k) { if (typeof k === 'string') { if (tem(k)) { s += 2; forte = true; } } else if (tem(k.fraca)) s += 1; });
-      if (forte && s > bs) { bs = s; best = m; }
-    });
-    return best;
+    var nomes = [servDe(t) + ' ' + t.name];
+    for (var a = t.parent; a; a = a.parent) nomes.push(a.name);
+    for (var n = 0; n < nomes.length; n++) {
+      var txt = ' ' + semAcento(nomes[n]).replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ') + ' ';
+      var tem = function (p) { return txt.indexOf(' ' + p.trim()) >= 0; };
+      var best = null, bs = 0;
+      Q.modelos.forEach(function (m) {
+        var s = 0, forte = false;
+        fvsChaves(m).forEach(function (k) { if (typeof k === 'string') { if (tem(k)) { s += 2; forte = true; } } else if (tem(k.fraca)) s += 1; });
+        if (forte && s > bs) { bs = s; best = m; }
+      });
+      if (best) return best;
+    }
+    return null;
   }
   function qcLocal(t) {
     var torre = torreDe(t), pv = pavDe(t);
