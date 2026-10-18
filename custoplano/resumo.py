@@ -1,4 +1,4 @@
-"""Resumo de engenharia de cada obra de cliente (PPC, medição, NCs), escrito uma vez por dia no log do
+"""Resumo de engenharia de cada obra de cliente (PPC, medição, NCs, indicadores de qualidade), escrito uma vez por dia no log do
 servidor. A conferência semanal da equipe lê essa linha nos logs do Render, sem precisar de login.
 Só números e o nome da obra: nenhum e-mail, senha ou dado pessoal vai para o log."""
 import datetime as dt
@@ -8,6 +8,7 @@ import banco
 
 MARCA = "RESUMO-ENGENHARIA"
 DIAS_MEDICAO = 7  # data de status mais antiga que isso = medição atrasada
+DIAS_QUALIDADE = 30  # janela dos indicadores de qualidade (inspeções e NCs fechadas)
 
 
 def _ppc(semanas: dict, hoje: dt.date) -> dict | None:
@@ -25,6 +26,29 @@ def _ppc(semanas: dict, hoje: dt.date) -> dict | None:
                     causas[a["causa"]] = causas.get(a["causa"], 0) + 1
             return {"semana": sem, "ppc": round(100 * ok / (ok + nok)), "ok": ok, "nok": nok, "causas": causas}
     return None
+
+
+def _qualidade(con, uid: int, hoje: dt.date) -> dict:
+    """Indicadores de qualidade dos últimos 30 dias: inspeções, aprovação na 1ª inspeção, NCs por serviço,
+    prazo médio de fechamento e NCs abertas sem responsável."""
+    desde = (hoje - dt.timedelta(days=DIAS_QUALIDADE)).isoformat()
+    insp = con.execute("SELECT servico, resultado, reinspecao_de FROM inspecoes WHERE usuario_id=? AND data>=? AND data<=?",
+                       (uid, desde, hoje.isoformat())).fetchall()
+    primeiras = [i for i in insp if not i["reinspecao_de"]]
+    aprov = sum(1 for i in primeiras if i["resultado"] == "aprovada")
+    ncs = con.execute("SELECT servico, status, responsavel, criado_em, fechada_em FROM ncs WHERE usuario_id=?", (uid,)).fetchall()
+    abertas = [n for n in ncs if n["status"] != "fechada"]
+    por_servico: dict[str, int] = {}
+    for n in abertas:
+        chave = n["servico"] or "Sem serviço"
+        por_servico[chave] = por_servico.get(chave, 0) + 1
+    dias = [(dt.date.fromisoformat(n["fechada_em"][:10]) - dt.date.fromisoformat(n["criado_em"][:10])).days
+            for n in ncs if n["status"] == "fechada" and n["fechada_em"] and n["fechada_em"][:10] >= desde]
+    return {"inspecoes_30d": len(insp), "reinspecoes_30d": len(insp) - len(primeiras),
+            "aprovacao_1a_pct": round(100 * aprov / len(primeiras)) if primeiras else None,
+            "servicos_inspecionados": sorted({i["servico"] for i in insp}),
+            "ncs_abertas_por_servico": por_servico, "ncs_sem_responsavel": sum(1 for n in abertas if not n["responsavel"]),
+            "ncs_fechadas_30d": len(dias), "dias_medio_fechamento": round(sum(dias) / len(dias), 1) if dias else None}
 
 
 def resumo_obras(hoje: dt.date | None = None) -> list[dict]:
@@ -56,6 +80,7 @@ def resumo_obras(hoje: dt.date | None = None) -> list[dict]:
             r["ncs_abertas"] = len(ncs)
             r["ncs_vencidas"] = sum(1 for n in ncs if n["prazo"] and n["prazo"][:10] < hoje.isoformat())
             r["ncs_altas"] = sum(1 for n in ncs if n["gravidade"] == "alta")
+            r["qualidade"] = _qualidade(con, o["id"], hoje)
             saida.append(r)
     return saida
 
