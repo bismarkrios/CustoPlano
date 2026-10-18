@@ -191,11 +191,6 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .hero-pts li{position:relative;padding-left:20px;font-size:15.5px;line-height:1.5;color:var(--muted)}
 .hero-pts li::before{content:"";position:absolute;left:0;top:.6em;width:8px;height:8px;background:var(--gold)}
 .hero-pts b{color:var(--ink);font-weight:600}
-.m-lead{font-size:18px;line-height:1.5;color:var(--ink)}
-.m-sub{margin:18px 0 8px;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.m-inclui{margin:0 0 20px;padding-left:18px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
-.m-inclui li::marker{color:var(--gold)}
-.m-inclui b{color:var(--ink);font-weight:600}
 .q-duo{display:grid;grid-template-columns:1fr;gap:28px;align-items:start}
 .q-dest{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:2px solid var(--ink)}
 .q-dest li{padding:16px 0 16px 16px;border-bottom:1px solid var(--line);border-left:3px solid var(--blue)}
@@ -221,15 +216,10 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .fvs footer{padding:10px 16px;font-size:13px;color:var(--muted);background:var(--ground)}
 @media (max-width:520px){.fvs .pill{font-size:11px;padding:2px 5px}.fvs table{font-size:13px}.fvs th,.fvs td{padding:9px 5px}.fvs th:first-child,.fvs td:first-child{padding-left:10px}}
 
-/* Manual */
-.manual{display:grid;grid-template-columns:120px minmax(0,1fr);gap:24px;align-items:center;background:var(--surface);border:1px solid var(--line);padding:22px}
-.livro-capa{width:120px;height:auto;display:block;box-shadow:4px 4px 0 var(--gold)}
 .tol{white-space:nowrap}
 .livro{width:120px;aspect-ratio:170/240;background:#282B59;color:#fff;padding:12px 10px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:4px 4px 0 var(--gold)}
 .livro b{font-family:var(--serif);font-size:15px;line-height:1.1}
 .livro small{font-size:9.5px;font-weight:600;color:#AFC3D9;letter-spacing:.12em;white-space:nowrap}
-.manual p{color:var(--muted);font-size:16px;margin:6px 0 14px}
-@media (max-width:520px){.manual{grid-template-columns:1fr}}
 
 /* Dúvidas */
 .faq details{border-bottom:1px solid var(--line);padding:16px 0}
@@ -826,7 +816,6 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <a href="#telas">O sistema</a>
       <a href="#qualidade">Qualidade</a>
       <a href="#duvidas">Dúvidas</a>
-      <a href="/manual">Manual</a>
       <a class="so-cel" href="#contato">Contato</a>
     </nav>
     <div class="actions">
@@ -1088,29 +1077,6 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     </div>
   </section>
 
-  <section class="block" id="manual">
-    <div class="wrap sec">
-      <header>
-        <h2>Nosso manual</h2>
-      </header>
-      <div class="manual">
-        <img class="livro-capa" src="/web/manual/capa.jpg" width="900" height="1271" alt="Capa do Manual do Engenheiro de Obra" loading="lazy">
-        <div>
-          <h3>Manual do Engenheiro de Obra: Planejamento, Custos e Qualidade</h3>
-          <p class="m-lead">O método prático que aplicamos no canteiro, consolidado em um guia objetivo de 65 páginas.</p>
-          <p>Um passo a passo completo cobrindo EAP, orçamento com composições, cronograma, linha de base, linha de balanço, análise de valor agregado e gestão da qualidade.</p>
-          <p class="m-sub">O que acompanha o manual</p>
-          <ul class="m-inclui">
-            <li><b>Modelo prático de FVS:</b> ficha pronta para aplicação e inspeção em campo, já com a conferência do material no recebimento (FVM).</li>
-            <li><b>Checklist de restrições:</b> modelo para mapeamento, prazos e remoção de gargalos operacionais.</li>
-            <li><b>Pauta da reunião semanal:</b> roteiro objetivo para as reuniões de curto prazo com a engenharia e os encarregados.</li>
-          </ul>
-          <a class="btn btn-ghost" id="linkManual" href="#contato" data-interesse="Manual do Engenheiro de Obra (ebook)">Quero o manual</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <section class="block" id="duvidas">
     <div class="wrap sec">
       <header>
@@ -1143,7 +1109,6 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           <select id="interesse" name="interesse">
             <option>Diagnóstico da obra: prazo, custo e qualidade</option>
             <option>Sistema Custo Plano</option>
-            <option>Manual do Engenheiro de Obra (ebook)</option>
           </select>
         </div>
         <div class="field full"><label for="msg">Sobre a obra</label><textarea id="msg" name="msg" placeholder="Ex.: residencial, 8 pavimentos, estrutura no 3º"></textarea></div>
@@ -1158,7 +1123,6 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   <div class="wrap">
     <span>Custo Plano Consultoria · prazo, custo e qualidade de obras</span>
     <nav class="rodape" aria-label="Rodapé">
-      <a href="/manual">Manual do Engenheiro de Obra</a>
       <a href="#demo">Obra de demonstração</a>
       <a href="/privacidade">Privacidade e termos</a>
       <a href="#entrar">Área do cliente</a>
@@ -4159,8 +4123,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 })();
 
 /* Contato do site. Preencha para ativar o envio e mostrar os dados na página.
-   whatsapp: só números, com DDI e DDD (ex.: 5571999998888). manual: página de venda do ebook. */
-var CONTATO = { whatsapp: '5511988236792', email: 'contato@custoplano.com.br', manual: '/manual' };
+   whatsapp: só números, com DDI e DDD (ex.: 5571999998888). */
+var CONTATO = { whatsapp: '5511988236792', email: 'contato@custoplano.com.br' };
 (function () {
   var info = document.getElementById('infoContato'), h = '';
   if (CONTATO.whatsapp) h += '<div><span>WhatsApp</span><b><a href="https://wa.me/' + CONTATO.whatsapp + '">' + CONTATO.whatsapp.replace(/^55(\d\d)(\d{4,5})(\d{4})$/, '($1) $2-$3') + '</a></b></div>';
@@ -4175,9 +4139,6 @@ var CONTATO = { whatsapp: '5511988236792', email: 'contato@custoplano.com.br', m
     wa.innerHTML = '<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91A9.85 9.85 0 0 0 12.04 2zm0 18.15h-.01a8.23 8.23 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24a8.24 8.24 0 0 1 8.24 8.25c0 4.54-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.8-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23a7.46 7.46 0 0 1-1.38-1.72c-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.15.16-.25.25-.42.08-.17.04-.31-.02-.43-.06-.13-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48a.92.92 0 0 0-.66.31 2.78 2.78 0 0 0-.87 2.07c0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.24 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.29z"/></svg><span>WhatsApp</span>';
     document.getElementById('site').appendChild(wa);
   }
-  var lm = document.getElementById('linkManual');
-  if (CONTATO.manual) lm.href = CONTATO.manual;
-  else lm.addEventListener('click', function () { document.getElementById('interesse').value = lm.getAttribute('data-interesse'); });
 })();
 // menu do celular: abre e fecha pelo botão; tocar num link ou fora dele fecha
 (function () {
