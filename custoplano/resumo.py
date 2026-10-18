@@ -1,5 +1,5 @@
-"""Resumo de engenharia de cada obra de cliente (PPC, medição, NCs, indicadores de qualidade), escrito uma vez por dia no log do
-servidor. A conferência semanal da equipe lê essa linha nos logs do Render, sem precisar de login.
+"""Resumo de engenharia de cada obra de cliente nos 3 pilares: prazo (PPC, medição), custo (orçado x realizado,
+IDC/IDP) e qualidade (NCs e indicadores), escrito uma vez por dia no log do servidor. A conferência semanal da equipe lê essa linha nos logs do Render, sem precisar de login.
 Só números e o nome da obra: nenhum e-mail, senha ou dado pessoal vai para o log."""
 import datetime as dt
 import json
@@ -51,7 +51,18 @@ def _qualidade(con, uid: int, hoje: dt.date) -> dict:
             "ncs_fechadas_30d": len(dias), "dias_medio_fechamento": round(sum(dias) / len(dias), 1) if dias else None}
 
 
-def resumo_obras(hoje: dt.date | None = None) -> list[dict]:
+def _custo(analise: dict | None) -> dict:
+    """Só os totais da análise de custos (a mesma da tela Custos)."""
+    if not analise:
+        return {"orcamento": "não importado"}
+    t = analise["totais"]
+    r2 = lambda v: round(v, 2) if v is not None else None  # noqa: E731
+    return {"orcado": r2(t["bac"]), "previsto_ate_hoje": r2(t["vp"]), "agregado": r2(t["va"]), "realizado": r2(t["cr"]),
+            "idc": r2(t["idc"]), "idp": r2(t["idp"]), "estimativa_final": r2(t["eac"]), "desvio_final": r2(t["vac"])}
+
+
+def resumo_obras(hoje: dt.date | None = None, analise_custos=None) -> list[dict]:
+    """analise_custos(obra_id) -> análise de custos da obra (app.analise_custos); sem ela, o custo fica de fora."""
     hoje = hoje or dt.date.today()
     with banco.conectar() as con:
         obras = con.execute(
@@ -81,10 +92,16 @@ def resumo_obras(hoje: dt.date | None = None) -> list[dict]:
             r["ncs_vencidas"] = sum(1 for n in ncs if n["prazo"] and n["prazo"][:10] < hoje.isoformat())
             r["ncs_altas"] = sum(1 for n in ncs if n["gravidade"] == "alta")
             r["qualidade"] = _qualidade(con, o["id"], hoje)
+            if analise_custos:
+                try:
+                    r["custo"] = _custo(analise_custos(o["id"]))
+                except Exception as e:  # noqa: BLE001 - um orçamento com problema não tira a obra do resumo
+                    r["custo"] = {"erro": str(e)[:120]}
             saida.append(r)
     return saida
 
 
-def registrar_no_log(hoje: dt.date | None = None) -> None:
+def registrar_no_log(hoje: dt.date | None = None, analise_custos=None) -> None:
     hoje = hoje or dt.date.today()
-    print(f"{MARCA} {json.dumps({'data': hoje.isoformat(), 'obras': resumo_obras(hoje)}, ensure_ascii=False)}", flush=True)
+    obras = resumo_obras(hoje, analise_custos)
+    print(f"{MARCA} {json.dumps({'data': hoje.isoformat(), 'obras': obras}, ensure_ascii=False)}", flush=True)

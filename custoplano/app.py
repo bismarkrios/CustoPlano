@@ -144,17 +144,7 @@ def _copias_diarias() -> None:
                     banco.limpar_copias(7)
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa da cópia
             print(f"Não consegui fazer a cópia de segurança: {e}", flush=True)
-        # resumo de engenharia das obras (PPC, medição, NCs) no log, uma vez por dia, para a conferência semanal
-        try:
-            if _RESUMO_DIA[0] != dt.date.today():
-                resumo.registrar_no_log()
-                _RESUMO_DIA[0] = dt.date.today()
-        except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa do resumo
-            print(f"Não consegui montar o resumo de engenharia: {e}", flush=True)
         time.sleep(3600)
-
-
-_RESUMO_DIA: list = [None]
 
 
 if os.environ.get("CP_COPIAS_AUTO", "1") == "1":
@@ -1145,6 +1135,26 @@ def exportar_historico(mid, formato):
 
 
 # ------------------------------------------------------------ comandos (CLI)
+# Resumo de engenharia das obras nos 3 pilares (prazo, custo, qualidade) no log, uma vez por dia, para a
+# conferência semanal da equipe. Fica aqui no fim porque usa analise_custos, definida acima.
+def _resumo_diario() -> None:
+    import time
+
+    feito = None
+    while True:
+        try:
+            if feito != dt.date.today():
+                resumo.registrar_no_log(analise_custos=analise_custos)
+                feito = dt.date.today()
+        except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa do resumo
+            print(f"Não consegui montar o resumo de engenharia: {e}", flush=True)
+        time.sleep(3600)
+
+
+if os.environ.get("CP_COPIAS_AUTO", "1") == "1":
+    threading.Thread(target=_resumo_diario, name="resumo", daemon=True).start()
+
+
 @app.cli.command("criar-usuario")
 @click.argument("email")
 @click.option("--nome", default="", help="Nome da pessoa")
