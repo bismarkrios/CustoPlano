@@ -71,6 +71,11 @@ CREATE TABLE IF NOT EXISTS fotos (
     dados       BLOB NOT NULL,
     criado_em   TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS fvs_tarefas (
+    usuario_id    INTEGER PRIMARY KEY REFERENCES obras(id) ON DELETE CASCADE,
+    dados         TEXT NOT NULL,            -- JSON {uid da tarefa do cronograma: {modelo_id}}; 0 = sem FVS
+    atualizado_em TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS ix_insp_usuario ON inspecoes(usuario_id);
 CREATE INDEX IF NOT EXISTS ix_nc_usuario ON ncs(usuario_id);
 """
@@ -275,7 +280,43 @@ def estado(uid: int) -> dict:
     for i in insp:
         if i["local"] not in locais:
             locais.append(i["local"])
-    return {"modelos": modelos, "inspecoes": insp, "ncs": ncs, "locais": locais, "hoje": dt.date.today().isoformat()}
+    return {"modelos": modelos, "inspecoes": insp, "ncs": ncs, "locais": locais, "tarefas": tarefas(uid),
+            "hoje": dt.date.today().isoformat()}
+
+
+# ------------------------------------------- FVS ligadas às tarefas do cronograma
+def tarefas(uid: int) -> dict:
+    with banco.conectar() as con:
+        r = con.execute("SELECT dados FROM fvs_tarefas WHERE usuario_id=?", (uid,)).fetchone()
+    return json.loads(r["dados"]) if r else {}
+
+
+def ligar_tarefa(uid: int, d: dict) -> None:
+    """Escolhe a FVS de uma tarefa do cronograma. modelo_id vazio volta para a escolha automática
+    (pelo nome do serviço); 0 marca a tarefa como sem FVS."""
+    tid = str(d.get("uid") or "")
+    if not re.fullmatch(r"\d{1,9}", tid):
+        raise ErroQualidade("Tarefa do cronograma inválida.")
+    mid = d.get("modelo_id")
+    dados = tarefas(uid)
+    if mid is None or mid == "":
+        dados.pop(tid, None)
+    else:
+        try:
+            mid = int(mid)
+        except (TypeError, ValueError):
+            raise ErroQualidade("FVS inválida.") from None
+        if mid:
+            with banco.conectar() as con:
+                if not con.execute("SELECT 1 FROM fvs_modelos WHERE id=? AND usuario_id=?", (mid, uid)).fetchone():
+                    raise ErroQualidade("FVS não encontrada.")
+        dados[tid] = {"modelo_id": mid}
+    if len(dados) > 20000:
+        raise ErroQualidade("Limite de tarefas atingido.")
+    with banco.conectar() as con:
+        con.execute("""INSERT INTO fvs_tarefas (usuario_id, dados, atualizado_em) VALUES (?, ?, ?)
+                       ON CONFLICT(usuario_id) DO UPDATE SET dados=excluded.dados, atualizado_em=excluded.atualizado_em""",
+                    (uid, json.dumps(dados), _agora()))
 
 
 # --------------------------------------------------------------- modelos

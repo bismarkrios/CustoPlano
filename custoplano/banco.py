@@ -108,7 +108,7 @@ def conectar() -> sqlite3.Connection:
 
 # tabelas com os dados de uma obra (a coluna usuario_id guarda o id da obra)
 TABELAS_DA_OBRA = ("cronogramas", "medicoes_fechadas", "custos", "planos_ataque", "suprimentos", "curto_prazo",
-                   "fvs_modelos", "inspecoes", "ncs", "fotos")
+                   "fvs_modelos", "inspecoes", "ncs", "fotos", "fvs_tarefas")
 
 
 def iniciar() -> None:

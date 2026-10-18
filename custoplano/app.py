@@ -1045,6 +1045,12 @@ def qualidade_inspecao_remover():
     return _ql(lambda: ql.remover_inspecao(oid(), int((request.get_json(silent=True) or {}).get("id") or 0)))
 
 
+@app.post("/api/qualidade/tarefa")
+@logado
+def qualidade_tarefa():
+    return _ql(lambda: ql.ligar_tarefa(oid(), request.get_json(silent=True) or {}))
+
+
 @app.post("/api/qualidade/nc")
 @logado
 def qualidade_nc():
