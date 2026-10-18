@@ -7,7 +7,7 @@ import json
 import sys
 from contextlib import redirect_stdout
 
-import app  # noqa: F401 - cria o banco e a obra de demonstração
+import app  # cria o banco e a obra de demonstração
 import banco
 import resumo
 
@@ -59,10 +59,26 @@ o2 = banco.criar_obra("Obra vazia")
 y = next(x for x in resumo.resumo_obras(hoje) if x["obra"] == "Obra vazia")
 checar(y["cronograma"] == "não importado" and y["ppc"] is None and y["ncs_abertas"] == 0, f"obra vazia errada: {y}")
 checar(y["qualidade"]["inspecoes_30d"] == 0 and y["qualidade"]["aprovacao_1a_pct"] is None, f"qualidade da obra vazia errada: {y}")
+checar("custo" not in y, "custo apareceu sem a análise de custos")
+
+# custo: totais da análise de custos (a mesma da tela Custos); um orçamento com problema não derruba o resumo
+y = next(x for x in resumo.resumo_obras(hoje, app.analise_custos) if x["obra"] == "Obra vazia")
+checar(y["custo"] == {"orcamento": "não importado"}, f"custo de obra sem orçamento errado: {y.get('custo')}")
+tot = {"bac": 1000.0, "vp": 500.0, "va": 400.0, "cr": 500.0, "idc": 0.8, "idp": 0.8, "eac": 1250.0, "vac": -250.0}
+z = next(x for x in resumo.resumo_obras(hoje, lambda oid: {"totais": tot}) if x["obra"] == "Obra vazia")
+checar(z["custo"]["idc"] == 0.8 and z["custo"]["desvio_final"] == -250.0 and z["custo"]["realizado"] == 500.0, f"custo errado: {z}")
+
+
+def quebra(oid):
+    raise ValueError("planilha ruim")
+
+
+z = next(x for x in resumo.resumo_obras(hoje, quebra) if x["obra"] == "Obra vazia")
+checar("erro" in z["custo"] and z["ppc"] is None, f"erro de custo não ficou registrado: {z}")
 
 buf = io.StringIO()
 with redirect_stdout(buf):
-    resumo.registrar_no_log(hoje)
+    resumo.registrar_no_log(hoje, app.analise_custos)
 linha = buf.getvalue().strip()
 checar(linha.startswith("RESUMO-ENGENHARIA "), f"linha do log errada: {linha[:80]}")
 checar(json.loads(linha.split(" ", 1)[1])["data"] == "2026-10-19", "data errada no log")
