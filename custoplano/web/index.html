@@ -17,10 +17,11 @@
 {"@context":"https://schema.org","@type":"ProfessionalService","name":"Custo Plano Consultoria",
 "url":"https://custoplano.com.br/","logo":"https://custoplano.com.br/web/icon-512.png","image":"https://custoplano.com.br/web/telas/painel.jpg",
 "description":"Consultoria em gestão de obras com três pilares, prazo, custo e qualidade, para construtoras, com sistema incluído.",
-"telephone":"+55-11-98823-6792","founder":{"@type":"Person","name":"Bismark Santos Rios"},
+"telephone":"+55-11-98823-6792","email":"contato@custoplano.com.br",
+"slogan":"Sua obra no prazo, no custo e com qualidade, controlada toda semana a partir do seu MS Project.","founder":{"@type":"Person","name":"Bismark Santos Rios"},
 "areaServed":[{"@type":"City","name":"Guarulhos"},{"@type":"City","name":"São Paulo"},{"@type":"City","name":"São José dos Campos"},{"@type":"City","name":"Atibaia"},{"@type":"City","name":"Bragança Paulista"}],
 "address":{"@type":"PostalAddress","addressRegion":"SP","addressCountry":"BR"},
-"knowsAbout":["Planejamento de obras","Controle de custos de obras","Linha de balanço","MS Project","PBQP-H","ISO 9001"]}
+"knowsAbout":["Planejamento de obras","Controle de custos de obras","Linha de balanço","MS Project","Gestão da qualidade","PBQP-H","ISO 9001"]}
 </script>
 <meta name="theme-color" content="#282B59">
 <link rel="icon" href="/web/icon.svg" type="image/svg+xml">
@@ -305,7 +306,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .login-side li::before{content:"";width:8px;height:8px;background:var(--accent)}
 .login-main{display:flex;flex-direction:column;justify-content:center;padding:clamp(28px,5vw,64px);gap:24px}
 .login-card{width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px}
-.login-card h1{font-size:34px;font-weight:800}
+.login-card h1,.login-card .h1{font-size:34px;font-weight:800}
 .login-card form{padding:0;background:transparent;grid-template-columns:1fr}
 .linkbtn{background:none;border:0;padding:6px 0;color:var(--blue);font:inherit;font-size:15px;font-weight:600;cursor:pointer;text-align:left}
 .linkbtn:hover{text-decoration:underline}
@@ -573,7 +574,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .hub-user{font-size:13px;color:var(--panel-muted)}
 .hub-sair{color:var(--panel-ink);border-color:var(--panel-line)}
 .hub-main{flex:1;display:flex;flex-direction:column;gap:22px;padding-block:clamp(28px,6vw,72px);width:100%}
-.hub-main h1{font-size:clamp(30px,4vw,44px);font-weight:800}
+.hub-main h1,.hub-main .h1{font-size:clamp(30px,4vw,44px);font-weight:800}
 .hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
 .hub-card{display:flex;flex-direction:column;gap:12px;padding:26px;border-radius:10px;background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink);min-height:230px;transition:border-color .15s,transform .15s}
 .hub-card:hover{border-color:var(--blue);transform:translateY(-2px)}
@@ -1087,6 +1088,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       </header>
       <div class="faq">
         <details><summary>Preciso trocar o MS Project pelo sistema de vocês?</summary><p>Não. O seu cronograma continua no MS Project. O nosso sistema importa diretamente o arquivo .mpp (ou .xml) e devolve o arquivo atualizado com as medições e o avanço realizado no canteiro.</p></details>
+        <details><summary>E se a minha obra ainda não tiver cronograma no MS Project?</summary><p>Montamos o cronograma junto com a sua engenharia, no MS Project e com linha de base, antes de começar o controle semanal. A montagem é um serviço à parte e entra separada na proposta.</p></details>
         <details><summary>A minha obra já começou. Ainda dá tempo de contratar?</summary><p>Sim, é o nosso cenário mais comum. Fazemos um diagnóstico inicial, reestruturamos a linha de base se necessário e implantamos imediatamente a rotina semanal de prazo, custo e qualidade.</p></details>
         <details><summary>O aplicativo funciona no canteiro sem internet?</summary><p>Funciona. Medições físicas, fichas de verificação (FVS) e não conformidades (RNC) ficam gravadas no celular e são sincronizadas automaticamente assim que ele volta a ter conexão.</p></details>
         <details><summary>Dá para contratar apenas o software, sem a consultoria?</summary><p>A nossa metodologia integra o sistema à consultoria presencial, porque a tecnologia só traz resultado quando vem acompanhada de processo e de suporte em campo. Se a sua empresa tem uma demanda específica só pela ferramenta, entre em contato para avaliarmos o seu caso.</p></details>
@@ -1169,7 +1171,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <div class="login-card">
         <div>
           <p class="eyebrow">Área do cliente</p>
-          <h1 style="margin-top:8px">Entrar</h1>
+          <h2 class="h1" style="margin-top:8px">Entrar</h2>
         </div>
         <form id="loginForm" novalidate>
           <div class="field"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="username" placeholder="voce@construtora.com.br" required></div>
@@ -1199,7 +1201,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <button class="btn btn-ghost btn-sm hub-sair" type="button" id="hubSair">Sair</button>
     </header>
     <main class="hub-main wrap">
-      <div><p class="eyebrow">Área do cliente</p><h1 style="margin-top:8px">Escolha a área</h1></div>
+      <div><p class="eyebrow">Área do cliente</p><h2 class="h1" style="margin-top:8px">Escolha a área</h2></div>
       <div id="hubConta" class="hub-conta"></div>
       <div class="hub-grid">
         <a class="hub-card" href="#sistema">
@@ -1232,7 +1234,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     </header>
     <main class="hub-main wrap">
       <div class="login-card" style="margin-inline:auto">
-        <div><p class="eyebrow">Área do cliente</p><h1 style="margin-top:8px">Criar sua senha</h1></div>
+        <div><p class="eyebrow">Área do cliente</p><h2 class="h1" style="margin-top:8px">Criar sua senha</h2></div>
         <p id="sv-email" style="margin:0;color:var(--muted)"></p>
         <form id="senhaForm" novalidate>
           <div class="field"><label for="sv-senha">Senha nova (mínimo 8 caracteres)</label><input id="sv-senha" type="password" autocomplete="new-password" minlength="8" required></div>
