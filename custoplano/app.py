@@ -348,6 +348,15 @@ def pagina_manual():
     return r
 
 
+@app.get("/apresentacao.pdf")
+def apresentacao():
+    """Apresentação comercial (os e-mails de prospecção levam este link; não aparece no menu)."""
+    r = send_from_directory(PASTA_WEB, "apresentacao.pdf", mimetype="application/pdf")
+    r.headers["Cache-Control"] = "no-cache"
+    r.headers["Content-Disposition"] = 'inline; filename="Custo-Plano-Apresentacao.pdf"'
+    return r
+
+
 @app.get("/privacidade")
 def pagina_privacidade():
     """Política de privacidade e termos de uso (LGPD)."""
