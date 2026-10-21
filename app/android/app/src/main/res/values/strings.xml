@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Custo Plano</string>
+    <string name="title_activity_main">Custo Plano</string>
+    <string name="package_name">br.com.custoplano.app</string>
+    <string name="custom_url_scheme">br.com.custoplano.app</string>
+</resources>

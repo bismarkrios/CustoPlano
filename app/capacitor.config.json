@@ -1,0 +1,16 @@
+{
+  "appId": "br.com.custoplano.app",
+  "appName": "Custo Plano",
+  "webDir": "www",
+  "server": {
+    "url": "https://custoplano.com.br/#entrar",
+    "errorPath": "index.html",
+    "allowNavigation": ["custoplano.com.br"]
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#282B59", "showSpinner": false },
+    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+  },
+  "android": { "allowMixedContent": false },
+  "ios": { "contentInset": "always" }
+}
