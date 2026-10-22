@@ -29,6 +29,19 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Custo Plano">
+<script>
+/* Dentro do app (lojas ou ícone na tela de início) o sistema vira app: abas embaixo e sem os links do site. */
+(function () {
+  var nativo = false;
+  try {
+    if (/[?&]app=1/.test(location.search)) sessionStorage.setItem('cp_app', '1');
+    nativo = sessionStorage.getItem('cp_app') === '1';
+  } catch (e) {}
+  if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) nativo = true;
+  if (window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) nativo = true;
+  if (nativo) document.documentElement.classList.add('nativo');
+})();
+</script>
 <!--CP_API-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -785,6 +798,22 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 }
 @media (max-width:480px){.grid4{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-tag{display:none}.facts{grid-template-columns:1fr}}
 
+/* App (lojas ou ícone na tela de início): abas fixas embaixo e sem links do site */
+.so-app{display:none!important}
+.nativo .so-app{display:inline-flex!important}
+.nativo .so-site{display:none!important}
+.nativo .login-side .brand{pointer-events:none}
+@media (max-width:860px){
+  .nativo .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:60;height:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:0;border-top:1px solid var(--panel-line);box-shadow:0 -6px 18px rgba(0,0,0,.18);scroll-snap-type:x proximity}
+  .nativo .side .brand{display:none}
+  .nativo .nav-grp{gap:0}
+  .nativo .nav-btn{flex-direction:column;gap:3px;min-width:76px;min-height:54px;padding:6px 4px;font-size:11px;font-weight:600;line-height:1.15;text-align:center;justify-content:center;white-space:normal;scroll-snap-align:start;position:relative}
+  .nativo .nav-btn svg{width:22px;height:22px}
+  .nativo .nav-btn .count{position:absolute;top:2px;right:10px;margin:0;min-width:16px;height:16px;font-size:10px;padding:0 4px}
+  .nativo .app-main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+  .nativo .app-top{padding-top:env(safe-area-inset-top)}
+}
+
 /* Cores da marca: destaques sobre o azul-marinho usam o azul-claro */
 .hero h1 em{background:linear-gradient(transparent 62%,var(--hl) 62%,var(--hl) 92%,transparent 92%)}
 .step .mark b{color:var(--hl)}
@@ -1167,7 +1196,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       </svg>
     </aside>
     <main class="login-main">
-      <a class="linkbtn" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
+      <a class="linkbtn so-site" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
       <div class="login-card">
         <div>
           <p class="eyebrow">Área do cliente</p>
@@ -1218,7 +1247,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         </a>
       </div>
       <div id="hubSenha"></div>
-      <a class="linkbtn" href="#inicio" style="text-decoration:none;align-self:flex-start">← Voltar ao site</a>
+      <a class="linkbtn so-site" href="#inicio" style="text-decoration:none;align-self:flex-start">← Voltar ao site</a>
     </main>
   </div>
 </div>
@@ -1293,7 +1322,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       </div>
       <div class="side-foot">
         <a class="linkbtn" href="#area" style="text-decoration:none">⇄ Trocar de área</a>
-        <a class="linkbtn" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
+        <a class="linkbtn so-site" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
       </div>
     </nav>
     <div class="app-main">
@@ -1316,6 +1345,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         <span class="demo-tag ro-tag" id="roTag" hidden title="Seu acesso a esta obra é só para consulta">Só consulta</span>
         <div class="user">
           <span class="avatar" id="avatar" aria-hidden="true">CL</span>
+          <a class="btn btn-ghost btn-sm so-app" href="#area" style="text-decoration:none">Áreas</a>
           <button class="btn btn-ghost btn-sm" type="button" data-a="logout">Sair</button>
         </div>
       </header>
@@ -1355,6 +1385,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
+    if ((h === '' || h === 'inicio') && document.documentElement.classList.contains('nativo')) { location.replace('#entrar'); h = 'entrar'; }
     if (h === 'demo') { abrirDemo(); return; }
     if (h.indexOf('senha=') === 0) { abrirSenha(h.slice(6)); return; }
     if (h === 'admin') {
