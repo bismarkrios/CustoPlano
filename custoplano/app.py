@@ -34,6 +34,7 @@ import custos as cst
 import demo
 import qualidade as ql
 import resumo
+import whatsapp as wa
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PASTA_WEB = os.path.join(AQUI, "web")
@@ -1093,26 +1094,98 @@ def qualidade_inspecao_pdf(iid):
 
 
 # ----------------------------------------------------------- relatório mensal
-@app.get("/api/relatorio.pdf")
-@logado
-def relatorio_pdf():
+def gerar_relatorio(obra_id: int):
+    """PDF do relatório mensal da obra: (pdf, nome do arquivo) ou None se a obra ainda não tem dados."""
     import relatorio
 
-    c, p = carregar()
-    plano, _ = plano_de(oid())
-    cus = analise_custos(oid())
+    c = banco.cronograma(obra_id)
+    p = projeto_de(c) if c else None
+    plano, _ = plano_de(obra_id)
+    cus = analise_custos(obra_id)
     if not c and not plano and not cus:
-        return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
-    o = banco.obra(oid())
+        return None
+    o = banco.obra(obra_id)
     obra = (p.titulo if p else (plano or {}).get("titulo")) or (o["nome"] if o else "") or "Obra"
-    hist = [dict(h) for h in banco.historico(oid())]
+    hist = [dict(h) for h in banco.historico(obra_id)]
     if c:
         sd = para_data(c["data_status"])
         pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus)
     else:
         sd = dt.datetime.now()
         pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus)
-    return download(pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf", "application/pdf")
+    return pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf"
+
+
+@app.get("/api/relatorio.pdf")
+@logado
+def relatorio_pdf():
+    r = gerar_relatorio(oid())
+    if not r:
+        return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
+    return download(r[0], r[1], "application/pdf")
+
+
+# ------------------------------------------------------------------- WhatsApp
+@app.post("/api/admin/whatsapp")
+@so_admin
+def admin_whatsapp():
+    d = request.get_json(silent=True) or {}
+    u = banco.usuario(int(d.get("usuario_id") or 0))
+    if not u or u["email"].lower() == DEMO_EMAIL:
+        return erro("Usuário não encontrado.", 404)
+    n = wa.normalizar(str(d.get("numero") or ""))
+    if n and not re.fullmatch(r"\d{12,15}", n):
+        return erro("Informe o celular com DDD, por exemplo (11) 98888-7777.")
+    if n:
+        dono = banco.usuario_por_whatsapp(wa.chave(n), wa.chave)
+        if dono and dono["id"] != u["id"]:
+            return erro(f"Esse número já está no acesso de {dono['email']}.")
+    banco.definir_whatsapp(u["id"], n)
+    return jsonify(ok=True, whatsapp=n)
+
+
+@app.get("/whatsapp/webhook")
+def whatsapp_confirmar():
+    """A Meta confirma o endereço do webhook com a frase combinada (WA_VERIFY_TOKEN)."""
+    if not wa.configurado():
+        abort(404)
+    a = request.args
+    if a.get("hub.mode") == "subscribe" and secrets.compare_digest(a.get("hub.verify_token", ""), os.environ["WA_VERIFY_TOKEN"]):
+        return Response(a.get("hub.challenge", ""), mimetype="text/plain")
+    abort(403)
+
+
+def _atender_whatsapp(lista) -> None:
+    for numero, texto in lista:
+        try:
+            u = banco.usuario_por_whatsapp(wa.chave(numero), wa.chave)
+            obras = banco.obras_do_usuario(u["id"]) if u else []
+            for r in wa.responder(numero, texto, u, obras, gerar_relatorio):
+                if r[0] == "texto":
+                    wa.enviar_texto(numero, r[1])
+                else:
+                    pdf, nome = r[2]
+                    wa.enviar_pdf(numero, pdf, nome, f"Relatório da obra {r[1]['nome']}, gerado agora pelo sistema Custo Plano.")
+                    print(f"WhatsApp: relatório da obra {r[1]['id']} enviado para {u['email']}.", flush=True)
+        except Exception as e:  # um erro numa mensagem não pode travar as outras
+            print(f"WhatsApp: erro ao responder ({type(e).__name__}).", flush=True)
+
+
+@app.post("/whatsapp/webhook")
+def whatsapp_aviso():
+    if not wa.configurado():
+        abort(404)
+    corpo = request.get_data()
+    if not wa.assinatura_ok(corpo, request.headers.get("X-Hub-Signature-256", "")):
+        abort(403)
+    try:
+        aviso = json.loads(corpo or b"{}")
+    except ValueError:
+        return erro("Aviso inválido.")
+    lista = [(n, t) for n, mid, t in wa.mensagens(aviso) if n and t and not wa.ja_vista(mid)]
+    if lista:  # responde à Meta na hora e gera o PDF em seguida
+        threading.Thread(target=_atender_whatsapp, args=(lista,), name="whatsapp", daemon=True).start()
+    return jsonify(ok=True)
 
 
 # -------------------------------------------------------------------- exportar

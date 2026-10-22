@@ -4137,8 +4137,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         }).join('') : '<span class="chip c-muted">nenhuma obra</span>') + '</div>' +
           (demo || !d.obras.length ? '' : '<div class="adm-acoes" style="margin-top:8px"><select aria-label="Obra" data-sel="obra:' + u.id + '">' + optObras + '</select><select aria-label="Acesso" data-sel="papel:' + u.id + '">' + optPapel + '</select>' +
             '<button class="btn btn-ghost btn-sm" type="button" data-adm="liberar:' + u.id + '">Liberar</button></div>');
-        return '<tr><td><b>' + esc(u.nome || u.email) + '</b><small>' + esc(u.email) + '</small></td><td>' + obras + '</td><td>' + dataHora(u.ultimo_login) + '</td>' +
-          '<td><div class="adm-acoes">' + (demo ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="link:' + u.id + '">Link de senha</button>') +
+        return '<tr><td><b>' + esc(u.nome || u.email) + '</b><small>' + esc(u.email) + '</small>' + (u.whatsapp ? '<small>WhatsApp ' + esc(zapFmt(u.whatsapp)) + '</small>' : '') + '</td><td>' + obras + '</td><td>' + dataHora(u.ultimo_login) + '</td>' +
+          '<td><div class="adm-acoes">' + (demo ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="link:' + u.id + '">Link de senha</button><button class="btn btn-ghost btn-sm" type="button" data-adm="zap:' + u.id + '">WhatsApp</button>') +
           (demo || u.admin || u.id === d.eu ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="remover:' + u.id + '">Remover</button>') + '</div></td></tr>';
       }).join('') + '</tbody></table></div></section>';
     // cópias
@@ -4149,6 +4149,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '</section>';
     document.getElementById('admBody').innerHTML = h;
   }
+  function zapFmt(n) { var m = /^55(\d\d)(\d{4,5})(\d{4})$/.exec(n || ''); return m ? '(' + m[1] + ') ' + m[2] + '-' + m[3] : '+' + n; }
   function admMsg(t) { var m = document.getElementById('admMsg'); if (m) { m.textContent = t; m.hidden = !t; } }
   document.getElementById('adm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -4191,6 +4192,12 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     }
     if (a[0] === 'link') {
       api('/api/admin/link-senha', { usuario_id: id }).then(function (r) { ADM_LINK = { titulo: 'Link de senha criado.', email: r.email, link: r.link }; renderAdm(); window.scrollTo(0, 0); }, function (err) { alert(err.message); }); return;
+    }
+    if (a[0] === 'zap') {
+      var pu = ADM.usuarios.filter(function (x) { return x.id === id; })[0] || {};
+      var nz = prompt('Celular com DDD desta pessoa. Por esse número ela pede o relatório da obra pelo WhatsApp da Custo Plano. Deixe em branco para tirar.', pu.whatsapp ? zapFmt(pu.whatsapp) : '');
+      if (nz === null) return;
+      api('/api/admin/whatsapp', { usuario_id: id, numero: nz }).then(carregarAdm, function (err) { alert(err.message); }); return;
     }
     if (a[0] === 'remover') {
       if (!confirm('Remover este acesso? A pessoa não entra mais no sistema. Os dados das obras continuam.')) return;

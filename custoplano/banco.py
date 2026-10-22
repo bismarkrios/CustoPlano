@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     criado_em   TEXT NOT NULL,
     admin       INTEGER NOT NULL DEFAULT 0,    -- equipe Custo Plano: vê todas as obras e cadastra clientes
     obra_atual  INTEGER,                       -- última obra aberta (volta nela no próximo login)
-    ultimo_login TEXT
+    ultimo_login TEXT,
+    whatsapp    TEXT                           -- celular para pedir o relatório pelo WhatsApp (só dígitos, com 55)
 );
 -- Cada obra guarda os próprios dados; nas tabelas de dados, a coluna usuario_id é o id da obra
 -- (o nome ficou de quando cada login tinha uma obra só).
@@ -129,7 +130,7 @@ def _colunas_novas() -> None:
         if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='usuarios'").fetchone():
             return
         tem = {r[1] for r in con.execute("PRAGMA table_info(usuarios)")}
-        for col, tipo in (("admin", "INTEGER NOT NULL DEFAULT 0"), ("obra_atual", "INTEGER"), ("ultimo_login", "TEXT")):
+        for col, tipo in (("admin", "INTEGER NOT NULL DEFAULT 0"), ("obra_atual", "INTEGER"), ("ultimo_login", "TEXT"), ("whatsapp", "TEXT")):
             if col not in tem:
                 con.execute(  # sql-seguro: coluna e tipo fixos no código
                     f"ALTER TABLE usuarios ADD COLUMN {col} {tipo}")
@@ -291,6 +292,20 @@ def usuario_por_email(email: str):
         return con.execute("SELECT id, email, nome, admin FROM usuarios WHERE lower(email) = lower(?)", (email.strip(),)).fetchone()
 
 
+def definir_whatsapp(uid: int, numero: str | None) -> None:
+    with conectar() as con:
+        con.execute("UPDATE usuarios SET whatsapp = ? WHERE id = ?", (numero or None, uid))
+
+
+def usuario_por_whatsapp(chave_numero, chave):
+    """Usuário dono do número (chave() iguala o celular com e sem o 9 da frente)."""
+    with conectar() as con:
+        for r in con.execute("SELECT id, email, nome, admin, whatsapp FROM usuarios WHERE whatsapp IS NOT NULL AND whatsapp <> ''"):
+            if chave(r["whatsapp"]) == chave_numero:
+                return r
+    return None
+
+
 def remover_usuario(uid: int) -> None:
     with conectar() as con:
         con.execute("DELETE FROM usuarios WHERE id = ?", (uid,))
@@ -366,7 +381,7 @@ def painel_admin() -> dict:
             "(SELECT COALESCE(SUM(LENGTH(f.dados)), 0) FROM fotos f WHERE f.usuario_id = o.id) AS bytes_fotos "
             "FROM obras o LEFT JOIN cronogramas c ON c.usuario_id = o.id ORDER BY o.empresa, o.nome")]
         usuarios_ = [dict(r) for r in con.execute(
-            "SELECT id, email, nome, admin, criado_em, ultimo_login FROM usuarios ORDER BY admin DESC, email")]
+            "SELECT id, email, nome, admin, criado_em, ultimo_login, whatsapp FROM usuarios ORDER BY admin DESC, email")]
         acessos_ = con.execute("SELECT usuario_id, obra_id, papel FROM acessos").fetchall()
     por_u: dict = {}
     for a in acessos_:
