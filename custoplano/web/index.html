@@ -798,21 +798,17 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 }
 @media (max-width:480px){.grid4{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-tag{display:none}.facts{grid-template-columns:1fr}}
 
-/* App (lojas ou ícone na tela de início): abas fixas embaixo e sem links do site */
+/* App (lojas ou ícone na tela de início): só a medição e o relatório em PDF, sem links do site */
 .so-app{display:none!important}
 .nativo .so-app{display:inline-flex!important}
 .nativo .so-site{display:none!important}
 .nativo .login-side .brand{pointer-events:none}
-@media (max-width:860px){
-  .nativo .side{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:60;height:auto;padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:0;border-top:1px solid var(--panel-line);box-shadow:0 -6px 18px rgba(0,0,0,.18);scroll-snap-type:x proximity}
-  .nativo .side .brand{display:none}
-  .nativo .nav-grp{gap:0}
-  .nativo .nav-btn{flex-direction:column;gap:3px;min-width:76px;min-height:54px;padding:6px 4px;font-size:11px;font-weight:600;line-height:1.15;text-align:center;justify-content:center;white-space:normal;scroll-snap-align:start;position:relative}
-  .nativo .nav-btn svg{width:22px;height:22px}
-  .nativo .nav-btn .count{position:absolute;top:2px;right:10px;margin:0;min-width:16px;height:16px;font-size:10px;padding:0 4px}
-  .nativo .app-main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
-  .nativo .app-top{padding-top:env(safe-area-inset-top)}
-}
+.nativo .app{grid-template-columns:minmax(0,1fr)}
+.nativo .side,.nativo .plan-only,.nativo .hub-grid{display:none!important}
+.nativo .app-top{padding-top:calc(12px + env(safe-area-inset-top))}
+.nativo .app-main{padding-bottom:env(safe-area-inset-bottom)}
+.med-pdf{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.med-pdf .btn{min-height:48px;font-size:16px}
 
 /* Cores da marca: destaques sobre o azul-marinho usam o azul-claro */
 .hero h1 em{background:linear-gradient(transparent 62%,var(--hl) 62%,var(--hl) 92%,transparent 92%)}
@@ -1230,7 +1226,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <button class="btn btn-ghost btn-sm hub-sair" type="button" id="hubSair">Sair</button>
     </header>
     <main class="hub-main wrap">
-      <div><p class="eyebrow">Área do cliente</p><h2 class="h1" style="margin-top:8px">Escolha a área</h2></div>
+      <div><p class="eyebrow">Área do cliente</p><h2 class="h1" style="margin-top:8px"><span class="so-site">Escolha a área</span><span class="so-app">Sua obra</span></h2></div>
       <div id="hubConta" class="hub-conta"></div>
       <div class="hub-grid">
         <a class="hub-card" href="#sistema">
@@ -1246,6 +1242,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           <span class="go">Entrar na qualidade →</span>
         </a>
       </div>
+      <a class="btn btn-primary so-app" href="#sistema" style="text-decoration:none;align-self:flex-start;min-height:48px">Abrir a medição →</a>
       <div id="hubSenha"></div>
       <a class="linkbtn so-site" href="#inicio" style="text-decoration:none;align-self:flex-start">← Voltar ao site</a>
     </main>
@@ -1345,7 +1342,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         <span class="demo-tag ro-tag" id="roTag" hidden title="Seu acesso a esta obra é só para consulta">Só consulta</span>
         <div class="user">
           <span class="avatar" id="avatar" aria-hidden="true">CL</span>
-          <a class="btn btn-ghost btn-sm so-app" href="#area" style="text-decoration:none">Áreas</a>
+          <a class="btn btn-ghost btn-sm so-app" href="#area" style="text-decoration:none">Obra e senha</a>
           <button class="btn btn-ghost btn-sm" type="button" data-a="logout">Sair</button>
         </div>
       </header>
@@ -1377,6 +1374,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   var user = null;
   try { user = sessionStorage.getItem('cp_user'); } catch (e) {}
+  // app das lojas ou ícone na tela de início: só a medição e o relatório em PDF
+  var NATIVO = document.documentElement.classList.contains('nativo');
 
   function show(view) {
     site.hidden = view !== 'site'; login.hidden = view !== 'login'; app.hidden = view !== 'app'; hub.hidden = view !== 'hub';
@@ -1385,7 +1384,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
-    if ((h === '' || h === 'inicio') && document.documentElement.classList.contains('nativo')) { location.replace('#entrar'); h = 'entrar'; }
+    if ((h === '' || h === 'inicio') && NATIVO) { location.replace('#entrar'); h = 'entrar'; }
     if (h === 'demo') { abrirDemo(); return; }
     if (h.indexOf('senha=') === 0) { abrirSenha(h.slice(6)); return; }
     if (h === 'admin') {
@@ -1396,6 +1395,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     // "Entrar" / "Área do cliente" com a sessão aberta vai direto para o sistema; o seletor de áreas fica em #area
     if (h === 'entrar' && user) { location.replace('#sistema'); route(); return; }
     if (h === 'entrar' || h === 'area') { show(user ? 'hub' : 'login'); window.scrollTo(0, 0); return; }
+    if (h === 'qualidade' && NATIVO) { location.replace('#sistema'); h = 'sistema'; }  // no app só existe a medição
     if (h === 'sistema' || h === 'qualidade') {
       if (!user) { show('login'); window.scrollTo(0, 0); return; }
       if (API && CONTA && !CONTA.obra) { location.replace('#area'); route(); return; }  // sem obra aberta: escolher na área do cliente
@@ -1932,6 +1932,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   var saveT = null;
   function persist(now) {
     clearTimeout(saveT);
+    esquecerPdf();  // medição mudou: o próximo PDF sai de novo do servidor
     if (API) {
       var send = function () {
         if (!P) return Promise.resolve();
@@ -2722,7 +2723,43 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     S.prjMsg = 'Sem internet: esta ação precisa de conexão. A medição continua guardada no aparelho e será enviada quando a conexão voltar.';
     render(); return true;
   }
+  // no app o PDF vem em duas etapas (gerar, depois salvar/enviar): o compartilhar do celular só abre logo depois de um toque
+  var PDF = null;
+  function relatorioApp() {
+    if (PDF) { salvarPdf(); return; }
+    if (precisaRede()) return;
+    S.prjMsg = 'Gerando o relatório…'; render();
+    (P ? persist(true) : Promise.resolve()).then(function () {
+      return fetch('/api/relatorio.pdf', { credentials: 'same-origin' });
+    }).then(function (r) {
+      if (r.status === 401) { sessaoExpirou(); throw new Error('a sessão terminou.'); }
+      if (!r.ok) throw new Error('erro ' + r.status + '.');
+      var m = /filename="?([^";]+)/.exec(r.headers.get('Content-Disposition') || '');
+      return r.blob().then(function (b) {
+        PDF = { nome: m ? m[1] : 'relatorio.pdf', blob: b, url: URL.createObjectURL(b) };
+        S.prjMsg = 'Relatório pronto. Toque em “Salvar ou enviar o PDF”.'; render();
+      });
+    }).catch(function (e) { S.prjMsg = 'Não foi possível gerar o relatório: ' + (e.offline ? 'sem conexão com a internet.' : e.message); render(); });
+  }
+  function esquecerPdf() { if (PDF) { URL.revokeObjectURL(PDF.url); PDF = null; } }
+  function salvarPdf() {
+    var cap = window.Capacitor && window.Capacitor.Plugins, d = PDF;
+    if (cap && cap.Filesystem && cap.Share) {  // app das lojas: grava no aparelho e abre o compartilhar (WhatsApp, e-mail, Arquivos)
+      var fr = new FileReader();
+      fr.onload = function () {
+        cap.Filesystem.writeFile({ path: d.nome, data: String(fr.result).split(',')[1], directory: 'CACHE' })
+          .then(function (w) { return cap.Share.share({ title: d.nome, url: w.uri }); })
+          .catch(function () {});
+      };
+      fr.readAsDataURL(d.blob); return;
+    }
+    var f = null;
+    try { f = new File([d.blob], d.nome, { type: 'application/pdf' }); } catch (e) {}
+    if (f && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: d.nome }).catch(function () {}); return; }
+    var a = document.createElement('a'); a.href = d.url; a.download = d.nome; document.body.appendChild(a); a.click(); a.remove();
+  }
   function baixarRelatorio() {
+    if (NATIVO) { relatorioApp(); return; }
     if (precisaRede()) return;
     var ir = function () { location.href = '/api/relatorio.pdf'; };
     if (P) persist(true).then(ir); else ir();
@@ -2730,6 +2767,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 
   function vMed() {
     if (!P) {
+      if (NATIVO) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">A medição usa o cronograma real da obra. A importação do .mpp é feita pelo computador, em custoplano.com.br. Depois disso, as tarefas aparecem aqui.</p>' + (API && NATIVO ? '<div class="med-pdf"><button type="button" class="btn btn-primary" data-a="prel">' + (PDF ? 'Salvar ou enviar o PDF' : 'Baixar relatório (PDF)') + '</button></div>' : '') +
+        (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') + '</section>';
       return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">A medição pelo celular usa o cronograma real da obra. Importe o .mpp (ou o .xml do MS Project) na tela Project, pelo computador ou pelo celular.</p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" data-a="nav:prj">Importar na tela Project</button>' +
         (API ? '<button type="button" class="btn btn-ghost" data-a="mex">Testar com o cronograma de exemplo</button>' : '') + '</div>' +
@@ -2803,12 +2842,13 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           pavs.map(function (n) { return '<option value="' + n + '"' + (S.med.pav !== '' && +S.med.pav === n ? ' selected' : '') + '>' + esc(rotPav(n)) + '</option>'; }).join('') + '</select>' : '') +
         '</div>' +
 
+        (API && NATIVO ? '<div class="med-pdf"><button type="button" class="btn btn-primary" data-a="prel">' + (PDF ? 'Salvar ou enviar o PDF' : 'Baixar relatório (PDF)') + '</button></div>' : '') +
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '</section>' +
       '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
-      (API ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
+      (API && !NATIVO ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
   }
 
@@ -3756,6 +3796,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var tag = document.getElementById('wkTag');
     tag.textContent = CUR === HOJE_W ? 'Dados de exemplo' : (CUR < HOJE_W ? 'Visualizando semana passada' : 'Simulando semana futura');
     tag.className = 'demo-tag plan-only' + (CUR === HOJE_W ? '' : ' alt');
+    if (NATIVO) { S.mod = 'plan'; S.screen = 'med'; }
     var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
     var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
