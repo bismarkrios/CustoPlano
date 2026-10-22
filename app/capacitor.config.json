@@ -3,7 +3,7 @@
   "appName": "Custo Plano",
   "webDir": "www",
   "server": {
-    "url": "https://custoplano.com.br/#entrar",
+    "url": "https://custoplano.com.br/?app=1#entrar",
     "errorPath": "index.html",
     "allowNavigation": ["custoplano.com.br"]
   },
