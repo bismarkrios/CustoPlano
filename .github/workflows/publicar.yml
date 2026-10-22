@@ -32,10 +32,10 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependências
-        run: pip install flask openpyxl
+        run: pip install flask openpyxl reportlab
 
       - name: Verificar sintaxe
-        run: python -m py_compile app.py banco.py cronograma.py correio.py
+        run: python -m py_compile app.py banco.py cronograma.py correio.py whatsapp.py
 
       - name: Garantir que nenhuma chave de API está no site (frontend)
         run: |
