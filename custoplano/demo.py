@@ -256,3 +256,76 @@ def semear(uid: int, hoje: dt.date | None = None) -> None:
     if dados:
         banco.salvar_orcamento(uid, ARQUIVO, dados)
         banco.salvar_lancamentos(uid, lanc)
+
+    _qualidade(uid, tarefas, hoje, rnd)
+
+
+# serviço do cronograma -> modelo de FVS da biblioteca
+FVS_DO_SERVICO = {"Estrutura": "FVS-03", "Alvenaria": "FVS-01", "Instalações": "FVS-10", "Reboco": "FVS-05", "Contrapiso": "FVS-04"}
+INSPETORES = ["Eng. Paula Mendes", "Téc. Rafael Souza"]
+OBS_NC = {
+    "FVS-01": ("Prumo", "Desvio de 6 mm em 1 m na parede da sala"),
+    "FVS-03": ("Cura", "Cura interrompida no segundo dia em parte da laje"),
+    "FVS-10": ("Teste de estanqueidade", "Vazamento na conexão do ramal do banheiro"),
+    "FVS-05": ("Planeza", "Ondulação de 5 mm sob régua de 2 m no hall"),
+    "FVS-04": ("Nível e caimento", "Caimento invertido no box do banheiro"),
+}
+
+
+def _qualidade(uid: int, tarefas, hoje: dt.date, rnd) -> None:
+    """FVS e não conformidades inventadas para a obra de demonstração: inspeções dos pavimentos já executados,
+    algumas reprovadas (viram NC), reinspeções que fecham NCs e uma NC aberta pela obra."""
+    import qualidade as ql
+    with banco.conectar() as con:
+        con.execute("DELETE FROM ncs WHERE usuario_id=?", (uid,))
+        con.execute("DELETE FROM inspecoes WHERE usuario_id=?", (uid,))
+        con.execute("DELETE FROM fvs_tarefas WHERE usuario_id=?", (uid,))
+        con.execute("DELETE FROM fotos WHERE usuario_id=?", (uid,))
+    ql.garantir_biblioteca(uid)
+    with banco.conectar() as con:
+        modelos = {r["codigo"]: dict(r) for r in con.execute("SELECT id, codigo, itens FROM fvs_modelos WHERE usuario_id=?", (uid,))}
+    feitas = []
+    for t in tarefas:
+        if t["resumo"] or t.get("marco") or t["nivel"] != 4 or t["fim"] > hoje or t["fim"] < hoje - dt.timedelta(weeks=6):
+            continue
+        serv = next(x for x in tarefas if x["resumo"] and x["nivel"] == 3 and t["eap"].startswith(x["eap"] + "."))
+        torre = next(x for x in tarefas if x["resumo"] and x["nivel"] == 2 and t["eap"].startswith(x["eap"] + "."))
+        if serv["nome"] in FVS_DO_SERVICO:
+            feitas.append((t, serv["nome"], torre["nome"]))
+    reprovar = {i for i in range(len(feitas)) if rnd.random() < 0.22}
+    for i, (t, serv, torre) in enumerate(feitas):
+        mod = modelos[FVS_DO_SERVICO[serv]]
+        itens = json.loads(mod["itens"])
+        data = min(t["fim"] + dt.timedelta(days=rnd.choice((1, 2, 3))), hoje)
+        if data.weekday() >= 5:
+            data -= dt.timedelta(days=data.weekday() - 4)
+        alvo, obs = OBS_NC[mod["codigo"]]
+        ruim = i in reprovar
+        marc = [dict(it, status="nc" if ruim and it["item"] == alvo else "ok", obs=obs if ruim and it["item"] == alvo else "")
+                for it in itens]
+        local = f"{torre} · {t['nome']}"
+        iid = ql.registrar_inspecao(uid, {"modelo_id": mod["id"], "local": local, "data": data.isoformat(),
+                                          "inspetor": INSPETORES[i % 2], "itens": marc, "cid": f"demo-{t['uid']}"})
+        # as reprovadas há mais de uma semana já foram corrigidas e reinspecionadas
+        if ruim and data < hoje - dt.timedelta(days=7):
+            re_data = data + dt.timedelta(days=4)
+            ql.registrar_inspecao(uid, {"modelo_id": mod["id"], "local": local, "data": re_data.isoformat(), "inspetor": INSPETORES[0],
+                                        "itens": [dict(it, status="ok", obs="") for it in itens], "reinspecao_de": iid,
+                                        "cid": f"demo-re-{t['uid']}"})
+            with banco.conectar() as con:
+                con.execute("UPDATE ncs SET responsavel=?, causa=?, acao=? WHERE usuario_id=? AND inspecao_id=?",
+                            ("Mestre de obras", "Conferência feita só no fim do serviço", "Serviço refeito e conferido pela equipe",
+                             uid, iid))
+        elif ruim:
+            with banco.conectar() as con:
+                con.execute("UPDATE ncs SET responsavel=?, status='tratamento' WHERE usuario_id=? AND inspecao_id=?",
+                            ("Empreiteiro " + serv.lower(), uid, iid))
+    # registros com a data em que a inspeção foi feita (não a de hoje), para o tempo de fechamento das NCs fazer sentido
+    with banco.conectar() as con:
+        con.execute("UPDATE inspecoes SET criado_em = data || 'T17:00:00' WHERE usuario_id=?", (uid,))
+        con.execute("UPDATE ncs SET criado_em = (SELECT i.data FROM inspecoes i WHERE i.id = ncs.inspecao_id) || 'T17:00:00' "
+                    "WHERE usuario_id=? AND inspecao_id IS NOT NULL", (uid,))
+    ql.salvar_nc(uid, {"descricao": "Guarda-corpo provisório solto no 6º pavimento da Torre A", "servico": "Segurança do canteiro",
+                       "local": "Torre A · 6º pavimento", "gravidade": "alta", "responsavel": "Técnico de segurança",
+                       "prazo": (hoje + dt.timedelta(days=2)).isoformat(), "origem": "Obra", "cid": "demo-nc-gc"})
+
