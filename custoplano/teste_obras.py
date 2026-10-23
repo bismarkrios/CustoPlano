@@ -2,6 +2,7 @@
 administração só para a equipe e links de senha de uso único.
 Rodar com:  CP_BANCO=/tmp/obras.db CP_SECRET=x CP_COPIAS_AUTO=0 python teste_obras.py
 """
+import gzip
 import io
 import os
 import sys
@@ -108,6 +109,18 @@ checar(eng.post("/api/admin/usuario", json={"email": "x@y.com", "equipe": True})
 r = adm.get("/api/admin/copia")
 checar(r.status_code == 200 and r.data[:2] == b"\x1f\x8b", "a cópia baixada não é um .gz")
 checar(app.app.test_client().get("/saude").status_code == 200, "/saude não respondeu")
+
+# ---- apagar de vez: some a obra, as cópias antigas saem e fica uma cópia nova sem ela
+banco.copia_de_seguranca("teste")
+o3 = adm.post("/api/admin/obra", json={"nome": "Obra Sigilosa"}).get_json()["id"]
+banco.copia_de_seguranca("com-sigilosa")
+antes = {c["nome"] for c in banco.listar_copias()}
+checar(adm.post("/api/admin/obra/remover", json={"id": o3, "confirmar": "Obra Sigilosa", "de_vez": True}).status_code == 200, "não apagou de vez")
+depois = banco.listar_copias()
+checar(len(depois) == 1 and depois[0]["nome"] not in antes, f"cópias antigas ficaram: {depois}")
+checar(banco.obra(o3) is None, "obra apagada de vez continua no banco")
+checar(b"Obra Sigilosa" not in open(banco.CAMINHO, "rb").read(), "nome da obra ficou no arquivo do banco")
+checar(b"Obra Sigilosa" not in gzip.open(os.path.join(banco.pasta_copias(), depois[0]["nome"])).read(), "obra apagada está na cópia nova")
 
 if falhas:
     print("FALHOU:\n- " + "\n- ".join(falhas))

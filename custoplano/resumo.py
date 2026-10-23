@@ -52,13 +52,14 @@ def _qualidade(con, uid: int, hoje: dt.date) -> dict:
 
 
 def _custo(analise: dict | None) -> dict:
-    """Só os totais da análise de custos (a mesma da tela Custos)."""
+    """Só índices e percentuais da análise de custos (a mesma da tela Custos): nenhum valor em reais vai para o log."""
     if not analise:
         return {"orcamento": "não importado"}
     t = analise["totais"]
     r2 = lambda v: round(v, 2) if v is not None else None  # noqa: E731
-    return {"orcado": r2(t["bac"]), "previsto_ate_hoje": r2(t["vp"]), "agregado": r2(t["va"]), "realizado": r2(t["cr"]),
-            "idc": r2(t["idc"]), "idp": r2(t["idp"]), "estimativa_final": r2(t["eac"]), "desvio_final": r2(t["vac"])}
+    pct = lambda v: round(100 * v / t["bac"], 1) if v is not None and t.get("bac") else None  # noqa: E731
+    return {"idc": r2(t["idc"]), "idp": r2(t["idp"]), "previsto_ate_hoje_pct": pct(t["vp"]), "agregado_pct": pct(t["va"]),
+            "realizado_pct": pct(t["cr"]), "desvio_final_pct": pct(t["vac"])}
 
 
 def resumo_obras(hoje: dt.date | None = None, analise_custos=None) -> list[dict]:

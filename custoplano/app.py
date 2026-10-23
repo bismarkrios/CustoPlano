@@ -601,8 +601,12 @@ def admin_obra_remover():
         return erro("Obra não encontrada.", 404)
     if str(d.get("confirmar") or "").strip().lower() != o["nome"].strip().lower():
         return erro("Para apagar, digite o nome da obra exatamente como aparece.")
-    banco.copia_de_seguranca(f"antes-de-apagar-obra-{o['id']}")
-    banco.remover_obra(o["id"])
+    if d.get("de_vez") is True:  # dados que não podem ficar guardados: sem cópia e sem as cópias antigas
+        banco.apagar_de_vez(o["id"])
+        print(f"Obra {o['id']} apagada de vez (com as cópias antigas).", flush=True)
+    else:
+        banco.copia_de_seguranca(f"antes-de-apagar-obra-{o['id']}")
+        banco.remover_obra(o["id"])
     if session.get("obra") == o["id"]:
         session.pop("obra", None)
     return jsonify(ok=True)

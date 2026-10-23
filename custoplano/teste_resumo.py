@@ -61,12 +61,13 @@ checar(y["cronograma"] == "não importado" and y["ppc"] is None and y["ncs_abert
 checar(y["qualidade"]["inspecoes_30d"] == 0 and y["qualidade"]["aprovacao_1a_pct"] is None, f"qualidade da obra vazia errada: {y}")
 checar("custo" not in y, "custo apareceu sem a análise de custos")
 
-# custo: totais da análise de custos (a mesma da tela Custos); um orçamento com problema não derruba o resumo
+# custo: só índices e percentuais da análise de custos, sem reais (a mesma da tela Custos); um orçamento com problema não derruba o resumo
 y = next(x for x in resumo.resumo_obras(hoje, app.analise_custos) if x["obra"] == "Obra vazia")
 checar(y["custo"] == {"orcamento": "não importado"}, f"custo de obra sem orçamento errado: {y.get('custo')}")
 tot = {"bac": 1000.0, "vp": 500.0, "va": 400.0, "cr": 500.0, "idc": 0.8, "idp": 0.8, "eac": 1250.0, "vac": -250.0}
 z = next(x for x in resumo.resumo_obras(hoje, lambda oid: {"totais": tot}) if x["obra"] == "Obra vazia")
-checar(z["custo"]["idc"] == 0.8 and z["custo"]["desvio_final"] == -250.0 and z["custo"]["realizado"] == 500.0, f"custo errado: {z}")
+checar(z["custo"]["idc"] == 0.8 and z["custo"]["desvio_final_pct"] == -25.0 and z["custo"]["realizado_pct"] == 50.0, f"custo errado: {z}")
+checar(not any(k in z["custo"] for k in ("orcado", "realizado", "estimativa_final", "desvio_final")), f"valor em reais no log: {z}")
 
 
 def quebra(oid):

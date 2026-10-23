@@ -4180,7 +4180,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (a[0] === 'apagar' && obra) {
       var c = prompt('Isto apaga a obra "' + obra.nome + '" e todos os dados dela (cronograma, medições, custos, FVS e fotos). Antes, o sistema guarda uma cópia de segurança.\n\nPara confirmar, digite o nome da obra:');
       if (c === null) return;
-      api('/api/admin/obra/remover', { id: id, confirmar: c }).then(function () { return api('/api/me').then(function (r) { CONTA = r; if (!r.obra) limparObra(); carregarAdm(); }); }, function (err) { alert(err.message); }); return;
+      var deVez = confirm('Apagar também todas as cópias de segurança antigas?\n\nOK: use quando os dados desta obra não podem ficar guardados em lugar nenhum (por exemplo, dados de outra empresa). O sistema faz em seguida uma cópia nova, já sem esta obra.\nCancelar: apaga só a obra e guarda uma cópia de antes, como de costume.');
+      api('/api/admin/obra/remover', { id: id, confirmar: c, de_vez: deVez }).then(function () { return api('/api/me').then(function (r) { CONTA = r; if (!r.obra) limparObra(); carregarAdm(); }); }, function (err) { alert(err.message); }); return;
     }
     if (a[0] === 'liberar') {
       var so = document.querySelector('[data-sel="obra:' + id + '"]'), sp = document.querySelector('[data-sel="papel:' + id + '"]');

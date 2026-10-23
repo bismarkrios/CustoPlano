@@ -363,6 +363,22 @@ def remover_obra(obra_id: int) -> None:
         con.execute("DELETE FROM obras WHERE id = ?", (obra_id,))
 
 
+def apagar_de_vez(obra_id: int) -> None:
+    """Para dados que não podem ficar guardados: apaga a obra, reescreve o arquivo do banco (VACUUM) para não
+    sobrar nada dela no disco, tira todas as cópias de segurança antigas (que ainda têm a obra) e faz uma
+    cópia nova, já sem ela."""
+    remover_obra(obra_id)
+    con = sqlite3.connect(CAMINHO)
+    try:
+        con.execute("VACUUM")
+        con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    finally:
+        con.close()
+    for c in listar_copias():
+        os.remove(os.path.join(pasta_copias(), c["nome"]))
+    copia_de_seguranca()
+
+
 def definir_acesso(uid: int, obra_id: int, papel: str | None) -> None:
     with conectar() as con:
         if papel is None:
