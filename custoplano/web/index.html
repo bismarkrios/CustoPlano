@@ -408,6 +408,15 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .avatar{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--ground);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .btn-sm{min-height:36px;padding:0 12px;font-size:14px;border-radius:4px}
 .app-body{padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;gap:18px}
+/* telas internas: entrada suave ao trocar de tela, cartões que respondem ao mouse */
+.app-body.entra>*{animation:cp-sobe .45s cubic-bezier(.2,.7,.2,1) both}
+.app-body.entra>:nth-child(2){animation-delay:.04s}.app-body.entra>:nth-child(3){animation-delay:.08s}.app-body.entra>:nth-child(n+4){animation-delay:.12s}
+.grid4>.card{transition:transform .18s,box-shadow .18s,border-color .18s}
+.grid4>.card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--blue) 45%,var(--line));box-shadow:0 10px 24px color-mix(in srgb,var(--ink) 9%,transparent)}
+.nav-btn{transition:background .15s,color .15s}
+.nav-btn svg{transition:transform .2s}
+.nav-btn:hover svg{transform:scale(1.12)}
+@media (max-width:860px){.app-top{flex-wrap:nowrap}.app-top .obra-nome{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.app-top .obra-nome .chip{display:none}.user{flex:none}}
 .app-head h1{font-size:clamp(26px,2.6vw,32px);font-weight:800;letter-spacing:0}
 .app-head p{color:var(--muted);margin-top:4px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
@@ -2495,7 +2504,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         '<div class="bar" style="margin-top:10px"><i style="width:' + Math.min(100, prev) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, real) + '%;background:var(--accent)"></i></div></div>' +
       '<div class="card"><div class="kpi-t">PPC · ' + cpRot(perF).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pacF.length + ' pacotes concluídos · meta 80%</div></div>' +
       '<div class="card"><div class="kpi-t">Tarefas atrasadas</div><div class="kpi-v" style="color:' + cor(!atras.length) + '">' + atras.length + '</div><div class="kpi-s">' + (atras.length ? 'de ' + fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd; }).length + ' que deviam estar prontas' : 'tudo o que devia terminar está pronto') + '</div></div>' +
-      '<div class="card"><div class="kpi-t">Prazo final</div><div class="kpi-v" style="color:' + (varFim == null ? 'inherit' : cor(varFim <= 0)) + '">' + (varFim == null ? fdate(fim) : varFim === 0 ? 'No prazo' : (varFim > 0 ? '+' : '−') + Math.abs(varFim) + ' dias') + '</div><div class="kpi-s">' + (fimB ? 'término ' + fdate(fim) + ' · linha de base ' + fdate(fimB) : 'sem linha de base salva no Project') + '</div></div>' +
+      '<div class="card"><div class="kpi-t">Prazo final</div><div class="kpi-v" style="color:' + (varFim == null ? 'inherit' : cor(varFim <= 0)) + '">' + (varFim == null ? fdate(fim) : varFim === 0 ? 'No prazo' : (varFim > 0 ? '+' : '−') + Math.abs(varFim) + (Math.abs(varFim) === 1 ? ' dia' : ' dias')) + '</div><div class="kpi-s">' + (fimB ? 'término ' + fdate(fim) + ' · linha de base ' + fdate(fimB) : 'sem linha de base salva no Project') + '</div></div>' +
       '</div>';
 
     // Curva S
@@ -2581,7 +2590,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     }
     // atrasadas e marcos (só o que tem conteúdo)
     var nomeL = function (t) { var l = localDe(t); return '<b style="font-weight:600">' + esc(servDe(t)) + '</b>' + (l ? ' <span style="color:var(--muted)">· ' + esc(l) + '</span>' : ''); };
-    var tabA = atras.slice(0, 10).map(function (t) { return '<tr><td>' + nomeL(t) + '<div class="kpi-s">EAP ' + esc(t.wbs) + '</div></td><td>' + fdate(fimLB(t)) + '</td><td style="text-align:right">' + fmt1(P.meas[t.uid] || 0) + '%</td><td style="text-align:right;color:var(--bad);font-weight:600">' + Math.round((sd - fimLB(t)) / dia) + ' dias</td></tr>'; }).join('');
+    var tabA = atras.slice(0, 10).map(function (t) { return '<tr><td>' + nomeL(t) + '<div class="kpi-s">EAP ' + esc(t.wbs) + '</div></td><td>' + fdate(fimLB(t)) + '</td><td style="text-align:right">' + fmt1(P.meas[t.uid] || 0) + '%</td><td style="text-align:right;color:var(--bad);font-weight:600">' + sdias(Math.round((sd - fimLB(t)) / dia)).replace('+', '') + '</td></tr>'; }).join('');
     var marcos = P.tasks.filter(function (t) { return t.ms && t.finish != null && t.finish >= sd - dia; }).sort(function (a, b) { return a.finish - b.finish; }).slice(0, 6);
     var tabM = marcos.map(function (t) { var v = t.bFinish ? Math.round((t.finish - t.bFinish) / dia) : null; return '<tr><td><b style="font-weight:600">' + esc(t.name) + '</b></td><td>' + fdate(t.finish) + '</td><td style="text-align:right;color:' + (v == null ? 'var(--muted)' : cor(v <= 0)) + '">' + (v == null ? '—' : prazoTxt(v)) + '</td></tr>'; }).join('');
     var cA = tabA ? '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:16px 18px 4px"><h2>Tarefas atrasadas</h2>' + (atras.length > 10 ? '<button class="more" type="button" data-a="nav:med">Ver as ' + atras.length + ' →</button>' : '') + '</div>' +
@@ -3234,7 +3243,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '<div class="card"><div class="kpi-t">Inspeções (FVS)</div><div class="kpi-v">' + I.length + '</div><div class="kpi-s">' + I.filter(function (i) { return i.data.slice(0, 7) === mes; }).length + ' neste mês</div></div>' +
       '<div class="card"><div class="kpi-t">Aprovação na 1ª inspeção</div><div class="kpi-v">' + (primeiras.length ? Math.round(apr1 / primeiras.length * 100) + '%' : '—') + '</div><div class="kpi-s">' + apr1 + ' de ' + primeiras.length + ' inspeções</div></div>' +
       '<div class="card"><div class="kpi-t">Não conformidades abertas</div><div class="kpi-v" style="color:' + (abertas.length ? 'var(--bad)' : 'var(--good)') + '">' + abertas.length + '</div><div class="kpi-s">' + (venc.length ? '<span class="due">' + venc.length + ' com prazo vencido</span>' : 'nenhuma com prazo vencido') + '</div><button class="more" type="button" data-a="nav:qn">Ver não conformidades →</button></div>' +
-      '<div class="card"><div class="kpi-t">Tempo médio para fechar NC</div><div class="kpi-v">' + (tmed == null ? '—' : tmed + ' d') + '</div><div class="kpi-s">' + fech.length + ' NCs fechadas</div></div></div>';
+      '<div class="card"><div class="kpi-t">Tempo médio para fechar NC</div><div class="kpi-v">' + (tmed == null ? '—' : tmed + (tmed === 1 ? ' dia' : ' dias')) + '</div><div class="kpi-s">' + fech.length + ' NCs fechadas</div></div></div>';
     var acao = '<section class="card q-cta"><span style="flex:1 1 240px"><b>Inspecionar um serviço</b><span class="kpi-s" style="display:block">Aplique a FVS no local, marque cada item e registre as fotos. Funciona sem internet.</span></span><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button></section>';
     var graf = '<section class="card"><div class="card-head"><h2>Não conformidades por serviço</h2></div>' + (ks.length ? '<div class="q-bars">' + ks.map(function (k) { return '<div><span>' + esc(k) + '</span><div class="bar" style="height:10px"><i style="width:' + (porServ[k] / mx * 100) + '%;background:var(--bad)"></i></div><b class="mono">' + porServ[k] + '</b></div>'; }).join('') + '</div>' : '<p class="kpi-s">Nenhuma não conformidade registrada.</p>') + '</section>';
     var ult = '<section class="card"><div class="card-head"><h2>Últimas inspeções</h2><button class="more" type="button" data-a="nav:qi">Todas →</button></div>' + (I.slice(0, 6).map(function (i) {
@@ -3856,6 +3865,25 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   document.getElementById('hubSair').addEventListener('click', sair);
   var body = document.getElementById('appBody');
+  var telaAntes = null, entraT = 0;
+  // os números grandes dos indicadores sobem do zero ao valor quando a tela abre
+  function contarKpis() {
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    Array.prototype.forEach.call(body.querySelectorAll('.kpi-v'), function (el) {
+      if (el.children.length) return;
+      var m = /^([+−-]?)(\d{1,3}(?:\.\d{3})*|\d+)(,\d+)?(%| dias?)?$/.exec(el.textContent.trim());
+      if (!m) return;
+      var alvo = parseFloat(m[2].replace(/\./g, '') + (m[3] ? '.' + m[3].slice(1) : '')), casas = m[3] ? m[3].length - 1 : 0, t0 = performance.now(), fim = el.textContent;
+      if (!(alvo > 0)) return;
+      (function passo(t) {
+        if (!el.isConnected) return;
+        var k = Math.min(1, (t - t0) / 650), e = 1 - Math.pow(1 - k, 3);
+        if (k >= 1) { el.textContent = fim; return; }
+        el.textContent = m[1] + (alvo * e).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) + (m[4] || '');
+        requestAnimationFrame(passo);
+      })(t0);
+    });
+  }
   var DEMO_TELAS = { cron: 1, lb: 1, res: 1 };
   // com servidor, a demonstração usa as mesmas telas do cliente (a conta demo recebe uma obra de exemplo no login)
   function contaReal() { return API && !!user; }
@@ -3874,8 +3902,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function (b) {
       if (b.getAttribute('data-a') === 'nav:' + S.screen) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
-    var ini = (user || 'CL').replace(/@.*/, '').split(/[._-]/).filter(Boolean).map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase() || 'CL';
-    document.getElementById('avatar').textContent = ini;
+    var nm = (CONTA && CONTA.nome && !ehDemo() && !/custo plano/i.test(CONTA.nome)) ? CONTA.nome : '';
+    var ini = (nm ? nm.split(/\s+/) : (user || 'CL').replace(/@.*/, '').split(/[._-]/)).filter(Boolean).map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase() || 'CL';
+    var av = document.getElementById('avatar'); av.textContent = ini; av.title = nm || user || '';
     var sel = document.getElementById('wkSel'), opts = '';
     for (var w = 1; w <= WEEKS; w++) {
       var d0 = new Date(W1 + (w - 1) * 7 * 864e5), d1 = new Date(W1 + ((w - 1) * 7 + 4) * 864e5);
@@ -3893,6 +3922,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
     var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
+    if (S.screen !== telaAntes) { telaAntes = S.screen; body.classList.remove('entra'); void body.offsetWidth; body.classList.add('entra'); clearTimeout(entraT); entraT = setTimeout(function () { body.classList.remove('entra'); }, 900); contarKpis(); }
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
     var qm = S.mod === 'qual';
