@@ -66,6 +66,12 @@ jobs:
           r = c.get("/sitemap.xml")
           assert r.status_code == 200 and b"custoplano.com.br/manual" in r.data, f"sitemap.xml respondeu {r.status_code}"
           assert b"application/ld+json" in c.get("/").data, "faltou o cartão da empresa para o Google"
+          r = c.get("/artigos")
+          assert r.status_code == 200 and "Artigos sobre gestão de obras".encode() in r.data, f"página de artigos respondeu {r.status_code}"
+          for n in app.ARTIGOS:
+              r = c.get("/artigos/" + n)
+              assert r.status_code == 200 and b"<h1>" in r.data and b"/artigos/" + n.encode() in c.get("/sitemap.xml").data, f"artigo {n} respondeu {r.status_code}"
+          assert c.get("/artigos/../app.py").status_code == 404 and c.get("/artigos/qualquer").status_code == 404, "artigo inexistente abriu"
           print("site OK")
           PY
 

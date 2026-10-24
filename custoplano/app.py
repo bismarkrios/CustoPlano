@@ -366,6 +366,32 @@ def pagina_privacidade():
     return r
 
 
+ARTIGOS = ("obra-atrasada-ou-so-parece", "ppc-planejamento-semanal", "curva-s-como-ler")
+
+
+def _pagina_estatica(arquivo: str) -> Response:
+    """Página de texto sem nenhum script: o cabeçalho de segurança proíbe qualquer JavaScript."""
+    r = send_from_directory(PASTA_WEB, arquivo, mimetype="text/html")
+    r.headers["Cache-Control"] = "no-cache"
+    r.headers["Content-Security-Policy"] = (
+        "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+    return r
+
+
+@app.get("/artigos")
+def artigos():
+    """Lista de artigos sobre gestão de obras (ajuda o site a aparecer no Google)."""
+    return _pagina_estatica("artigos/index.html")
+
+
+@app.get("/artigos/<nome>")
+def artigo(nome: str):
+    if nome not in ARTIGOS:  # só os artigos publicados, nunca um caminho qualquer
+        abort(404)
+    return _pagina_estatica(f"artigos/{nome}.html")
+
+
 @app.get("/robots.txt")
 def robots():
     """Libera o site para o Google e esconde a área do sistema."""
@@ -376,7 +402,7 @@ def robots():
 @app.get("/sitemap.xml")
 def sitemap():
     """Páginas públicas para o Google Search Console."""
-    urls = "".join(f"<url><loc>https://custoplano.com.br{p}</loc></url>" for p in ("/", "/manual", "/privacidade"))
+    urls = "".join(f"<url><loc>https://custoplano.com.br{p}</loc></url>" for p in ("/", "/manual", "/privacidade", "/artigos") + tuple("/artigos/" + n for n in ARTIGOS))
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
            f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>')
     return Response(xml, mimetype="application/xml")

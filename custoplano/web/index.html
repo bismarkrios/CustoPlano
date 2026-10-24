@@ -201,6 +201,15 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .pilares h3{margin:0}
 .pilares p{margin:0;color:var(--muted)}
 @media (max-width:860px){.pilares{grid-template-columns:minmax(0,1fr)}}
+@media (min-width:861px) and (max-width:1199px){.menu .so-largo{display:none}}
+.atende{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:28px;align-items:start}
+.pilares.segs{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cidades{display:flex;flex-direction:column;gap:12px;padding:20px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.cidades h3{margin:0}
+.cidades ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.cidades li{font-size:14.5px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--blue-soft);color:var(--ink)}
+.cidades p{margin:0;color:var(--muted);font-size:15px}
+@media (max-width:860px){.atende{grid-template-columns:minmax(0,1fr)}.pilares.segs{grid-template-columns:minmax(0,1fr)}}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 .hero-pts{list-style:none;margin:20px 0 26px;padding:0;display:grid;gap:10px;max-width:60ch}
@@ -910,6 +919,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <a href="#telas">O sistema</a>
       <a href="#qualidade">Qualidade</a>
       <a href="#duvidas">Dúvidas</a>
+      <a class="so-largo" href="/artigos">Artigos</a>
       <a class="so-cel" href="#contato">Contato</a>
     </nav>
     <div class="actions">
@@ -1039,6 +1049,30 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           </ul>
         </li>
       </ol>
+    </div>
+  </section>
+
+  <section class="block" id="atendemos">
+    <div class="wrap sec">
+      <header>
+        <h2>Para quem trabalhamos</h2>
+        <p>Construtoras e incorporadoras de pequeno e médio porte que querem a obra sob controle sem montar um departamento de planejamento próprio.</p>
+      </header>
+      <div class="atende">
+        <ol class="pilares segs">
+          <li><span class="n">01</span><h3>Residencial vertical</h3><p>Edifícios com torres e pavimentos tipo, em que o ritmo por pavimento e a linha de balanço fazem a diferença.</p></li>
+          <li><span class="n">02</span><h3>Residencial horizontal e condomínios</h3><p>Casas e conjuntos com muitas unidades repetidas, controlados por frente de serviço.</p></li>
+          <li><span class="n">03</span><h3>Comercial e corporativo</h3><p>Lojas, salas e galpões com data de entrega combinada com o cliente final.</p></li>
+          <li><span class="n">04</span><h3>Reformas e retrofit</h3><p>Obras com o imóvel em uso, em que planejar as etapas evita parar a operação.</p></li>
+        </ol>
+        <div class="cidades">
+          <h3>Onde atuamos</h3>
+          <ul>
+            <li>São Paulo</li><li>Guarulhos</li><li>São José dos Campos</li><li>Atibaia</li><li>Bragança Paulista</li>
+          </ul>
+          <p>E nas cidades vizinhas. Para obras em outras regiões, <a href="#contato">fale com a gente</a>.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1220,6 +1254,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     <span>Custo Plano Consultoria · prazo, custo e qualidade de obras</span>
     <nav class="rodape" aria-label="Rodapé">
       <a href="#demo">Obra de demonstração</a>
+      <a href="/artigos">Artigos</a>
       <a href="/privacidade">Privacidade e termos</a>
       <a href="#entrar">Área do cliente</a>
       <a href="https://wa.me/5511988236792" target="_blank" rel="noopener">WhatsApp (11) 98823-6792</a>
