@@ -327,6 +327,50 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 .btn-block{width:100%}
 @media (max-width:860px){.login{grid-template-columns:1fr}.login-side{order:2}}
+/* Telas de acesso: mais humanas (foto real do sistema, respostas na hora) */
+@keyframes cp-sobe{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes cp-treme{10%,90%{transform:translateX(-1px)}20%,80%{transform:translateX(2px)}30%,50%,70%{transform:translateX(-4px)}40%,60%{transform:translateX(4px)}}
+@keyframes cp-gira{to{transform:rotate(360deg)}}
+.login-card>*,.lg-tela,.login-card>:nth-child(2){animation-delay:.06s}.login-card>:nth-child(3){animation-delay:.12s}.login-card>:nth-child(n+4){animation-delay:.18s}
+.lg-tela{animation-delay:.1s}.hub-main>:nth-child(2){animation-delay:.06s}.hub-main>:nth-child(n+3){animation-delay:.12s}
+.lg-pilares{display:flex;flex-wrap:wrap;gap:8px}
+.lg-pilares span{font-size:13px;font-weight:600;padding:5px 12px;border-radius:99px;border:1px solid var(--panel-line);color:var(--panel-ink)}
+.lg-tela{position:relative;margin:0;max-width:440px}
+.lg-tela img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--panel-line);box-shadow:0 18px 40px rgba(0,0,0,.35);transition:transform .4s}
+.lg-tela:hover img{transform:scale(1.01)}
+.lg-tela figcaption{position:absolute;right:-6px;bottom:-14px;display:flex;align-items:center;gap:8px;background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:600;padding:9px 14px;border-radius:99px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.lg-tela figcaption i{width:9px;height:9px;border-radius:50%;background:#1FAF55;box-shadow:0 0 0 4px color-mix(in srgb,#1FAF55 25%,transparent)}
+.lg-senha{position:relative}
+.lg-senha input{padding-right:84px}
+.lg-ver{position:absolute;right:6px;top:50%;transform:translateY(-50%);min-height:34px;padding:0 10px;border:0;border-radius:6px;background:transparent;color:var(--blue);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.lg-ver:hover{background:var(--blue-soft)}
+.lg-dica{font-size:13px;color:var(--bad);margin:0}
+.lg-lembrar{display:flex;align-items:center;gap:10px;font-weight:500;font-size:15px;cursor:pointer}
+.lg-lembrar input{width:20px;height:20px;min-height:0;margin:0;accent-color:var(--blue)}
+.login-card input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 22%,transparent)}
+.login-card input.erro{border-color:var(--bad);box-shadow:0 0 0 3px color-mix(in srgb,var(--bad) 18%,transparent)}
+.login-card .treme{animation:cp-treme .4s both}
+#lg-msg.erro{background:var(--bad-bg);color:var(--ink)}
+.lg-entrar{display:inline-flex;align-items:center;justify-content:center;gap:10px}
+.lg-entrar .roda{display:none;width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:cp-gira .8s linear infinite}
+.lg-entrar[aria-busy="true"] .roda{display:inline-block}
+.lg-entrar[aria-busy="true"]{opacity:.85;cursor:progress}
+.lg-ajuda{display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--muted);margin:0}
+.lg-ajuda a{color:var(--blue);font-weight:600}
+.lg-ajuda svg{flex:none;color:#1FAF55}
+@media (min-width:861px){.login-side{padding-block:clamp(24px,4vh,48px);gap:clamp(16px,3vh,28px);justify-content:flex-start}.login-side>div:nth-child(2){margin-top:auto}.lg-tela{margin-bottom:auto}.login-side h2{font-size:clamp(30px,3vw,42px)}}
+@media (max-width:860px){.lg-tela{display:none}.login-side{gap:20px}.login-side h2{font-size:28px}}
+.hub-ola{display:flex;flex-direction:column;gap:6px}
+.hub-ola p{margin:0;color:var(--muted);font-size:17px}
+.hub-card{position:relative;overflow:hidden;box-shadow:0 1px 0 var(--line)}
+.hub-card::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--blue);transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.hub-card:hover,.hub-card:focus-visible{box-shadow:0 14px 30px color-mix(in srgb,var(--ink) 12%,transparent)}
+.hub-card:hover::after,.hub-card:focus-visible::after{transform:scaleX(1)}
+.hub-card .hub-ic{transition:background .2s,color .2s}
+.hub-card:hover .hub-ic{background:var(--blue);color:#FFFFFF}
+.hub-card .go{display:inline-flex;align-items:center;gap:6px}
+.hub-card .go b{display:inline-block;transition:transform .2s}
+.hub-card:hover .go b{transform:translateX(5px)}
 
 /* ---------- Sistema ---------- */
 .app{min-height:100dvh;display:grid;grid-template-columns:236px minmax(0,1fr);background:var(--ground);font-size:15px}
@@ -1171,42 +1215,37 @@ footer.site .copy{flex-basis:100%;font-size:13px}
         <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="var(--s1)"></rect><rect x="12" y="10" width="6" height="18" fill="var(--s1)"></rect><rect x="22" y="2" width="6" height="26" fill="var(--accent)"></rect></svg>
         <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small style="color:var(--panel-muted)">Área do cliente</small></span>
       </a>
-      <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:16px">
         <h2>Sua obra, semana a semana.</h2>
         <p>Acompanhe o planejamento do seu empreendimento, organizado com a Custo Plano, com os dados registrados pela equipe no canteiro.</p>
-        <ul>
-          <li>Avanço físico e curva S</li>
-          <li>Linha de balanço por pavimento</li>
-          <li>Planejamento semanal e PPC</li>
-          <li>Restrições e responsáveis</li>
-          <li>Qualidade: FVS e não conformidades</li>
-        </ul>
+        <div class="lg-pilares" aria-label="O que acompanhamos"><span>Prazo</span><span>Custo</span><span>Qualidade</span></div>
       </div>
-      <svg viewBox="0 0 400 120" style="width:100%;max-width:420px;height:auto" aria-hidden="true">
-        <g stroke="var(--panel-line)"><line x1="0" y1="10" x2="400" y2="10"></line><line x1="0" y1="60" x2="400" y2="60"></line><line x1="0" y1="110" x2="400" y2="110"></line></g>
-        <g fill="none" stroke-width="4" stroke-linecap="round">
-          <path d="M0 110 L140 10" stroke="#8FB3DC"></path><path d="M50 110 L190 10" stroke="#AFC3D9"></path>
-          <path d="M100 110 L240 10" stroke="#86AE88"></path><path d="M150 110 L290 10" stroke="#B49AD6"></path>
-          <path d="M200 110 L340 10" stroke="#E0866A"></path>
-        </g>
-      </svg>
+      <figure class="lg-tela">
+        <img src="/web/telas/painel.jpg?v=2" width="1280" height="760" alt="Painel de uma obra no sistema da Custo Plano, com avanço, PPC e curva S">
+        <figcaption><i aria-hidden="true"></i>Atualizado pela equipe toda semana</figcaption>
+      </figure>
     </aside>
     <main class="login-main">
       <a class="linkbtn so-site" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
       <div class="login-card">
         <div>
-          <p class="eyebrow">Área do cliente</p>
-          <h2 class="h1" style="margin-top:8px">Entrar</h2>
+          <p class="eyebrow" id="lg-saud">Área do cliente</p>
+          <h2 class="h1" style="margin-top:8px" id="lg-tit">Entrar na sua obra</h2>
         </div>
         <form id="loginForm" novalidate>
           <div class="field"><label for="lg-email">E-mail</label><input id="lg-email" type="email" autocomplete="username" placeholder="voce@construtora.com.br" required></div>
-          <div class="field"><label for="lg-senha">Senha</label><input id="lg-senha" type="password" autocomplete="current-password" required></div>
+          <div class="field"><label for="lg-senha">Senha</label>
+            <div class="lg-senha"><input id="lg-senha" type="password" autocomplete="current-password" required><button class="lg-ver" type="button" id="lg-ver" aria-controls="lg-senha" aria-pressed="false">Mostrar</button></div>
+            <p class="lg-dica" id="lg-caps" hidden>O Caps Lock está ligado.</p>
+          </div>
+          <label class="lg-lembrar"><input type="checkbox" id="lg-lembrar">Lembrar meu e-mail neste aparelho</label>
           <p class="note" id="lg-msg" role="status" hidden></p>
-          <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+          <button class="btn btn-primary btn-block lg-entrar" type="submit" id="lg-entrar"><span class="roda" aria-hidden="true"></span><span id="lg-entrar-t">Entrar</span></button>
         </form>
         <button class="linkbtn" type="button" id="lg-forgot">Esqueci minha senha</button>
         <div class="divider">ou</div>
         <button class="btn btn-ghost btn-block" type="button" id="lg-demo">Ver obra de demonstração</button>
+        <p class="lg-ajuda"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.2.1.7-.1 1.4z"/></svg><span>Precisa de ajuda? <a id="lg-zap" href="https://wa.me/5511988236792" target="_blank" rel="noopener">Fale com a gente no WhatsApp</a></span></p>
         <p style="font-size:13px;color:var(--muted)" id="lg-note">Protótipo: qualquer e-mail e senha dão acesso à obra de exemplo. Os dados exibidos são fictícios.</p>
       </div>
     </main>
@@ -1226,20 +1265,20 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       <button class="btn btn-ghost btn-sm hub-sair" type="button" id="hubSair">Sair</button>
     </header>
     <main class="hub-main wrap">
-      <div><p class="eyebrow">Área do cliente</p><h2 class="h1" style="margin-top:8px"><span class="so-site">Escolha a área</span><span class="so-app">Sua obra</span></h2></div>
+      <div class="hub-ola"><p class="eyebrow" id="hubData">Área do cliente</p><h2 class="h1" id="hubOla">Olá!</h2><p><span class="so-site">Por onde você quer começar hoje?</span><span class="so-app">A medição da sua obra está a um toque.</span></p></div>
       <div id="hubConta" class="hub-conta"></div>
       <div class="hub-grid">
         <a class="hub-card" href="#sistema">
           <span class="hub-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path></svg></span>
           <h2>Planejamento</h2>
           <p>Cronograma e medição (com o MS Project), medição pelo celular, plano de ataque, custos e cronograma financeiro, linha de balanço, curto prazo e restrições.</p>
-          <span class="go">Entrar no planejamento →</span>
+          <span class="go">Entrar no planejamento <b aria-hidden="true">→</b></span>
         </a>
         <a class="hub-card" href="#qualidade">
           <span class="hub-ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 3v2h6V3"></path><path d="M9 12l2 2 4-4"></path></svg></span>
           <h2>Qualidade</h2>
           <p>Fichas de verificação de serviço (FVS) com fotos e assinatura, não conformidades e seu tratamento, matriz de inspeção por pavimento e modelos de FVS.</p>
-          <span class="go">Entrar na qualidade →</span>
+          <span class="go">Entrar na qualidade <b aria-hidden="true">→</b></span>
         </a>
       </div>
       <a class="btn btn-primary so-app" href="#sistema" style="text-decoration:none;align-self:flex-start;min-height:48px">Abrir a medição →</a>
@@ -1380,7 +1419,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   function show(view) {
     site.hidden = view !== 'site'; login.hidden = view !== 'login'; app.hidden = view !== 'app'; hub.hidden = view !== 'hub';
     admV.hidden = view !== 'adm'; senhaV.hidden = view !== 'senha';
-    if (view === 'hub') { document.getElementById('hubUser').textContent = user || ''; renderHub(); }
+    if (view === 'hub') { document.getElementById('hubUser').textContent = user || ''; saudarHub(); renderHub(); }
+    if (view === 'login') saudarLogin();
   }
   function route() {
     var h = (location.hash || '').replace('#', '');
@@ -1439,11 +1479,18 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 
   document.getElementById('loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    var em = document.getElementById('lg-email'), pw = document.getElementById('lg-senha'), msg = document.getElementById('lg-msg');
-    if (!em.value.trim() || !em.checkValidity()) { msg.textContent = 'Informe um e-mail válido.'; msg.hidden = false; em.focus(); return; }
-    if (!pw.value) { msg.textContent = 'Informe a sua senha.'; msg.hidden = false; pw.focus(); return; }
-    msg.hidden = true;
-    if (API) { api('/api/login', { email: em.value.trim(), senha: pw.value }).then(function (r) { pw.value = ''; CONTA = r; enter(r.email); }, function (err) { msg.textContent = err.message; msg.hidden = false; }); return; }
+    var em = document.getElementById('lg-email'), pw = document.getElementById('lg-senha'), msg = document.getElementById('lg-msg'), bt = document.getElementById('lg-entrar');
+    if (bt.getAttribute('aria-busy') === 'true') return;
+    em.classList.remove('erro'); pw.classList.remove('erro');
+    if (!em.value.trim() || !em.checkValidity()) { lgErro(em, 'Confira o e-mail: parece que falta alguma coisa.'); return; }
+    if (!pw.value) { lgErro(pw, 'Falta a senha.'); return; }
+    msg.hidden = true; msg.classList.remove('erro');
+    lembrarEmail(em.value.trim());
+    if (API) {
+      lgOcupado(true);
+      api('/api/login', { email: em.value.trim(), senha: pw.value }).then(function (r) { lgOcupado(false); pw.value = ''; CONTA = r; enter(r.email); }, function (err) { lgOcupado(false); lgErro(pw, err.message); });
+      return;
+    }
     enter(em.value.trim());
   });
   if (API) { document.getElementById('lg-note').textContent = 'Acesso com o e-mail e a senha fornecidos pela Custo Plano.'; if (!window.CP_DEMO) { document.getElementById('lg-demo').hidden = true; document.querySelector('.divider').hidden = true; } }
@@ -1481,6 +1528,51 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     msg.textContent = 'Enviando…';
     api('/api/senha/esqueci', { email: em.value.trim() }).then(function (r) { msg.textContent = r.msg; }, function (err) { msg.textContent = err.message; });
   });
+
+  /* ---------- Telas de acesso: saudação, lembrar o e-mail, mostrar a senha ---------- */
+  function periodo() { var h = new Date().getHours(); return h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; }
+  function lerEmail() { try { return localStorage.getItem('cp_email') || ''; } catch (e) { return ''; } }
+  function lembrarEmail(v) { try { if (document.getElementById('lg-lembrar').checked) localStorage.setItem('cp_email', v); else localStorage.removeItem('cp_email'); } catch (e) {} }
+  function saudarLogin() {
+    var em = document.getElementById('lg-email'), salvo = lerEmail();
+    document.getElementById('lg-saud').textContent = periodo();
+    document.getElementById('lg-tit').textContent = salvo ? 'Que bom te ver de novo' : 'Entrar na sua obra';
+    if (salvo && !em.value) { em.value = salvo; document.getElementById('lg-lembrar').checked = true; }
+    var pw = document.getElementById('lg-senha'), ver = document.getElementById('lg-ver');
+    pw.type = 'password'; ver.textContent = 'Mostrar'; ver.setAttribute('aria-pressed', 'false'); lgOcupado(false);
+  }
+  function lgOcupado(on) {
+    var bt = document.getElementById('lg-entrar');
+    bt.setAttribute('aria-busy', on ? 'true' : 'false');
+    document.getElementById('lg-entrar-t').textContent = on ? 'Entrando…' : 'Entrar';
+  }
+  function lgErro(campo, texto) {
+    var msg = document.getElementById('lg-msg');
+    msg.textContent = texto; msg.hidden = false; msg.classList.add('erro');
+    campo.classList.add('erro'); campo.focus();
+    msg.classList.remove('treme'); void msg.offsetWidth; msg.classList.add('treme');
+  }
+  ['lg-email', 'lg-senha'].forEach(function (id) {
+    var c = document.getElementById(id);
+    c.addEventListener('input', function () { c.classList.remove('erro'); });
+  });
+  document.getElementById('lg-ver').addEventListener('click', function () {
+    var pw = document.getElementById('lg-senha'), ver = pw.type === 'password';
+    pw.type = ver ? 'text' : 'password'; this.textContent = ver ? 'Ocultar' : 'Mostrar'; this.setAttribute('aria-pressed', ver ? 'true' : 'false'); pw.focus();
+  });
+  ['keydown', 'keyup'].forEach(function (ev) {
+    document.getElementById('lg-senha').addEventListener(ev, function (e) { if (e.getModifierState) document.getElementById('lg-caps').hidden = !e.getModifierState('CapsLock'); });
+  });
+  document.getElementById('lg-zap').href = 'https://wa.me/5511988236792?text=' + encodeURIComponent('Olá! Preciso de ajuda para entrar no sistema da Custo Plano.');
+  function saudarHub() {
+    var nome = (CONTA && CONTA.nome) || '';
+    if (/custo plano/i.test(nome)) nome = '';
+    if (!nome && user && !/^demo@/.test(user)) nome = user.split('@')[0].split(/[._-]/)[0];
+    nome = nome.split(' ')[0]; if (nome) nome = nome.charAt(0).toUpperCase() + nome.slice(1);
+    document.getElementById('hubOla').textContent = periodo() + (nome ? ', ' + nome : '') + '!';
+    var d = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    document.getElementById('hubData').textContent = d;
+  }
 
   /* ---------- Dados da obra de exemplo ---------- */
   var FLOORS = 10, WEEKS = 22, HOJE_W = 9, CUR = 9, T = 24;
