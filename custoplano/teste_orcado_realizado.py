@@ -178,6 +178,8 @@ checar(round(an["totais"]["bac"]) == 1000 and round(an["totais"]["cr"]) == 600 a
 checar([(s_["mes"], round(s_["realizado"])) for s_ in an["serie"]] == [("2026-08", 150), ("2026-09", 450)],
        f"ERP: mês a mês errado: {an['serie']}")
 checar([round(e["cr"]) for e in an["etapas"]] == [350, 250], f"ERP: realizado por etapa errado: {an['etapas']}")
+checar([(u["codigo"], u["nome"], round(u["meses"]["2026-09"]), round(u["total"])) for u in an["ucs"] or []] == [("2", "CUSTOS INDIRETOS", 450, 600)],
+       f"ERP: mês a mês por unidade de custo errado: {an['ucs']}")
 checar([y["codigo"] for y in x["linhas"]] == ["2.01", "2.02"], f"ERP: etapas lidas erradas: {x['linhas']}")
 e1, e2 = x["linhas"]
 checar(e1["incorrido"] == 400 and e1["saldo_pedido"] == 10 and e1["saldo_contrato"] == 100 and e1["a_contratar"] == 0,
@@ -204,6 +206,7 @@ checar(lei.get("/api/custos/controle/niveis").status_code == 200, "leitor não v
 cu = adm.get("/api/custos").get_json()["custos"]
 checar(cu.get("origem") == "erp" and not cu.get("so_controle") and len(cu["serie"]) == 2 and round(cu["totais"]["bac"]) == 1000,
        f"ERP: tela Custos não montou a estrutura pela planilha: {cu.get('origem')} {cu.get('so_controle')} {cu.get('totais')}")
+checar(adm.get("/api/relatorio.pdf?tipo=custos").status_code == 200, "ERP: relatório de custos em PDF falhou")
 checar(not any("diferente do custo realizado" in a_ for a_ in cu["controle"]["avisos"]),
        f"ERP: acusou diferença entre incorrido e pago + a pagar: {cu['controle']['avisos']}")
 

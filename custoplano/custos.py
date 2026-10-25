@@ -636,6 +636,17 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
             cr_ate += v
         lanc_out.append(dict(lc, etapa=chave or "Sem etapa"))
     lanc_out.sort(key=lambda x: x["data"], reverse=True)
+    # arquivo do ERP: realizado mês a mês por unidade de custo (UC), o 1º número do código (Bismark, 25/10/2026)
+    ucs = None
+    if dados.get("origem") == "erp":
+        nomes, por_uc = dados.get("nomes_uc") or {}, {}
+        for lc in todos:
+            uc = (lc.get("codigo") or "").split(".")[0]
+            U = por_uc.setdefault(uc, {"codigo": uc, "nome": nomes.get(uc, ""), "meses": {}, "total": 0.0})
+            m_ = _mes(dt.date.fromisoformat(lc["data"]))
+            U["meses"][m_] = U["meses"].get(m_, 0.0) + float(lc["valor"])
+            U["total"] += float(lc["valor"])
+        ucs = sorted(por_uc.values(), key=lambda u: int(u["codigo"]) if u["codigo"].isdigit() else 9999)
 
     # ------------------------------------------------ série mensal
     todos_meses = sorted(set(meses_prev) | set(meses_real))
@@ -673,7 +684,7 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
                    "eac": eac, "vac": (bac - eac) if eac is not None else None},
         "tipos": [{"tipo": k, "nome": TIPOS[k], "valor": v, "com_bdi": v * (1 + bdi)} for k, v in tot_tipo.items() if v],
         "etapas": etapas_out, "itens": itens_out, "serie": serie, "lancamentos": lanc_out,
-        "sem_vinculo": sem_vinculo, "avisos": dados.get("avisos") or [],
+        "sem_vinculo": sem_vinculo, "avisos": dados.get("avisos") or [], "ucs": ucs,
         # sem nenhum lançamento real: o realizado e o IDC não existem (não mostrar R$ 0 como se fosse gasto)
         "sem_realizado": not todos,
     }
@@ -1205,9 +1216,12 @@ def _erp_orcamento_analitico(wb) -> dict | None:
             vistos.add(cod)
             itens.append({"codigo": cod, "descricao": desc, "titulo": True, "unidade": "", "qtd": 0.0, "comp": "",
                           "preco": None, "total_planilha": None, "tarefa": "", "inicio": None, "termino": None})
+    nomes_uc = {}
     for x in L[r0 + 1:]:
         x = list(x) + [None] * 9
         uc, ap = cod_uc(x[0]), re.sub(r"\D", "", texto(x[3]).split(".")[0])
+        if uc:
+            nomes_uc.setdefault(uc, texto(x[0]).split("-", 1)[1].strip())
         if not uc or len(ap) < 10:
             continue
         et = re.match(r"\s*(\d+)\s*-\s*(.*)", texto(x[1]))
@@ -1254,7 +1268,7 @@ def _erp_orcamento_analitico(wb) -> dict | None:
     if a_pagar:
         avisos.append(f"R$ {a_pagar:,.0f}".replace(",", ".") + " a pagar ainda não têm data da baixa: entram no incorrido (d) "
                       "do Orçado x Realizado, mas não no mês a mês.")
-    return {"origem": "erp", "bdi": 0.0, "itens": itens, "composicoes": {}, "realizado": realizado,
+    return {"origem": "erp", "bdi": 0.0, "itens": itens, "composicoes": {}, "realizado": realizado, "nomes_uc": nomes_uc,
             "a_pagar": round(a_pagar, 2), "avisos": avisos}
 
 

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import io
+import re
 import os
 
 from cronograma import Projeto
@@ -802,6 +803,20 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         # um mês por linha: cabe qualquer duração e qualquer valor sem quebrar os números
         mes = lambda v: rs(v) if v else ""  # noqa: E731
         if so_realizado:
+            ucs = custos.get("ucs") or []
+            if ucs:  # uma coluna por unidade de custo do ERP, um mês por linha
+                cab = ["Mês"] + [f"{u['codigo']} {esc(re.sub(r'/(?=\S)', '/ ', u['nome']))}" for u in ucs] + ["Realizado no mês", "Realizado acumulado"]
+                n_ = len(cab) - 1
+                txt(f"A {prox()} apresenta o realizado mês a mês por unidade de custo, em reais: o que foi pago, pela data "
+                    "da baixa no ERP.")
+                H.extend([NextPageTemplate("paisagem"), PageBreak()])
+                add(tabela("Realizado mês a mês por unidade de custo (R$)", cab,
+                           [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", *[mes(u["meses"].get(s_["mes"])) for u in ucs],
+                             mes(s_["realizado"]), mes(s_["realizado_acum"])] for s_ in serie]
+                           + [["Total", *[mes(u["total"]) for u in ucs], mes(sum(s_["realizado"] for s_ in serie)), ""]],
+                           [2.2 * cm] + [(WL - 2.2 * cm) / n_] * n_, direita=tuple(range(1, n_ + 1)), total=True, corpo="8"))
+                H.extend([NextPageTemplate("texto"), PageBreak()])
+                return
             txt(f"A {prox()} apresenta o realizado mês a mês, em reais: o que foi pago, pela data da baixa no ERP.")
             add(tabela("Realizado mês a mês (R$)", ["Mês", "Realizado no mês", "Realizado acumulado"],
                        [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", mes(s_["realizado"]), mes(s_["realizado_acum"])]

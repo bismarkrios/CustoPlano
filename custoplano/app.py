@@ -907,6 +907,8 @@ def analise_custos(uid: int):
         # arquivo do ERP é sempre a base (Bismark, 25/10/2026): as abas Orçamento e Analítico dão o orçamento e o
         # realizado mês a mês, no lugar de qualquer orçamento importado antes (e nunca do Project)
         dados, reg = ctl["orcamento"], None
+        if not dados.get("nomes_uc"):  # importado antes dos nomes das UCs: tira dos níveis do Orçado x Realizado
+            dados = dict(dados, nomes_uc={x["codigo"]: x["descricao"] for x in ctl.get("niveis") or [] if x.get("tipo") == "uc"})
     if not dados:
         if not ctl:
             return None
