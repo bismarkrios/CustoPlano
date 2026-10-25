@@ -98,6 +98,12 @@ CREATE TABLE IF NOT EXISTS curto_prazo (
     dados         TEXT NOT NULL,                -- JSON: {segunda-feira da semana: {uid da tarefa: {st, causa}}}
     atualizado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS controle_custos (
+    usuario_id    INTEGER PRIMARY KEY REFERENCES obras(id) ON DELETE CASCADE,
+    arquivo       TEXT NOT NULL,
+    dados         TEXT NOT NULL,                -- JSON: planilha Orçado x Realizado (custos.ler_controle)
+    atualizado_em TEXT NOT NULL
+);
 """
 
 
@@ -595,6 +601,28 @@ def salvar_curto_prazo(usuario_id: int, dados: dict) -> None:
                ON CONFLICT(usuario_id) DO UPDATE SET dados=excluded.dados, atualizado_em=excluded.atualizado_em""",
             (usuario_id, json.dumps(dados, ensure_ascii=False), agora()),
         )
+
+
+# --------------------------------------------------------- orçado x realizado
+def controle_custos(usuario_id: int) -> dict | None:
+    with conectar() as con:
+        r = con.execute("SELECT arquivo, dados, atualizado_em FROM controle_custos WHERE usuario_id = ?", (usuario_id,)).fetchone()
+    return dict(json.loads(r["dados"]), arquivo=r["arquivo"], atualizado_em=r["atualizado_em"]) if r else None
+
+
+def salvar_controle_custos(usuario_id: int, arquivo: str, dados: dict) -> None:
+    with conectar() as con:
+        con.execute(
+            """INSERT INTO controle_custos (usuario_id, arquivo, dados, atualizado_em) VALUES (?, ?, ?, ?)
+               ON CONFLICT(usuario_id) DO UPDATE SET arquivo=excluded.arquivo, dados=excluded.dados,
+                 atualizado_em=excluded.atualizado_em""",
+            (usuario_id, arquivo, json.dumps(dados, ensure_ascii=False), agora()),
+        )
+
+
+def remover_controle_custos(usuario_id: int) -> None:
+    with conectar() as con:
+        con.execute("DELETE FROM controle_custos WHERE usuario_id = ?", (usuario_id,))
 
 
 # -------------------------------------------------------------------- custos

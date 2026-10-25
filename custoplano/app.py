@@ -911,6 +911,8 @@ def analise_custos(uid: int):
     a = cst.analisar(dados, json.loads(reg["lancamentos"]) if reg else [], p, atual, ds)
     a["atualizado_em"] = reg["atualizado_em"] if reg else None
     a["origem"] = dados.get("origem") or "planilha"
+    t = a.get("totais") or {}
+    a["controle"] = cst.calcular_controle(banco.controle_custos(uid), t.get("bac"), None if a.get("sem_realizado") else t.get("cr"))
     return a
 
 
@@ -934,6 +936,31 @@ def importar_custos():
     except cst.ErroCustos as e:
         return erro(str(e))
     banco.salvar_orcamento(oid(), arq.filename, dados)
+    return ver_custos()
+
+
+@app.post("/api/custos/controle")
+@logado
+@servico("custos")
+@sem_demo
+def importar_controle():
+    arq = request.files.get("arquivo")
+    if not arq or not arq.filename:
+        return erro("Escolha a planilha Orçado x Realizado (.xlsx).")
+    try:
+        dados = cst.ler_controle(arq.filename, arq.read())
+    except cst.ErroCustos as e:
+        return erro(str(e))
+    banco.salvar_controle_custos(oid(), arq.filename, dados)
+    return ver_custos()
+
+
+@app.post("/api/custos/controle/remover")
+@logado
+@servico("custos")
+@sem_demo
+def remover_controle():
+    banco.remover_controle_custos(oid())
     return ver_custos()
 
 

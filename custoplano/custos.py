@@ -996,3 +996,97 @@ def _zip_seguro(conteudo: bytes, limite: int = 150_000_000) -> bool:
             return sum(i.file_size for i in z.infolist()) <= limite
     except zipfile.BadZipFile:
         return True  # o openpyxl dá o erro de arquivo inválido
+
+
+# ------------------------------------------------------- orçado x realizado
+# Estrutura da planilha de controle da Engenharia (projetos/_modelo/orcamento/orcado_realizado.py):
+# (a) orçamento inicial, (b) atualizado, (c) contratado, (d) incorrido, (e) saldo de contrato, (f) saldo de pedido,
+# (h) saldo a contratar (premissa). O sistema calcula (g) = d+e+f, (i) = g+h, (j) = b−i e (k) = i÷b.
+CONTROLE_ENTRADAS = {"a": "oin", "b": "oatu", "c": "contratado", "d": "incorrido", "e": "saldo_contrato",
+                     "f": "saldo_pedido", "h": "a_contratar"}
+
+
+def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
+    if not re.search(r"\.xls[xm]$", nome_arquivo or "", re.I):
+        raise ErroCustos("Envie a planilha Orçado x Realizado em Excel (.xlsx).")
+    try:
+        if not _zip_seguro(conteudo):
+            raise ErroCustos("A planilha é grande demais para ser lida.")
+        wb = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=True, read_only=True)
+    except Exception:
+        raise ErroCustos("Não consegui abrir a planilha. Confira se é um arquivo .xlsx válido.")
+    try:
+        ws = next((w for w in wb.worksheets if "orcado x realizado" in norm(w.title).replace("×", "x")), None)
+        if ws is None:
+            raise ErroCustos("Não achei a aba Orçado x Realizado. Use a planilha de controle no padrão Custo Plano.")
+        L = _linhas(ws, 400, 20)
+    finally:
+        wb.close()
+    r0 = col = None
+    for r, linha in enumerate(L[:40]):
+        m = {}
+        for c, v in enumerate(linha):
+            n = norm(v)
+            achou = re.search(r"\(([a-k])\)\s*$", n)
+            if achou:
+                m[achou[1]] = c
+            elif n.startswith("cod"):
+                m["cod"] = c
+            elif n.startswith("servico") or n.startswith("descricao"):
+                m["serv"] = c
+        if all(k in m for k in ("serv", "a", "b", "c", "d", "e", "f", "h")):
+            r0, col = r, m
+            break
+    if r0 is None:
+        raise ErroCustos("Na aba Orçado x Realizado não encontrei o cabeçalho com Serviço e as colunas (a) a (h).")
+    linhas, avisos, vazias = [], [], []
+    for linha in L[r0 + 1:]:
+        serv = texto(linha[col["serv"]]) if col["serv"] < len(linha) else ""
+        cod = texto(linha[col["cod"]]) if "cod" in col and col["cod"] < len(linha) else ""
+        if norm(serv).startswith("total") or norm(cod).startswith("total"):
+            break
+        if not serv and not cod:
+            if linhas:
+                break
+            continue
+        x = {"codigo": cod, "servico": serv}
+        for letra, campo in CONTROLE_ENTRADAS.items():
+            v = linha[col[letra]] if col[letra] < len(linha) else None
+            n = numero(v)
+            if n is None and v not in (None, ""):
+                vazias.append(f"{cod or serv} ({letra})")
+            x[campo] = int(_arred(n or 0))
+        linhas.append(x)
+    if not linhas:
+        raise ErroCustos("A aba Orçado x Realizado não tem serviços preenchidos.")
+    if vazias:
+        avisos.append("Valores que não consegui ler e ficaram zerados: " + ", ".join(vazias[:8]) + ("…" if len(vazias) > 8 else ""))
+    return {"arquivo": nome_arquivo, "linhas": linhas, "avisos": avisos}
+
+
+def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, realizado_sistema: float | None = None):
+    """Linhas com (g), (i), (j) e (k) calculados, o total da obra e os avisos de conferência com o sistema."""
+    if not dados or not dados.get("linhas"):
+        return None
+    campos = list(CONTROLE_ENTRADAS.values()) + ["comprometido", "estimativa", "desvio"]
+    out, tot = [], dict.fromkeys(campos, 0)
+    for x in dados["linhas"]:
+        y = dict(x)
+        y["comprometido"] = x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"]
+        y["estimativa"] = y["comprometido"] + x["a_contratar"]
+        y["desvio"] = x["oatu"] - y["estimativa"]
+        y["indice"] = round(y["estimativa"] / x["oatu"], 3) if x["oatu"] else None
+        for k in campos:
+            tot[k] += y[k]
+        out.append(y)
+    tot["indice"] = round(tot["estimativa"] / tot["oatu"], 3) if tot["oatu"] else None
+    avisos = list(dados.get("avisos") or [])
+    br = lambda v: f"R$ {v:,.0f}".replace(",", ".")  # noqa: E731
+    if orcado_sistema and abs(tot["oin"] - orcado_sistema) > len(out):
+        avisos.append(f"O orçamento inicial da planilha ({br(tot['oin'])}) é diferente do orçamento do sistema "
+                      f"({br(orcado_sistema)}). Confira se as duas estão na mesma revisão.")
+    if realizado_sistema and abs(tot["incorrido"] - realizado_sistema) > len(out):
+        avisos.append(f"O incorrido da planilha ({br(tot['incorrido'])}) é diferente do custo realizado lançado no "
+                      f"sistema ({br(realizado_sistema)}). Confira os lançamentos ou a planilha.")
+    return {"arquivo": dados.get("arquivo"), "atualizado_em": dados.get("atualizado_em"), "linhas": out,
+            "total": tot, "avisos": avisos}

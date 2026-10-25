@@ -146,6 +146,7 @@ def semear(uid: int, hoje: dt.date | None = None) -> None:
 
     banco.remover_cronograma(uid)
     banco.remover_custos(uid)
+    banco.remover_controle_custos(uid)
     banco.remover_plano(uid)
     with banco.conectar() as con:
         con.execute("DELETE FROM medicoes_fechadas WHERE usuario_id=?", (uid,))
@@ -256,6 +257,7 @@ def semear(uid: int, hoje: dt.date | None = None) -> None:
     if dados:
         banco.salvar_orcamento(uid, ARQUIVO, dados)
         banco.salvar_lancamentos(uid, lanc)
+        banco.salvar_controle_custos(uid, "Residencial Aurora - orcado x realizado.xlsx", _controle(folhas, lanc, fator))
 
     _qualidade(uid, tarefas, hoje, rnd)
 
@@ -270,6 +272,39 @@ OBS_NC = {
     "FVS-05": ("Planeza", "Ondulação de 5 mm sob régua de 2 m no hall"),
     "FVS-04": ("Nível e caimento", "Caimento invertido no box do banheiro"),
 }
+
+
+# Orçado x Realizado da demonstração (estrutura da planilha de controle da Engenharia, 25/10/2026; a planilha de
+# exemplo projetos/_modelo/orcamento/exemplo-aurora-orcado-x-realizado.xlsx tem estes mesmos números).
+# (a) e (d) saem do próprio sistema: orçamento das tarefas e custos lançados. O contrato de cada serviço
+# iniciado vale o orçamento × o mesmo fator do realizado; o saldo de pedido e o saldo a contratar são
+# premissas fictícias do gerente de orçamento.
+ADITIVO = {"Instalações": 40000}
+SALDO_PEDIDO = {"Estrutura": 115000, "Alvenaria": 18000, "Instalações": 40000}
+A_CONTRATAR = {"Revestimento": 1120000, "Pintura": 515000}
+
+
+def _controle(folhas, lanc, fator) -> dict:
+    ordem = ["Canteiro de obras", "Fundações"] + [s[0] for s in SERVICOS]
+    oin = dict.fromkeys(ordem, 0.0)
+    inc = dict.fromkeys(ordem, 0.0)
+    for t in folhas:
+        if t["custo"]:
+            serv = t["nome"] if t["eap"].startswith("1.1.") else SERVICOS[int(t["eap"].split(".")[2]) - 1][0]
+            oin[serv] += t["custo"]
+    for x in lanc:
+        inc[x["descricao"].split(" · ")[0]] += x["valor"]
+    linhas = []
+    for i, serv in enumerate(ordem):
+        a, d = round(oin[serv]), round(inc[serv])
+        b = a + ADITIVO.get(serv, 0)
+        c = max(round(a * fator.get(serv, 1.0)), d) if d else 0
+        f = min(SALDO_PEDIDO.get(serv, 0), c - d)
+        h = A_CONTRATAR.get(serv, 0) if not c else 0
+        nome = serv if i < 2 else f"{serv} (torres A e B)"
+        linhas.append({"codigo": f"1.{i + 1}" if i < 2 else f"2.{i - 1}", "servico": nome, "oin": a, "oatu": b,
+                       "contratado": c, "incorrido": d, "saldo_contrato": c - d - f, "saldo_pedido": f, "a_contratar": h})
+    return {"linhas": linhas, "avisos": []}
 
 
 def _qualidade(uid: int, tarefas, hoje: dt.date, rnd) -> None:

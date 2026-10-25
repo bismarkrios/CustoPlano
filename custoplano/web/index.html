@@ -741,6 +741,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .cu-fin tbody th{font-family:var(--body);text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:500;color:var(--ink);border-bottom:1px solid var(--line)}
 .cu-fin tbody .cu-et th{font-weight:700;background:var(--soft)}
 .cu-et .cu-sticky{background:var(--soft)}
+.cu-ctl th{white-space:nowrap;vertical-align:bottom;text-align:right;min-width:68px;line-height:1.35;font-size:10.5px}
+.cu-ctl th.cu-sticky{text-align:left;min-width:200px;white-space:nowrap}
+.cu-ctl td{font-size:12px;padding:8px 6px}
+.cu-ctl th{padding-left:6px;padding-right:6px}
+.cu-ctl .cl{text-transform:none;font-family:var(--mono);font-weight:500}
+.cu-ctl td.ruim{color:var(--bad);font-weight:600}
+.cu-ctl .prem{font-style:italic}
 .cu-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;align-items:end}
 .cu-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
 .cu-form .w2{grid-column:span 2}
@@ -1457,6 +1464,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       <input type="file" id="prjFile" accept=".xml,.mpp" hidden>
       <input type="file" id="paFile" accept=".xlsx,.xlsm" hidden>
       <input type="file" id="cuFile" accept=".xlsx,.xlsm" hidden>
+      <input type="file" id="cuCtlFile" accept=".xlsx,.xlsm" hidden>
       <div class="app-body" id="appBody"></div>
     </div>
   </div>
@@ -3088,16 +3096,29 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<div class="card"><div class="kpi-t">Valor agregado (físico medido)</div><div class="kpi-v" style="font-size:22px">' + brl(T.va) + '</div><div class="kpi-s">previsto até ' + ds + ': ' + brl(T.vp) + '</div></div>' +
       '<div class="card"><div class="kpi-t">Índice de desempenho de custo (IDC)</div><div class="kpi-v" style="color:' + idcCor + '">' + (T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ',')) + '</div><div class="kpi-s">' + (T.eac == null ? (CU.sem_realizado ? 'sem lançamentos reais' : 'sem custo lançado ainda') : 'estimativa no término ' + brl(T.eac) + ' (<b style="color:' + (T.vac < 0 ? 'var(--bad)' : 'var(--good)') + '">' + (T.vac < 0 ? '−' : '+') + brl(Math.abs(T.vac)) + '</b>)') + '</div></div>' +
       '</div>';
+    // com a planilha Orçado x Realizado, a tela segue a estrutura dela: (b) orçamento, (c) contratado, (d) incorrido, (i)/(j)/(k)
+    var CT = CU.controle && CU.controle.total;
+    if (CT) {
+      var pc = function (v) { return CT.oatu ? fmt1(v / CT.oatu * 100) + '% do orçamento atualizado' : ''; };
+      var bar = function (v) { return '<div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, CT.oatu ? v / CT.oatu * 100 : 0) + '%;background:var(--accent)"></i></div>'; };
+      kpis = '<div class="grid4">' +
+        '<div class="card"><div class="kpi-t">Orçamento atualizado (b)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.oatu) + '</div><div class="kpi-s">inicial (a): R$ ' + rs0(CT.oin) + '</div></div>' +
+        '<div class="card"><div class="kpi-t">Contratado (c)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.contratado) + '</div><div class="kpi-s">' + pc(CT.contratado) + '</div>' + bar(CT.contratado) + '</div>' +
+        '<div class="card"><div class="kpi-t">Incorrido (d)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.incorrido) + '</div><div class="kpi-s">' + pc(CT.incorrido) + '</div>' + bar(CT.incorrido) + '</div>' +
+        '<div class="card"><div class="kpi-t">Estimativa no término (i)</div><div class="kpi-v" style="font-size:22px;color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'inherit') + '">R$ ' + rs0(CT.estimativa) + '</div><div class="kpi-s">desvio (j): <b style="color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (Math.abs(CT.desvio) < 0.5 ? '0' : (CT.desvio < 0 ? '−' : '+') + rs0(Math.abs(CT.desvio))) + '</b> · índice (k): ' + (CT.indice == null ? '–' : CT.indice.toFixed(3).replace('.', ',')) + '</div></div>' +
+        '</div>';
+    }
+    if (!S.cu.tabEscolhida) S.cu.tab = CT ? 'ctl' : (S.cu.tab === 'ctl' ? 'orc' : S.cu.tab);
     var avisos = (CU.avisos || []).slice();
     if (CU.sem_realizado) avisos.unshift('Sem lançamentos reais: o custo realizado e o IDC só aparecem quando houver custos reais lançados (notas, pagamentos, medições de empreiteiro). Nada é estimado ou suposto.');
     if (!CU.tem_cronograma) avisos.push('Sem cronograma importado: o custo só é distribuído no tempo para itens com Início e Término, e o valor agregado fica zerado. Importe o cronograma na tela Project.');
     else if (CU.sem_vinculo.n) avisos.push(CU.sem_vinculo.n + ' itens (' + brl(CU.sem_vinculo.valor) + ') não foram ligados a nenhuma tarefa do cronograma. ' + (CU.origem === 'padrao' ? 'Confira se o código UA deles (GSA/GSE) está no campo Código UA de alguma tarefa do cronograma.' : 'Preencha a coluna Tarefa (EAP) na planilha.'));
     var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
     var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
-      '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + tab('real', 'Orçado × real') + '</div></div>' +
+      '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('ctl', 'Orçado x Realizado') + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + tab('real', 'Valor agregado') + '</div></div>' +
       '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
       (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
-    var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
+    var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'ctl' ? vCusCtl() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
     return kpis + '<section class="card" style="display:flex;flex-direction:column;gap:12px">' + bar + '</section>' + corpo;
   }
 
@@ -3229,6 +3250,46 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<p style="font-size:12.5px;color:var(--muted)">Valor agregado = orçado × % físico medido. Variação negativa ou IDC abaixo de 1 = gastou mais do que o avanço físico justifica. Previsto até a data = custo que a linha de base previa gastar até a data de status.</p>' +
       form + lanc;
   }
+
+  // Orçado x Realizado: estrutura da planilha de controle da Engenharia. (a) a (h) vêm da planilha;
+  // (g), (i), (j) e (k) são calculados no servidor. O saldo a contratar (h) é sempre premissa.
+  // cabeçalho sempre em 2 linhas de título e a letra da coluna sozinha na 3ª linha
+  var CTL_COLS = [['oin', 'Orçamento|inicial', 'a'], ['oatu', 'Orçamento|atualizado', 'b'], ['contratado', 'Valor|contratado', 'c'], ['incorrido', 'Valor|incorrido', 'd'],
+    ['saldo_contrato', 'Saldo de|contrato', 'e'], ['saldo_pedido', 'Saldo de|pedido', 'f'], ['comprometido', 'Incorrido|+ saldos', 'g'],
+    ['a_contratar', 'A contratar|(premissa)', 'h'], ['estimativa', 'Estimativa|no término', 'i'], ['desvio', 'Desvio|previsto', 'j'], [null, 'Índice|de custo', 'k']];
+  function rs0(v) { return !v ? '–' : (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
+  function vCusCtl() {
+    var C = CU.controle;
+    if (!C) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Orçado x Realizado</b>' +
+      '<p style="color:var(--muted);font-size:14px">Importe a planilha de controle Orçado x Realizado no padrão Custo Plano. Por serviço, ela traz o orçamento inicial (a) e o atualizado (b), o contratado (c), o incorrido (d), os saldos de contrato (e) e de pedido (f) e o saldo a contratar (h). O sistema calcula o comprometido, a estimativa no término, o desvio e o índice, e confere o total com o orçamento e os custos lançados aqui.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuCtlFile" class="btn btn-primary" style="cursor:pointer">Importar a planilha Orçado x Realizado</label></div></section>';
+    var cel = function (x, k) { return '<td class="mono num' + (k === 'desvio' && x[k] < -0.5 ? ' ruim' : '') + (k === 'a_contratar' && x[k] ? ' prem' : '') + '">' + rs0(x[k]) + '</td>'; };
+    var idx = function (v) { return '<td class="mono num' + (v != null && v > 1 ? ' ruim' : '') + '">' + (v == null ? '–' : v.toFixed(3).replace('.', ',')) + '</td>'; };
+    var cab = '<tr><th class="cu-sticky">Serviço<br>&nbsp;<br>&nbsp;</th>' + CTL_COLS.map(function (c) { return '<th>' + c[1].split('|').map(esc).join('<br>') + '<br><span class="cl">(' + c[2] + ')</span></th>'; }).join('') + '</tr>';
+    var rows = C.linhas.map(function (x) {
+      return '<tr><th scope="row" class="pa-row cu-sticky">' + esc((x.codigo ? x.codigo + ' ' : '') + x.servico) + '</th>' + CTL_COLS.slice(0, -1).map(function (c) { return cel(x, c[0]); }).join('') + idx(x.indice) + '</tr>';
+    }).join('');
+    var T = C.total;
+    rows += '<tr class="cu-et"><th scope="row" class="pa-row cu-sticky">Total da obra</th>' + CTL_COLS.slice(0, -1).map(function (c) { return cel(T, c[0]); }).join('') + idx(T.indice) + '</tr>';
+    var est = T.estimativa, d = T.desvio;
+    var resumo = '<p style="font-size:14px">A obra deve terminar em <b>R$ ' + rs0(est) + '</b>, ' + (Math.abs(d) < 0.5 ? 'igual ao orçamento atualizado.' : (d < 0 ? '<b style="color:var(--bad)">R$ ' + rs0(-d) + ' acima</b>' : '<b style="color:var(--good)">R$ ' + rs0(d) + ' abaixo</b>') + ' do orçamento atualizado (R$ ' + rs0(T.oatu) + ').') +
+      (T.a_contratar ? ' Dessa estimativa, R$ ' + rs0(T.a_contratar) + ' ainda são premissa (saldo a contratar).' : '') + '</p>';
+    return '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">Orçado x Realizado</b><span style="font-size:12.5px;color:var(--muted)">' + esc(C.arquivo || '') + (C.atualizado_em ? ' · importada em ' + isoBr(C.atualizado_em.slice(0, 10)) : '') + '</span></span>' +
+      (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outra planilha</label><button type="button" class="linkbtn" data-a="cuctlrm" style="font-size:13px">Remover</button>') + '</div>' + resumo +
+      (C.avisos.length ? '<div class="notebox">' + C.avisos.map(esc).join('<br>') + '</div>' : '') + '</section>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl cu-fin cu-ctl"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
+      '<p style="font-size:12.5px;color:var(--muted)">Valores em reais, sem centavos. (g) = d + e + f; (i) = g + h; (j) = b − i; (k) = i ÷ b. Desvio positivo é economia; negativo (em vermelho) é estouro. Índice acima de 1 indica que o serviço deve terminar acima do orçamento atualizado. O saldo a contratar (h), em itálico, é previsão do gerente de orçamento, não dado medido.</p>';
+  }
+  function cuCtlImport(file) {
+    if (!file) return;
+    if (precisaRede()) return;
+    var fd = new FormData(); fd.append('arquivo', file);
+    S.cu.msg = 'Lendo ' + file.name + '…'; S.screen = 'cus'; S.cu.tab = 'ctl'; render();
+    api('/api/custos/controle', fd).then(function (r) {
+      CU = r.custos; S.cu.msg = CU && CU.controle ? 'Planilha Orçado x Realizado importada: ' + CU.controle.linhas.length + ' serviços.' : ''; render();
+    }, function (e) { S.cu.msg = 'Não foi possível importar: ' + e.message; render(); });
+  }
+  document.getElementById('cuCtlFile').addEventListener('change', function (e) { cuCtlImport(e.target.files[0]); e.target.value = ''; });
 
   function cuImport(file) {
     if (!file) return;
@@ -4123,8 +4184,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
-      case 'cut': S.cu.tab = a[1]; break;
+      case 'cut': S.cu.tab = a[1]; S.cu.tabEscolhida = true; break;
       case 'cuit': S.cu.open[a[1]] = !S.cu.open[a[1]]; break;
+      case 'cuctlrm': if (!confirm('Remover a planilha Orçado x Realizado desta obra? O orçamento e os lançamentos continuam.')) return; if (precisaRede()) return; api('/api/custos/controle/remover', {}).then(function (r) { CU = r.custos; S.cu.msg = ''; render(); }, function (e2) { S.cu.msg = e2.message; render(); }); return;
       case 'curm': if (!confirm('Remover o orçamento e todos os lançamentos de custo desta obra?')) return; if (precisaRede()) return; api('/api/custos/remover', {}).then(function () { CU = null; S.cu.msg = ''; render(); }, function (e2) { S.cu.msg = e2.message; render(); }); return;
       case 'cudel': if (!confirm('Excluir este lançamento?')) return; if (precisaRede()) return; cuSet(api('/api/custos/lancamento/remover', { id: a[1] })); return;
       case 'cuxls': if (precisaRede()) return; location.href = '/api/custos/financeiro.xlsx'; return;

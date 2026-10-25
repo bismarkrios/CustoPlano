@@ -216,6 +216,11 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         "th": est("th", fontName="Helvetica-Bold", fontSize=10, leading=12, textColor=colors.white),
         "thr": est("thr", fontName="Helvetica-Bold", fontSize=10, leading=12, textColor=colors.white, alignment=2),
         "small": est("small", fontSize=10, leading=12, textColor=CINZA),
+        # tabelas largas em paisagem (muitas colunas de valores)
+        "t8": est("t8", fontSize=8, leading=10),
+        "tr8": est("tr8", fontSize=8, leading=10, alignment=2),
+        "th8": est("th8", fontName="Helvetica-Bold", fontSize=7, leading=9, textColor=colors.white),
+        "thr8": est("thr8", fontName="Helvetica-Bold", fontSize=7, leading=9, textColor=colors.white, alignment=2),
     }
     esc = lambda s: str(s if s is not None else "").replace("&", "&amp;").replace("<", "&lt;")  # noqa: E731
     Pa = lambda t, s="t": Paragraph(t, S[s])  # noqa: E731
@@ -243,11 +248,12 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     def fonte_dados(texto="Custo Plano Consultoria"):
         return Pa(f"Fonte: {texto} ({data_status.year}).", "fonte")
 
-    def tabela(titulo_, cab, linhas, larg, direita=(), total=False, fonte="Custo Plano Consultoria"):
-        """Tabela aberta nas laterais (padrão IBGE), cabeçalho azul-marinho, legenda acima e fonte abaixo."""
-        dados = [[Pa(h, "thr" if i in direita else "th") for i, h in enumerate(cab)]]
+    def tabela(titulo_, cab, linhas, larg, direita=(), total=False, fonte="Custo Plano Consultoria", corpo=""):
+        """Tabela aberta nas laterais (padrão IBGE), cabeçalho azul-marinho, legenda acima e fonte abaixo.
+        corpo="8" usa letra de 8 pt, para tabelas largas."""
+        dados = [[Pa(h, ("thr" if i in direita else "th") + corpo) for i, h in enumerate(cab)]]
         for ln in linhas:
-            dados.append([c if not isinstance(c, str) else Pa(esc(c), "tr" if i in direita else "t") for i, c in enumerate(ln)])
+            dados.append([c if not isinstance(c, str) else Pa(esc(c), ("tr" if i in direita else "t") + corpo) for i, c in enumerate(ln)])
         t = Table(dados, colWidths=larg, repeatRows=1)
         estilo = [("BACKGROUND", (0, 0), (-1, 0), NAVY), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                   ("LINEABOVE", (0, 0), (-1, 0), 0.8, NAVY), ("LINEBELOW", (0, -1), (-1, -1), 0.8, NAVY),
@@ -701,6 +707,45 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                    direita=(2, 3, 4, 5, 6, 7), total=True))
         H.extend([NextPageTemplate("texto"), PageBreak()])
 
+    def sec_custo_controle(nome_secao=None):
+        """Orçado x Realizado por serviço (planilha de controle da Engenharia), em paisagem e em reais inteiros."""
+        C = custos.get("controle")
+        if not C:
+            return
+        dv = lambda v: "0" if abs(v) < 0.5 else ("-" if v < 0 else "+") + rs(abs(v))  # noqa: E731
+        ix = lambda v: "-" if v is None else _br(v, 3)  # noqa: E731
+        cols = ("oin", "oatu", "contratado", "incorrido", "saldo_contrato", "saldo_pedido", "comprometido", "a_contratar",
+                "estimativa")
+
+        def linha(x, cod, nome):
+            return [cod, nome, *[rs(x[k]) if x[k] else "-" for k in cols],
+                    Pa(f"<font color='{cor_desv(x['desvio'], -0.5)}'>{dv(x['desvio'])}</font>", "tr8"),
+                    Pa(f"<font color='{cor_desv(-(x['indice'] or 0), -1.0)}'>{ix(x['indice'])}</font>", "tr8")]
+        linhas = [linha(x, x["codigo"], Pa(esc(x["servico"]), "t8")) for x in C["linhas"]]
+        linhas.append(linha(C["total"], "", Pa("<b>Total da obra</b>", "t8")))
+        H.extend([NextPageTemplate("paisagem"), PageBreak()])
+        if nome_secao:
+            secao(nome_secao)
+        T_ = C["total"]
+        txt(f"A {prox()} compara, por serviço, o orçamento com o que já foi contratado e incorrido. A estimativa no "
+            "término (i) soma o incorrido, os saldos de contrato e de pedido e o saldo a contratar; o desvio (j) é o "
+            "orçamento atualizado menos essa estimativa, negativo quando o serviço deve estourar. O saldo a contratar (h) "
+            f"é premissa do gerente de orçamento, não dado medido. A obra deve terminar em R$ {rs(T_['estimativa'])}, "
+            f"contra R$ {rs(T_['oatu'])} do orçamento atualizado"
+            + (f". Essa estimativa parte dos contratos; a projeção pelo IDC, nos indicadores, é de R$ {rs(T['eac'])}."
+               if T.get("eac") and not sem_real else "."))
+        for a_ in C.get("avisos") or []:
+            txt(a_)
+        n = 1.78 * cm
+        cab = ["Cód.", "Serviço"] + [f"{t.replace('|', '<br/>')}<br/>({l})" for t, l in (
+            ("Orçamento|inicial", "a"), ("Orçamento|atualizado", "b"), ("Valor|contratado", "c"), ("Valor|incorrido", "d"),
+            ("Saldo de|contrato", "e"), ("Saldo de|pedido", "f"), ("Incorrido|+ saldos", "g"), ("A contratar|(premissa)", "h"),
+            ("Estimativa|no término", "i"), ("Desvio|previsto", "j"), ("Índice|de custo", "k"))]
+        add(tabela("Orçado x Realizado (R$)", cab,
+                   linhas, [1.0 * cm, WL - 1.0 * cm - 11 * n - 0.1 * cm, *[n] * 11], direita=tuple(range(2, 13)), total=True,
+                   fonte=f"Custo Plano Consultoria, planilha {C.get('arquivo') or 'Orçado x Realizado'}", corpo="8"))
+        H.extend([NextPageTemplate("texto"), PageBreak()])
+
     def sec_custo_tipos():
         tipos = custos.get("tipos") or []
         if len(tipos) < 2:
@@ -812,6 +857,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             if custos:
                 sec_custo_totais()
                 sec_custo_etapas()
+                sec_custo_controle()
                 sec_custo_serie()
             else:
                 txt("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.")
@@ -880,6 +926,8 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                        [1.8 * cm, W - 9.4 * cm, 3.4 * cm, 4.2 * cm]))
     elif tipo == "custos":
         if custos:
+            # com a planilha Orçado x Realizado, o relatório começa por ela (mesma estrutura da tela Custos)
+            sec_custo_controle("Orçado x Realizado")
             secao("Indicadores de custo")
             sec_custo_totais()
             sec_custo_etapas("Custo por etapa")

@@ -122,6 +122,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: python teste_servicos.py
 
+      - name: Testar a tabela Orçado x Realizado (planilha de controle da Engenharia)
+        env:
+          CP_BANCO: ${{ runner.temp }}/ctl.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: python teste_orcado_realizado.py
+
       - name: Testar o WhatsApp que manda o relatório
         env:
           CP_BANCO: ${{ runner.temp }}/wa.db
