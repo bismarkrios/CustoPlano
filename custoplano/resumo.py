@@ -102,6 +102,18 @@ def resumo_obras(hoje: dt.date | None = None, analise_custos=None) -> list[dict]
     return saida
 
 
+def indicadores_obra(obra_id: int, hoje: dt.date | None = None) -> dict:
+    """PPC, NCs e qualidade de uma obra, para o relatório mensal (os mesmos números do resumo diário)."""
+    hoje = hoje or dt.date.today()
+    with banco.conectar() as con:
+        cp = con.execute("SELECT dados FROM curto_prazo WHERE usuario_id=?", (obra_id,)).fetchone()
+        ncs = con.execute("SELECT status, prazo, gravidade FROM ncs WHERE usuario_id=? AND status != 'fechada'",
+                          (obra_id,)).fetchall()
+        return {"ppc": _ppc(json.loads(cp["dados"]) if cp else {}, hoje), "ncs_abertas": len(ncs),
+                "ncs_vencidas": sum(1 for n in ncs if n["prazo"] and n["prazo"][:10] < hoje.isoformat()),
+                "ncs_altas": sum(1 for n in ncs if n["gravidade"] == "alta"), "qualidade": _qualidade(con, obra_id, hoje)}
+
+
 def registrar_no_log(hoje: dt.date | None = None, analise_custos=None) -> None:
     hoje = hoje or dt.date.today()
     obras = resumo_obras(hoje, analise_custos)

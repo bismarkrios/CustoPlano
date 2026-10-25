@@ -1137,12 +1137,13 @@ def gerar_relatorio(obra_id: int):
     o = banco.obra(obra_id)
     obra = (p.titulo if p else (plano or {}).get("titulo")) or (o["nome"] if o else "") or "Obra"
     hist = [dict(h) for h in banco.historico(obra_id)]
+    ind = resumo.indicadores_obra(obra_id)
     if c:
         sd = para_data(c["data_status"])
-        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus)
+        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus, ind)
     else:
         sd = dt.datetime.now()
-        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus)
+        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus, ind)
     return pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf"
 
 
