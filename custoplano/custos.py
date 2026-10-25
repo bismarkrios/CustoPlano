@@ -1279,7 +1279,9 @@ def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, r
         avisos.append(f"O incorrido da planilha ({br(tot['incorrido'])}) é diferente do custo realizado lançado no "
                       f"sistema ({br(realizado_sistema)}). Confira os lançamentos ou a planilha.")
     return {"arquivo": dados.get("arquivo"), "atualizado_em": dados.get("atualizado_em"), "linhas": out,
-            "total": tot, "avisos": avisos, "tem_niveis": bool(dados.get("niveis"))}
+            "total": tot, "avisos": avisos, "tem_niveis": bool(dados.get("niveis")),
+            # arquivo do ERP importado antes de 25/10/2026: sem níveis nem abas Orçamento e Analítico guardados
+            "reimportar": dados.get("origem") == "erp" and not (dados.get("niveis") and dados.get("orcamento"))}
 
 
 def _calc_linha(x: dict) -> dict:

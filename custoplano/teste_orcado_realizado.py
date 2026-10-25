@@ -193,6 +193,9 @@ checar(N[0]["a_contratar"] == 250 and N[0]["estimativa"] == sum(y["estimativa"] 
 checar(N[3]["contratado"] == 500 and N[3]["incorrido"] == 350 and N[3]["estimativa"] is None and N[2]["desvio"] is None,
        f"ERP: credor ou item com valores errados: {N[2]} {N[3]}")
 checar(cst.calcular_controle(x)["tem_niveis"], "ERP: não marcou que tem todos os níveis")
+checar(not cst.calcular_controle(x)["reimportar"], "ERP: pediu para importar de novo um arquivo completo")
+checar(cst.calcular_controle({k: v for k, v in x.items() if k not in ("niveis", "orcamento")})["reimportar"],
+       "ERP: não pediu para importar de novo um arquivo antigo")
 r = adm.post("/api/custos/controle", data={"arquivo": (io.BytesIO(out.getvalue()), "erp.xlsx")}, content_type="multipart/form-data")
 checar(r.status_code == 200, f"ERP: importação pelo site falhou: {r.get_json()}")
 nv = adm.get("/api/custos/controle/niveis").get_json()["niveis"]
