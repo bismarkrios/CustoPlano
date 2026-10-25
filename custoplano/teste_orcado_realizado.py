@@ -159,6 +159,20 @@ checar(e1["incorrido"] == 400 and e1["saldo_pedido"] == 10 and e1["saldo_contrat
        f"ERP: colunas da etapa 1 erradas: {e1}")
 checar(e2["oatu"] == 650 and e2["a_contratar"] == 250, f"ERP: ajustes ou saldo a contratar (b − c) errados: {e2}")
 checar(any("premissa" in a_ for a_ in x["avisos"]), "ERP: não avisou que o saldo a contratar é premissa")
+# todos os níveis: UC > etapa > item > credor; (h) a (k) só em UC e etapa
+N = cst.calcular_niveis(x)
+checar([(n["tipo"], n["nivel"]) for n in N] == [("uc", 0), ("etapa", 1), ("item", 2), ("credor", 3), ("etapa", 1), ("item", 2)],
+       f"ERP: níveis errados: {[(n['tipo'], n['nivel']) for n in N]}")
+checar(N[0]["a_contratar"] == 250 and N[0]["estimativa"] == sum(y["estimativa"] for y in cst.calcular_controle(x)["linhas"]),
+       f"ERP: a unidade de custo não soma as etapas: {N[0]}")
+checar(N[3]["contratado"] == 500 and N[3]["incorrido"] == 350 and N[3]["estimativa"] is None and N[2]["desvio"] is None,
+       f"ERP: credor ou item com valores errados: {N[2]} {N[3]}")
+checar(cst.calcular_controle(x)["tem_niveis"], "ERP: não marcou que tem todos os níveis")
+r = adm.post("/api/custos/controle", data={"arquivo": (io.BytesIO(out.getvalue()), "erp.xlsx")}, content_type="multipart/form-data")
+checar(r.status_code == 200, f"ERP: importação pelo site falhou: {r.get_json()}")
+nv = adm.get("/api/custos/controle/niveis").get_json()["niveis"]
+checar(len(nv) == 6 and nv[0]["tipo"] == "uc", f"ERP: endpoint de níveis errado: {nv}")
+checar(lei.get("/api/custos/controle/niveis").status_code == 200, "leitor não vê todos os níveis")
 
 if falhas:
     print("FALHAS:\n- " + "\n- ".join(falhas))

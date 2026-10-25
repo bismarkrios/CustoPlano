@@ -1121,42 +1121,64 @@ def _ler_controle_erp(L) -> dict | None:
     if r0 is None:
         return None
     val = lambda linha, k: int(_arred(numero(linha[m[k]]) or 0)) if k in m and m[k] < len(linha) else 0  # noqa: E731
-    linhas, uc, total_uc = [], None, 0
-    for linha in L[r0 + 1:]:
-        ref, desc = texto(linha[m["ref"]]), texto(linha[m["desc"]])
-        uc_m = re.match(r"(\d+)\s*-\s*(.+)", desc) if not ref else None
-        if uc_m and numero(linha[m["oin"]]) is not None:
-            uc = uc_m[1]
-            total_uc += val(linha, "oin")
-            continue
-        if uc is None or not re.fullmatch(r"\d{1,3}", ref):
-            continue
+    def entradas(linha, com_h=True):
         a, c = val(linha, "oin"), val(linha, "contratado")
         b = a + val(linha, "ajustes")
         d = val(linha, "apropriado") if "apropriado" in m else val(linha, "realizado") + val(linha, "a_pagar")
         e, f = val(linha, "saldo_contrato"), val(linha, "saldo_pedido")
         g = d + e + f
-        if c and c >= 0.95 * b:  # escopo considerado todo contratado
+        if not com_h:  # credor: não tem orçamento próprio, nada a contratar
+            h = 0
+        elif c and c >= 0.95 * b:  # escopo considerado todo contratado
             h = 0
         elif c:  # falta contratar parte do escopo: valorizada pelo orçamento
             h = max(0, b - c)
         else:  # sem contrato
             h = max(0, b - g)
-        linhas.append({"codigo": f"{uc}.{ref}", "servico": desc, "oin": a, "oatu": b, "contratado": c, "incorrido": d,
-                       "saldo_contrato": e, "saldo_pedido": f, "a_contratar": h})
+        return {"oin": a, "oatu": b, "contratado": c, "incorrido": d, "saldo_contrato": e, "saldo_pedido": f, "a_contratar": h}
+
+    # níveis do ERP: UC > etapa (Ref. de 2 dígitos) > itens (Ref. 01.000.000.001, aninhados pelo prefixo) > credor
+    # (contrato CTPS/…, Pedido …, ou pagamento sem documento). As linhas por etapa continuam sendo a base de (a)…(k).
+    linhas, niveis, uc, total_uc, pilha, no_uc = [], [], None, 0, [], None
+    for linha in L[r0 + 1:]:
+        ref, desc = texto(linha[m["ref"]]), texto(linha[m["desc"]])
+        if not ref and not desc:
+            continue
+        uc_m = re.match(r"(\d+)\s*-\s*(.+)", desc) if not ref else None
+        if uc_m and numero(linha[m["oin"]]) is not None:
+            uc, pilha = uc_m[1], []
+            total_uc += val(linha, "oin")
+            no_uc = dict(entradas(linha), nivel=0, tipo="uc", codigo=uc, descricao=uc_m[2].strip(), a_contratar=0)
+            niveis.append(no_uc)
+            continue
+        if uc is None:
+            continue
+        if re.fullmatch(r"\d{1,3}", ref):
+            x = entradas(linha)
+            linhas.append(dict(x, codigo=f"{uc}.{ref}", servico=desc))
+            no_uc["a_contratar"] += x["a_contratar"]
+            pilha = [ref]
+            niveis.append(dict(x, nivel=1, tipo="etapa", codigo=f"{uc}.{ref}", descricao=desc))
+        elif re.fullmatch(r"\d+(\.\d+)+", ref) and pilha:
+            while len(pilha) > 1 and not ref.startswith(pilha[-1] + "."):
+                pilha.pop()
+            pilha.append(ref)
+            niveis.append(dict(entradas(linha), nivel=len(pilha), tipo="item", codigo=f"{uc}.{ref}", descricao=desc))
+        elif pilha:
+            niveis.append(dict(entradas(linha, False), nivel=len(pilha) + 1, tipo="credor", codigo=ref, descricao=desc))
     if not linhas:
         return None
     avisos = ["Planilha do ERP: o incorrido (d) é o apropriado financeiro (realizado + a pagar). O saldo a contratar (h) "
               "não vem do ERP (a tendência do ERP repete o contratado) e é premissa: zero quando o contratado já passa de 95% de (b); "
               "(b) − (c) quando falta contratar parte do escopo; (b) − (g) quando não há contrato."]
-    acima = [x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"] - x["contratado"] for x in linhas if x["contratado"]]
-    acima = [v for v in acima if v > 1]
-    if acima:
-        avisos.append(f"R$ {sum(acima):,.0f} de gasto fora de contrato: em {len(acima)} etapas o incorrido mais os saldos passa "
-                      "do contratado (confira a aba Fora do Orçamento do ERP).".replace(",", "."))
+    dif = [x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"] - x["contratado"] for x in linhas if x["contratado"]]
+    acima = [v for v in dif if v > 1]
+    if acima:  # bruto (só as etapas acima do contratado) e líquido da obra, para ninguém comparar um com o outro
+        avisos.append(f"R$ {sum(acima):,.0f} acima do contratado em {len(acima)} etapas (líquido R$ {sum(dif):,.0f} na obra): "
+                      "o incorrido mais os saldos passa do contratado (confira a aba Fora do Orçamento do ERP).".replace(",", "."))
     if abs(sum(x["oin"] for x in linhas) - total_uc) > len(linhas):
         avisos.append("A soma das etapas não fecha com o total das unidades de custo da planilha. Confira a exportação do ERP.")
-    return {"linhas": linhas, "avisos": avisos, "origem": "erp"}
+    return {"linhas": linhas, "niveis": niveis, "avisos": avisos, "origem": "erp"}
 
 
 def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, realizado_sistema: float | None = None):
@@ -1166,11 +1188,7 @@ def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, r
     campos = list(CONTROLE_ENTRADAS.values()) + ["comprometido", "estimativa", "desvio"]
     out, tot = [], dict.fromkeys(campos, 0)
     for x in dados["linhas"]:
-        y = dict(x)
-        y["comprometido"] = x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"]
-        y["estimativa"] = y["comprometido"] + x["a_contratar"]
-        y["desvio"] = x["oatu"] - y["estimativa"]
-        y["indice"] = round(y["estimativa"] / x["oatu"], 3) if x["oatu"] else None
+        y = _calc_linha(x)
         for k in campos:
             tot[k] += y[k]
         out.append(y)
@@ -1184,4 +1202,25 @@ def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, r
         avisos.append(f"O incorrido da planilha ({br(tot['incorrido'])}) é diferente do custo realizado lançado no "
                       f"sistema ({br(realizado_sistema)}). Confira os lançamentos ou a planilha.")
     return {"arquivo": dados.get("arquivo"), "atualizado_em": dados.get("atualizado_em"), "linhas": out,
-            "total": tot, "avisos": avisos}
+            "total": tot, "avisos": avisos, "tem_niveis": bool(dados.get("niveis"))}
+
+
+def _calc_linha(x: dict) -> dict:
+    y = dict(x)
+    y["comprometido"] = x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"]
+    y["estimativa"] = y["comprometido"] + x["a_contratar"]
+    y["desvio"] = x["oatu"] - y["estimativa"]
+    y["indice"] = round(y["estimativa"] / x["oatu"], 3) if x["oatu"] else None
+    return y
+
+
+def calcular_niveis(dados: dict | None) -> list | None:
+    """Todos os níveis do ERP (UC, etapa, item, credor). (h) a (k) só em UC e etapa, onde a premissa é calculada;
+    item e credor mostram os valores do ERP (a) a (g)."""
+    if not dados or not dados.get("niveis"):
+        return None
+    out = [_calc_linha(x) for x in dados["niveis"]]
+    for y in out:
+        if y["tipo"] in ("item", "credor"):  # a premissa (h) e a estimativa são feitas por etapa (regra validada)
+            y["a_contratar"] = y["estimativa"] = y["desvio"] = y["indice"] = None
+    return out

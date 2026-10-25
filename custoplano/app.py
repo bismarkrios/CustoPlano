@@ -960,6 +960,13 @@ def importar_controle():
     return ver_custos()
 
 
+@app.get("/api/custos/controle/niveis")
+@logado
+@servico("custos")
+def niveis_controle():
+    return jsonify(niveis=cst.calcular_niveis(banco.controle_custos(oid())) or [])
+
+
 @app.post("/api/custos/controle/remover")
 @logado
 @servico("custos")
