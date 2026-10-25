@@ -230,6 +230,19 @@ def _obra_da_sessao() -> int | None:
     return session.get("obra")
 
 
+def servico(*nomes):
+    """Rotas de um serviço (planejamento, custos ou qualidade): só funcionam se a obra aberta contratou
+    pelo menos um deles. Vem depois de @logado, que já garante a obra."""
+    def deco(f):
+        @wraps(f)
+        def interno(*a, **k):
+            if not set(nomes) & set(banco.servicos_da_obra(oid())):
+                return erro("Este serviço não está contratado para esta obra. Fale com a Custo Plano para incluir.", 403)
+            return f(*a, **k)
+        return interno
+    return deco
+
+
 def so_logado(f):
     """Rotas da conta (trocar senha, escolher obra): só precisam de login."""
     @wraps(f)
@@ -615,7 +628,24 @@ def admin_obra():
             return erro("Obra não encontrada.", 404)
         banco.editar_obra(int(d["id"]), nome, empresa)
         return jsonify(id=int(d["id"]))
-    return jsonify(id=banco.criar_obra(nome, empresa))
+    servicos = d.get("servicos")
+    if servicos is not None and not (isinstance(servicos, list) and set(map(str, servicos)) & set(banco.SERVICOS)):
+        return erro("Marque pelo menos um serviço contratado: planejamento, custos ou qualidade.")
+    return jsonify(id=banco.criar_obra(nome, empresa, [str(x) for x in servicos] if servicos is not None else None))
+
+
+@app.post("/api/admin/obra/servicos")
+@so_admin
+def admin_obra_servicos():
+    """Serviços contratados da obra: o sistema mostra só as telas e os relatórios desses serviços."""
+    d = request.get_json(silent=True) or {}
+    obra_id = int(d.get("id") or 0)
+    if not banco.obra(obra_id):
+        return erro("Obra não encontrada.", 404)
+    servicos = d.get("servicos")
+    if not isinstance(servicos, list) or not set(map(str, servicos)) & set(banco.SERVICOS):
+        return erro("A obra precisa de pelo menos um serviço contratado.")
+    return jsonify(id=obra_id, servicos=banco.definir_servicos(obra_id, [str(x) for x in servicos]))
 
 
 @app.post("/api/admin/obra/remover")
@@ -765,6 +795,7 @@ def importar_exemplo():
 
 @app.post("/api/medicao")
 @logado
+@servico("planejamento", "custos")
 def medicao():
     d = request.get_json(silent=True) or {}
     if not banco.cronograma(oid()):
@@ -779,6 +810,7 @@ def medicao():
 
 @app.post("/api/fechar")
 @logado
+@servico("planejamento", "custos")
 def fechar():
     c, p = carregar()
     if not c:
@@ -799,6 +831,7 @@ def remover():
 
 @app.get("/api/historico")
 @logado
+@servico("planejamento", "custos")
 def ver_historico():
     return jsonify([dict(h) for h in banco.historico(oid())])
 
@@ -818,6 +851,7 @@ def plano_de(uid: int):
 
 @app.get("/api/plano")
 @logado
+@servico("planejamento")
 def ver_plano():
     d, quando = plano_de(oid())
     return jsonify(plano=d, atualizado_em=quando)
@@ -825,6 +859,7 @@ def ver_plano():
 
 @app.post("/api/plano/importar")
 @logado
+@servico("planejamento")
 @sem_demo
 def importar_plano():
     arq = request.files.get("arquivo")
@@ -840,6 +875,7 @@ def importar_plano():
 
 @app.post("/api/plano/remover")
 @logado
+@servico("planejamento")
 @sem_demo
 def remover_plano():
     banco.remover_plano(oid())
@@ -875,12 +911,14 @@ def analise_custos(uid: int):
 
 @app.get("/api/custos")
 @logado
+@servico("custos")
 def ver_custos():
     return jsonify(custos=analise_custos(oid()))
 
 
 @app.post("/api/custos/importar")
 @logado
+@servico("custos")
 @sem_demo
 def importar_custos():
     arq = request.files.get("arquivo")
@@ -896,6 +934,7 @@ def importar_custos():
 
 @app.post("/api/custos/exemplo")
 @logado
+@servico("custos")
 @sem_demo
 def exemplo_custos():
     uid = oid()
@@ -915,6 +954,7 @@ def modelo_custos():
 
 @app.get("/api/custos/financeiro.xlsx")
 @logado
+@servico("custos")
 def exportar_financeiro():
     a = analise_custos(oid())
     if not a:
@@ -925,6 +965,7 @@ def exportar_financeiro():
 
 @app.post("/api/custos/lancamento")
 @logado
+@servico("custos")
 def lancar_custo():
     reg = banco.custos(oid())
     if not reg:
@@ -955,6 +996,7 @@ def lancar_custo():
 
 @app.post("/api/custos/lancamento/remover")
 @logado
+@servico("custos")
 def remover_lancamento():
     reg = banco.custos(oid())
     if not reg:
@@ -966,6 +1008,7 @@ def remover_lancamento():
 
 @app.post("/api/custos/remover")
 @logado
+@servico("custos")
 @sem_demo
 def remover_custos():
     banco.remover_custos(oid())
@@ -978,12 +1021,14 @@ SUP_ETAPAS = ("solicitar", "cotacao", "pedido", "entregue")
 
 @app.get("/api/suprimentos")
 @logado
+@servico("custos")
 def ver_suprimentos():
     return jsonify(itens=banco.suprimentos(oid()))
 
 
 @app.post("/api/suprimentos")
 @logado
+@servico("custos")
 def salvar_suprimento():
     """Grava prazo do fornecedor, fornecedor e etapa da compra de uma linha resumo do cronograma."""
     d = request.get_json(silent=True) or {}
@@ -1013,12 +1058,14 @@ CP_CAUSAS = ("Material", "Mão de obra", "Projeto", "Equipamento", "Clima", "Pre
 
 @app.get("/api/curtoprazo")
 @logado
+@servico("planejamento")
 def ver_curto_prazo():
     return jsonify(semanas=banco.curto_prazo(oid()))
 
 
 @app.post("/api/curtoprazo")
 @logado
+@servico("planejamento")
 def salvar_curto_prazo():
     """Grava o apontamento de um pacote na semana: concluído, não concluído (com a causa) ou sem apontamento."""
     d = request.get_json(silent=True) or {}
@@ -1055,18 +1102,21 @@ def _ql(fn):
 
 @app.get("/api/qualidade")
 @logado
+@servico("qualidade")
 def ver_qualidade():
     return jsonify(ql.estado(oid()))
 
 
 @app.post("/api/qualidade/modelo")
 @logado
+@servico("qualidade")
 def qualidade_modelo():
     return _ql(lambda: ql.salvar_modelo(oid(), request.get_json(silent=True) or {}))
 
 
 @app.post("/api/qualidade/modelo/remover")
 @logado
+@servico("qualidade")
 @sem_demo
 def qualidade_modelo_remover():
     return _ql(lambda: ql.remover_modelo(oid(), int((request.get_json(silent=True) or {}).get("id") or 0)))
@@ -1074,12 +1124,14 @@ def qualidade_modelo_remover():
 
 @app.post("/api/qualidade/inspecao")
 @logado
+@servico("qualidade")
 def qualidade_inspecao():
     return _ql(lambda: ql.registrar_inspecao(oid(), request.get_json(silent=True) or {}))
 
 
 @app.post("/api/qualidade/inspecao/remover")
 @logado
+@servico("qualidade")
 @sem_demo
 def qualidade_inspecao_remover():
     return _ql(lambda: ql.remover_inspecao(oid(), int((request.get_json(silent=True) or {}).get("id") or 0)))
@@ -1087,18 +1139,21 @@ def qualidade_inspecao_remover():
 
 @app.post("/api/qualidade/tarefa")
 @logado
+@servico("qualidade")
 def qualidade_tarefa():
     return _ql(lambda: ql.ligar_tarefa(oid(), request.get_json(silent=True) or {}))
 
 
 @app.post("/api/qualidade/nc")
 @logado
+@servico("qualidade")
 def qualidade_nc():
     return _ql(lambda: ql.salvar_nc(oid(), request.get_json(silent=True) or {}))
 
 
 @app.get("/api/qualidade/foto/<fid>")
 @logado
+@servico("qualidade")
 def qualidade_foto(fid):
     f = ql.foto(oid(), fid)
     if not f:
@@ -1110,6 +1165,7 @@ def qualidade_foto(fid):
 
 @app.get("/api/qualidade/inspecao/<int:iid>.pdf")
 @logado
+@servico("qualidade")
 def qualidade_inspecao_pdf(iid):
     import relatorio
 
@@ -1134,7 +1190,12 @@ def gerar_relatorio(obra_id: int, tipo: str = "consolidado"):
     plano, _ = plano_de(obra_id)
     cus = analise_custos(obra_id)
     tipo = tipo if tipo in relatorio.TIPOS else "consolidado"
-    extra = {}
+    servs = banco.servicos_da_obra(obra_id)
+    if not set(relatorio.SERVICO_DO_TIPO[tipo]) & set(servs):
+        return None
+    if tipo == "consolidado" and "custos" not in servs:
+        cus = None
+    extra = {"servicos": servs}
     if tipo in ("qualidade", "inspecoes", "ncs", "modelos"):
         extra["qualidade"] = ql.estado(obra_id)
     elif tipo == "curto":
@@ -1142,7 +1203,8 @@ def gerar_relatorio(obra_id: int, tipo: str = "consolidado"):
     elif tipo == "suprimentos":
         extra["sup"] = banco.suprimentos(obra_id)
     # o consolidado precisa de algum dado de prazo ou custo; os de qualidade saem mesmo sem cronograma
-    if not c and not plano and not cus and tipo not in ("qualidade", "inspecoes", "ncs", "modelos", "curto"):
+    so_qualidade = tipo == "consolidado" and servs == ["qualidade"]
+    if not c and not plano and not cus and not so_qualidade and tipo not in ("qualidade", "inspecoes", "ncs", "modelos", "curto"):
         return None
     o = banco.obra(obra_id)
     obra = (p.titulo if p else (plano or {}).get("titulo")) or (o["nome"] if o else "") or "Obra"
@@ -1162,7 +1224,11 @@ def gerar_relatorio(obra_id: int, tipo: str = "consolidado"):
 @app.get("/api/relatorio.pdf")
 @logado
 def relatorio_pdf():
-    r = gerar_relatorio(oid(), request.args.get("tipo") or "consolidado")
+    import relatorio
+    tipo = request.args.get("tipo") or "consolidado"
+    if not set(relatorio.SERVICO_DO_TIPO.get(tipo, relatorio.SERVICOS)) & set(banco.servicos_da_obra(oid())):
+        return erro("Este relatório é de um serviço que não está contratado para esta obra.", 403)
+    r = gerar_relatorio(oid(), tipo)
     if not r:
         return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
     return download(r[0], r[1], "application/pdf")
@@ -1258,6 +1324,7 @@ def exportar(formato):
 
 @app.get("/api/historico/<int:mid>/<formato>")
 @logado
+@servico("planejamento", "custos")
 def exportar_historico(mid, formato):
     c = banco.medicao_fechada(oid(), mid)
     if not c:

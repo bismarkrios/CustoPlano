@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS obras (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     nome        TEXT NOT NULL,
     empresa     TEXT NOT NULL DEFAULT '',
-    criado_em   TEXT NOT NULL
+    criado_em   TEXT NOT NULL,
+    servicos    TEXT NOT NULL DEFAULT 'planejamento,custos,qualidade'   -- serviços contratados, separados por vírgula
 );
 CREATE TABLE IF NOT EXISTS acessos (
     usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -116,6 +117,8 @@ def iniciar() -> None:
     _colunas_novas()
     with conectar() as con:
         con.executescript(ESQUEMA)
+        if "servicos" not in {r[1] for r in con.execute("PRAGMA table_info(obras)")}:
+            con.execute("ALTER TABLE obras ADD COLUMN servicos TEXT NOT NULL DEFAULT 'planejamento,custos,qualidade'")
         # o cronograma de exemplo antigo tinha o nome de uma obra real; troca nas cópias já importadas
         con.execute(
             "UPDATE cronogramas SET xml = replace(replace(xml, 'Rubi – Obra teste', 'Residencial Exemplo – Torre A'), 'Rubi teste.xml', 'Obra de exemplo.xml') "
@@ -322,11 +325,35 @@ def obras_do_usuario(uid: int) -> list[dict]:
     with conectar() as con:
         u = con.execute("SELECT admin FROM usuarios WHERE id = ?", (uid,)).fetchone()
         if u and u["admin"]:
-            rs = con.execute("SELECT id, nome, empresa, 'editor' AS papel FROM obras ORDER BY empresa, nome").fetchall()
+            rs = con.execute("SELECT id, nome, empresa, servicos, 'editor' AS papel FROM obras ORDER BY empresa, nome").fetchall()
         else:
-            rs = con.execute("SELECT o.id, o.nome, o.empresa, a.papel FROM acessos a JOIN obras o ON o.id = a.obra_id "
+            rs = con.execute("SELECT o.id, o.nome, o.empresa, o.servicos, a.papel FROM acessos a JOIN obras o ON o.id = a.obra_id "
                              "WHERE a.usuario_id = ? ORDER BY o.empresa, o.nome", (uid,)).fetchall()
-    return [dict(r) for r in rs]
+    return [dict(r, servicos=_servicos(r["servicos"])) for r in rs]
+
+
+# Serviços que a construtora pode contratar; cada obra guarda os seus e o sistema mostra só esses
+SERVICOS = ("planejamento", "custos", "qualidade")
+
+
+def _servicos(texto: str | None) -> list[str]:
+    tem = set((texto or "").split(","))
+    return [s for s in SERVICOS if s in tem]
+
+
+def servicos_da_obra(obra_id: int) -> list[str]:
+    with conectar() as con:
+        r = con.execute("SELECT servicos FROM obras WHERE id = ?", (obra_id,)).fetchone()
+    return _servicos(r["servicos"]) if r else []
+
+
+def definir_servicos(obra_id: int, servicos: list[str]) -> list[str]:
+    lista = [s for s in SERVICOS if s in set(servicos)]
+    if not lista:
+        raise ValueError("A obra precisa de pelo menos um serviço.")
+    with conectar() as con:
+        con.execute("UPDATE obras SET servicos = ? WHERE id = ?", (",".join(lista), obra_id))
+    return lista
 
 
 def papel_na_obra(uid: int, obra_id: int) -> str | None:
@@ -346,10 +373,13 @@ def obra(obra_id: int):
         return con.execute("SELECT * FROM obras WHERE id = ?", (obra_id,)).fetchone()
 
 
-def criar_obra(nome: str, empresa: str = "") -> int:
+def criar_obra(nome: str, empresa: str = "", servicos: list[str] | None = None) -> int:
+    lista = [s for s in SERVICOS if s in set(servicos)] if servicos is not None else list(SERVICOS)
+    if not lista:
+        raise ValueError("A obra precisa de pelo menos um serviço.")
     with conectar() as con:
-        return con.execute("INSERT INTO obras (nome, empresa, criado_em) VALUES (?, ?, ?)",
-                           (nome.strip(), empresa.strip(), agora())).lastrowid
+        return con.execute("INSERT INTO obras (nome, empresa, criado_em, servicos) VALUES (?, ?, ?, ?)",
+                           (nome.strip(), empresa.strip(), agora(), ",".join(lista))).lastrowid
 
 
 def editar_obra(obra_id: int, nome: str, empresa: str) -> None:
@@ -392,7 +422,7 @@ def painel_admin() -> dict:
     """Obras e usuários para a tela de administração."""
     with conectar() as con:
         obras_ = [dict(r) for r in con.execute(
-            "SELECT o.id, o.nome, o.empresa, o.criado_em, c.arquivo AS cronograma, c.atualizado_em AS atualizado_em, "
+            "SELECT o.id, o.nome, o.empresa, o.criado_em, o.servicos, c.arquivo AS cronograma, c.atualizado_em AS atualizado_em, "
             "(SELECT COUNT(*) FROM acessos a WHERE a.obra_id = o.id) AS usuarios, "
             "(SELECT COALESCE(SUM(LENGTH(f.dados)), 0) FROM fotos f WHERE f.usuario_id = o.id) AS bytes_fotos "
             "FROM obras o LEFT JOIN cronogramas c ON c.usuario_id = o.id ORDER BY o.empresa, o.nome")]
@@ -404,6 +434,8 @@ def painel_admin() -> dict:
         por_u.setdefault(a["usuario_id"], []).append({"obra_id": a["obra_id"], "papel": a["papel"]})
     for u in usuarios_:
         u["acessos"] = por_u.get(u["id"], [])
+    for o in obras_:
+        o["servicos"] = _servicos(o["servicos"])
     return {"obras": obras_, "usuarios": usuarios_}
 
 

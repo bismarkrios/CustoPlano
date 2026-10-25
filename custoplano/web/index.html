@@ -678,6 +678,10 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .adm-tbl small{color:var(--muted);display:block}
 .adm-acessos{display:flex;flex-wrap:wrap;gap:6px}
 .adm-acessos .chip button{border:0;background:none;color:inherit;cursor:pointer;font:inherit;padding:0 0 0 6px}
+.adm-serv{flex:1 1 100%;order:3;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:14px}
+.adm-serv>span{font-weight:600}
+.adm-serv label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0}
+button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
 .adm-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-radius:8px;background:var(--blue-soft)}
 .adm-link input{flex:1 1 260px;min-height:40px;font-family:var(--mono);font-size:12.5px}
 .adm-acoes{display:flex;flex-wrap:wrap;gap:6px}
@@ -1459,6 +1463,19 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   // conta logada: e-mail, se é da equipe, obra aberta e obras liberadas (vem do /api/me e do login)
   var CONTA = null, SENHA_EMAIL = false;
   var API = !!window.CP_API;
+  // serviços contratados da obra aberta (planejamento, custos, qualidade): o sistema mostra só as telas deles
+  var TODOS_SERV = ['planejamento', 'custos', 'qualidade'];
+  function servs() { return (API && CONTA && CONTA.obra && CONTA.obra.servicos) || TODOS_SERV; }
+  function temServ(s) { return servs().indexOf(s) >= 0; }
+  function temBase() { return temServ('planejamento') || temServ('custos'); }  // cronograma e medição servem aos dois
+  var TELA_SERV = { painel: 'planejamento', cron: 'planejamento', lb: 'planejamento', pa: 'planejamento', cp: 'planejamento', res: 'planejamento',
+    cus: 'custos', sup: 'custos', qp: 'qualidade', qi: 'qualidade', qn: 'qualidade', qm: 'qualidade', qmod: 'qualidade' };
+  function telaOk(t) {
+    if (t === 'prj' || t === 'med') return temBase();
+    if (t === 'qc') return temServ('qualidade') && temBase();  // FVS do cronograma precisa do cronograma
+    return !TELA_SERV[t] || temServ(TELA_SERV[t]);
+  }
+  var ORDEM_TELAS = { plan: ['painel', 'prj', 'med', 'cus', 'sup', 'pa', 'cp'], qual: ['qp', 'qi', 'qc', 'qn', 'qm', 'qmod'] };
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
     if (body instanceof FormData) o.body = body;
@@ -1497,11 +1514,15 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (h === 'sistema' || h === 'qualidade') {
       if (!user) { show('login'); window.scrollTo(0, 0); return; }
       if (API && CONTA && !CONTA.obra) { location.replace('#area'); route(); return; }  // sem obra aberta: escolher na área do cliente
+      // área de um serviço não contratado: vai para a outra área
+      if (h === 'qualidade' && !temServ('qualidade')) { location.replace('#sistema'); h = 'sistema'; }
+      else if (h === 'sistema' && !temBase() && !NATIVO) { location.replace('#qualidade'); h = 'qualidade'; }
       S.mod = h === 'qualidade' ? 'qual' : 'plan';
       var ehQ = /^q/.test(S.screen);
       if (S.mod === 'qual' && !ehQ) S.screen = 'qp';
       if (S.mod === 'plan' && ehQ) S.screen = 'painel';
       if (S.mod === 'qual' && API) loadQual();
+      if (!telaOk(S.screen)) S.screen = ORDEM_TELAS[S.mod].filter(telaOk)[0] || S.screen;
       show('app'); render(); window.scrollTo(0, 0); return;
     }
     show('site');
@@ -2217,7 +2238,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       if (v.meas) P.meas = v.meas; if (v.base) P.base = v.base; if (v.weight) P.weight = v.weight;
     } catch (e) { P = null; }
   }
-  function loadHist() { if (!API) return; api('/api/historico').then(function (h) { S.hist = h; if (!app.hidden) render(); }).catch(function () {}); }
+  function loadHist() { if (!API || !temBase()) return; api('/api/historico').then(function (h) { S.hist = h; if (!app.hidden) render(); }).catch(function () {}); }
   function loadPrj() {
     if (API) {
       api('/api/cronograma').then(function (v) {
@@ -2321,7 +2342,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexport">Exportar para o MS Project (.xml)</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pcsv">Boletim de medição (.csv)</button>' +
-          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button><button type="button" class="btn btn-primary btn-sm" data-a="prel:prazo">Relatório de prazo (PDF)</button>' : '') +
+          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button>' + (temServ('planejamento') ? '<button type="button" class="btn btn-primary btn-sm" data-a="prel:prazo">Relatório de prazo (PDF)</button>' : '') : '') +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pclose" title="A medição atual passa a ser a medição anterior">Fechar medição</button>' +
           '<span style="flex:1"></span>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexp">Expandir tudo</button>' +
@@ -2348,7 +2369,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   function nkey(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }
   function sdias(n) { return n === 0 ? 'no prazo' : (n > 0 ? '+' : '−') + Math.abs(n) + (Math.abs(n) === 1 ? ' dia' : ' dias'); }
   function loadPlano() {
-    if (!API) return;
+    if (!API || !temServ('planejamento')) return;
     api('/api/plano').then(function (r) { PA = r.plano || null; if (!app.hidden && (S.screen === 'pa' || S.screen === 'painel')) render(); }).catch(function () {});
   }
   function paDemo() {
@@ -2631,7 +2652,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
             '<span class="pn-et-v">' + fmt1(rr) + '%</span><span class="pn-et-s" style="color:' + (ruim ? 'var(--bad)' : 'var(--muted)') + '">' + nota + '</span></div>';
         }).join('') + '</div></section>';
     }
-    if (CU && CU.totais) {
+    if (CU && CU.totais && temServ('custos')) {
       var T = CU.totais, br = function (v) { return 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR'); };
       html += '<div class="grid4">' +
         kpi('Orçado', br(T.bac), 'custo total do cronograma', null, 'nav:cus') +
@@ -2656,7 +2677,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   var CPD = null, cpCarregando = false;
   S.cpw = 0;
   function loadCP() {
-    if (!API || cpCarregando) return;
+    if (!API || cpCarregando || !temServ('planejamento')) return;
     cpCarregando = true;
     api('/api/curtoprazo').then(function (r) { CPD = r.semanas || {}; cpCarregando = false; if (!app.hidden && (S.screen === 'cp' || S.screen === 'painel')) render(); }, function () { cpCarregando = false; CPD = CPD || {}; });
   }
@@ -3026,7 +3047,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   var TIPO_NOME = { mat: 'Material', mo: 'Mão de obra', eq: 'Equipamento', sv: 'Serviço', out: 'Outros' };
   function recarregarDerivados() { if (API) { loadPlano(); loadCustos(); } }
   function loadCustos() {
-    if (!API) return;
+    if (!API || !temServ('custos')) return;
     S.cu.carregando = !CU;
     api('/api/custos').then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && (S.screen === 'cus' || S.screen === 'painel')) render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
   }
@@ -3217,7 +3238,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   function hojeIso() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
   function fotoUrl(f) { return /^data:/.test(f) ? f : '/api/qualidade/foto/' + f; }
   function loadQual() {
-    if (!API) return Promise.resolve();
+    if (!API || !temServ('qualidade')) return Promise.resolve();
     return api('/api/qualidade').then(function (r) {
       Q = r;
       return kvGet('qout').then(function (fila) { aplicarFila(fila || []); if (!app.hidden && S.mod === 'qual') render(); flushQ(); });
@@ -3746,7 +3767,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   var SUPR = null, supCarregando = false;
   S.supR = { f: 'todos', torre: '', q: '', msg: '' };
   function loadSup() {
-    if (!API || supCarregando) return;
+    if (!API || supCarregando || !temServ('custos')) return;
     supCarregando = true;
     api('/api/suprimentos').then(function (r) { SUPR = r.itens || {}; supCarregando = false; if (!app.hidden) render(); }, function () { supCarregando = false; });
   }
@@ -3955,10 +3976,13 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       document.getElementById('obraNome').innerHTML = esc(nomeObra) + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
       document.getElementById('roTag').hidden = !(CONTA && CONTA.obra && CONTA.obra.papel === 'leitor');
     }
+    if (!telaOk(S.screen)) S.screen = ORDEM_TELAS[S.mod === 'qual' ? 'qual' : 'plan'].filter(telaOk)[0] || S.screen;
     var M = model();
     document.getElementById('navCount').textContent = M.abertas;
     Array.prototype.forEach.call(document.querySelectorAll('.nav-btn'), function (b) {
-      if (b.getAttribute('data-a') === 'nav:' + S.screen) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+      var tela = (b.getAttribute('data-a') || '').replace('nav:', '');
+      b.style.display = telaOk(tela) ? '' : 'none';
+      if (tela === S.screen) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
     var nm = (CONTA && CONTA.nome && !ehDemo() && !/custo plano/i.test(CONTA.nome)) ? CONTA.nome : '';
     var ini = (nm ? nm.split(/\s+/) : (user || 'CL').replace(/@.*/, '').split(/[._-]/)).filter(Boolean).map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase() || 'CL';
@@ -3987,8 +4011,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     paintSync();
     var qm = S.mod === 'qual';
     document.getElementById('navPlan').hidden = qm; document.getElementById('navQual').hidden = !qm;
-    document.getElementById('sideLabel').textContent = qm ? 'Qualidade' : 'Planejamento';
-    document.getElementById('sideSub').textContent = qm ? 'Qualidade' : 'Planejamento';
+    var nomePlan = temServ('planejamento') ? 'Planejamento' : 'Custos';
+    document.getElementById('sideLabel').textContent = qm ? 'Qualidade' : nomePlan;
+    document.getElementById('sideSub').textContent = qm ? 'Qualidade' : nomePlan;
     Array.prototype.forEach.call(document.querySelectorAll('.plan-only'), function (e) { e.hidden = qm; });
     var nAb = Q ? Q.ncs.filter(function (n) { return n.status !== 'fechada'; }).length : 0, qc = document.getElementById('qnCount');
     qc.textContent = nAb; qc.hidden = !nAb;
@@ -4269,7 +4294,18 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     box.innerHTML = h;
     var sel = document.getElementById('hubObraSel');
     if (sel) sel.addEventListener('change', function () { trocarObra(+sel.value); });
-    Array.prototype.forEach.call(document.querySelectorAll('#hub .hub-card'), function (a) { a.hidden = !CONTA.obra; });
+    Array.prototype.forEach.call(document.querySelectorAll('#hub .hub-card'), function (a) {
+      var q = a.getAttribute('href') === '#qualidade';
+      a.hidden = !CONTA.obra || !(q ? temServ('qualidade') : temBase());
+      if (q) return;
+      var pl = temServ('planejamento'), cu = temServ('custos');
+      if (!a.getAttribute('data-txt')) a.setAttribute('data-txt', a.querySelector('p').textContent);
+      a.querySelector('h2').textContent = pl ? 'Planejamento' : 'Custos';
+      a.querySelector('p').textContent = pl && cu ? a.getAttribute('data-txt') : pl
+        ? 'Cronograma e medição (com o MS Project), medição pelo celular, plano de ataque, linha de balanço, curto prazo e restrições.'
+        : 'Cronograma e medição (com o MS Project), custos, cronograma financeiro e suprimentos.';
+      a.querySelector('.go').firstChild.textContent = pl ? 'Entrar no planejamento ' : 'Entrar em custos ';
+    });
     sen.innerHTML = ehDemo() ? '' : '<details class="hub-adm"><summary class="linkbtn" style="cursor:pointer">Trocar minha senha</summary>' +
       '<form id="trocaSenha" class="adm-form" style="margin-top:12px;width:100%" novalidate>' +
       '<div class="field"><label for="ts-atual">Senha atual</label><input id="ts-atual" type="password" autocomplete="current-password" required></div>' +
@@ -4314,6 +4350,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
   }
   function mb(n) { return n ? (n / 1048576).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' MB' : '—'; }
   function dataHora(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(2, 4) + ' ' + iso.slice(11, 16) : '—'; }
+  var SERV_ROT = [['planejamento', 'Planejamento'], ['custos', 'Custos'], ['qualidade', 'Qualidade']];
   function renderAdm() {
     var d = ADM, nomeObra = {};
     d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
@@ -4325,19 +4362,29 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '<a class="btn btn-primary btn-sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Olá! Este é o seu acesso ao sistema da Custo Plano. Abra o link para criar a sua senha (vale 7 dias): ' + ADM_LINK.link) + '">Enviar pelo WhatsApp</a></div>' : '';
     var h = '<div><p class="eyebrow">Equipe Custo Plano</p><h1 style="margin-top:8px">Administração</h1></div>' + linkBox;
     // obras
-    h += '<section class="adm-card"><h2>Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade.</p>' +
+    h += '<section class="adm-card"><h2>Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade. ' +
+      'Em Serviços, marque o que a construtora contratou: o cliente vê só as telas e os relatórios desses serviços.</p>' +
       '<form class="adm-form" id="admObraForm" novalidate><div class="field"><label for="ao-nome">Nome da obra</label><input id="ao-nome" maxlength="120" placeholder="Ex.: Residencial Jardins – Torre A" required></div>' +
       '<div class="field"><label for="ao-emp">Construtora</label><input id="ao-emp" maxlength="120" placeholder="Ex.: Construtora Exemplo"></div>' +
-      '<button class="btn btn-primary" type="submit">Criar obra</button></form>' +
-      '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Obra</th><th>Cronograma</th><th class="num">Pessoas</th><th class="num">Fotos</th><th></th></tr></thead><tbody>' +
+      '<div class="adm-serv" role="group" aria-labelledby="ao-serv-t"><span id="ao-serv-t">Serviços contratados:</span>' + SERV_ROT.map(function (r) {
+        return '<label><input type="checkbox" name="ao-serv" value="' + r[0] + '" checked> ' + r[1] + '</label>';
+      }).join('') + '</div>' +
+      '<button class="btn btn-primary" type="submit" style="order:2">Criar obra</button></form>' +
+      '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Obra</th><th>Serviços</th><th>Cronograma</th><th class="num">Pessoas</th><th class="num">Fotos</th><th></th></tr></thead><tbody>' +
       (d.obras.length ? d.obras.map(function (o) {
+        var sv = o.servicos || [];
         return '<tr><td><b>' + esc(o.nome) + '</b><small>' + esc(o.empresa || 'sem construtora') + '</small></td>' +
+          '<td><div class="adm-acessos">' + SERV_ROT.map(function (r) {
+            var on = sv.indexOf(r[0]) >= 0;
+            return '<button type="button" class="chip ' + (on ? 'c-ok' : 'c-muted') + '" aria-pressed="' + on + '" data-adm="serv:' + o.id + ':' + r[0] + '" title="' +
+              (on ? 'Contratado. Clique para tirar.' : 'Não contratado. Clique para incluir.') + '">' + (on ? '✓ ' : '') + r[1] + '</button>';
+          }).join('') + '</div></td>' +
           '<td>' + (o.cronograma ? esc(o.cronograma) + '<small>atualizado ' + dataHora(o.atualizado_em) + '</small>' : '<span class="chip c-muted">não importado</span>') + '</td>' +
           '<td class="num">' + o.usuarios + '</td><td class="num">' + mb(o.bytes_fotos) + '</td>' +
           '<td><div class="adm-acoes"><button class="btn btn-primary btn-sm" type="button" data-adm="abrir:' + o.id + '">Abrir</button>' +
           '<button class="btn btn-ghost btn-sm" type="button" data-adm="renomear:' + o.id + '">Renomear</button>' +
           '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">Apagar</button></div></td></tr>';
-      }).join('') : '<tr><td colspan="5">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
+      }).join('') : '<tr><td colspan="6">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
     // pessoas
     h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada. A equipe Custo Plano vê todas as obras e esta Administração.</p>' +
       '<form class="adm-form" id="admUsuForm" novalidate><div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" maxlength="200" placeholder="engenheiro@construtora.com.br" required></div>' +
@@ -4374,7 +4421,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (e.target.id === 'admObraForm') {
       var nome = document.getElementById('ao-nome').value.trim();
       if (!nome) { document.getElementById('ao-nome').focus(); return; }
-      api('/api/admin/obra', { nome: nome, empresa: document.getElementById('ao-emp').value.trim() }).then(carregarAdm, function (err) { alert(err.message); });
+      var sv = Array.prototype.map.call(document.querySelectorAll('input[name="ao-serv"]:checked'), function (c) { return c.value; });
+      if (!sv.length) { alert('Marque pelo menos um serviço contratado.'); return; }
+      api('/api/admin/obra', { nome: nome, empresa: document.getElementById('ao-emp').value.trim(), servicos: sv }).then(carregarAdm, function (err) { alert(err.message); });
     }
     if (e.target.id === 'admUsuForm') {
       var em = document.getElementById('au-email'), ob = document.getElementById('au-obra').value;
@@ -4390,6 +4439,15 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var obra = ADM && ADM.obras.filter(function (o) { return o.id === id; })[0];
     if (a[0] === 'copiar') { var t = document.getElementById('admLinkTxt'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () { b.textContent = 'Copiado'; }, function () { document.execCommand('copy'); b.textContent = 'Copiado'; }); return; }
     if (a[0] === 'abrir') { trocarObra(id, function () { location.hash = 'sistema'; }); return; }
+    if (a[0] === 'serv' && obra) {
+      var atuais = obra.servicos || [], liga = atuais.indexOf(a[2]) < 0;
+      var novos = liga ? atuais.concat([a[2]]) : atuais.filter(function (x) { return x !== a[2]; });
+      if (!novos.length) { alert('A obra precisa de pelo menos um serviço contratado.'); return; }
+      api('/api/admin/obra/servicos', { id: id, servicos: novos }).then(function () {
+        // se for a obra aberta, o menu do sistema já muda
+        return api('/api/me').then(function (r) { CONTA = r; carregarAdm(); });
+      }, function (err) { alert(err.message); }); return;
+    }
     if (a[0] === 'renomear' && obra) {
       var n = prompt('Nome da obra', obra.nome); if (n === null || !n.trim()) return;
       var emp = prompt('Construtora', obra.empresa || ''); if (emp === null) return;

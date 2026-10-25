@@ -99,6 +99,12 @@ TIPOS = {
     "modelos": ("RELATÓRIO DOS MODELOS DE FVS", "itens de verificação e critérios de aceitação",
                 "os itens de verificação e os critérios de aceitação dos modelos de FVS", "Gerência de qualidade"),
 }
+# serviços que a construtora contrata e os relatórios de cada um (o de medição serve aos dois primeiros)
+SERVICOS = ("planejamento", "custos", "qualidade")
+SERVICO_DO_TIPO = {"prazo": ("planejamento",), "medicao": ("planejamento", "custos"), "plano": ("planejamento",),
+                   "curto": ("planejamento",), "custos": ("custos",), "suprimentos": ("custos",),
+                   "qualidade": ("qualidade",), "inspecoes": ("qualidade",), "ncs": ("qualidade",),
+                   "modelos": ("qualidade",), "consolidado": SERVICOS}
 GRAVIDADE = {"alta": "Alta", "media": "Média", "baixa": "Baixa"}
 SITUACAO_NC = {"aberta": "Aberta", "tratamento": "Em tratamento", "fechada": "Fechada"}
 ETAPA_SUP = {"solicitar": "A solicitar", "cotacao": "Em cotação", "pedido": "Pedido feito", "entregue": "Entregue"}
@@ -170,6 +176,14 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     titulo, subtitulo, assunto, _gerencia = TIPOS[tipo]
     cons = tipo == "consolidado"
     extra = extra or {}
+    # serviços contratados pela obra: o consolidado traz só os pilares deles
+    servs = [s_ for s_ in SERVICOS if s_ in (extra.get("servicos") or SERVICOS)]
+    VP, VC, VQ = (not cons or s_ in servs for s_ in SERVICOS)
+    pilares = [n_ for n_, v_ in (("prazo", VP), ("custo", VC), ("qualidade", VQ)) if v_]
+    pilares_txt = pilares[0] if len(pilares) == 1 else ", ".join(pilares[:-1]) + " e " + pilares[-1]
+    if cons:
+        subtitulo = pilares_txt
+        assunto = f"o acompanhamento de {pilares_txt}"
     # cores padrão da Custo Plano (projetos/_modelo/marca/cores-padrao.md)
     NAVY, NAVY2, CLARO = colors.HexColor("#002455"), colors.HexColor("#261FB3"), colors.HexColor("#ECF0F1")
     PRETO, CINZA, LINHA = colors.black, colors.HexColor("#555555"), colors.HexColor("#B8C2CC")
@@ -363,11 +377,12 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     frases = [f"Este relatório apresenta {assunto} da obra {esc(obra)}, com data de status em {ref:%d/%m/%Y}."]
     if cons:
         frases[0] = (f"Este relatório apresenta o acompanhamento mensal da obra {esc(obra)}, com data de status em "
-                     f"{ref:%d/%m/%Y}, nos três pilares de gestão: prazo, custo e qualidade.")
-    if p and tipo in ("consolidado", "prazo", "medicao"):
+                     f"{ref:%d/%m/%Y}, " + ("nos três pilares de gestão: prazo, custo e qualidade." if len(pilares) == 3
+                                            else f"nos serviços contratados: {pilares_txt}."))
+    if p and VP and tipo in ("consolidado", "prazo", "medicao"):
         frases.append(f"O avanço físico real é de {_br(real)}%, contra {_br(prev)}% previstos na linha de base, "
                       f"um desvio de {_sn(desv)} pontos percentuais.")
-    if ppc and tipo in ("consolidado", "curto"):
+    if ppc and VP and tipo in ("consolidado", "curto"):
         frases.append(f"O PPC da semana de {_d(ppc['semana'])} foi de {ppc['ppc']}%.")
     if tipo == "curto" and causas:
         fc = frase_causas()
@@ -375,7 +390,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     if rp and tipo == "plano":
         frases.append(f"Foram executados {rp['ok']} de {rp['tot']} pacotes de serviço por pavimento, e "
                       f"{_plural(rp['late'], 'pacote está atrasado', 'pacotes estão atrasados')}.")
-    if tipo in ("consolidado", "custos"):
+    if tipo in ("consolidado", "custos") and VC:
         if idc is not None:
             frases.append(f"{'No custo, o' if cons else 'O'} índice de desempenho de custo (IDC) é {_br(idc, 2)}"
                           + (f" e o índice de desempenho de prazo (IDP) é {_br(idp, 2)}." if idp is not None else "."))
@@ -386,7 +401,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         week = sum(1 for x in sup if x["grupo"] == "week")
         frases.append(f"Dos {len(sup)} pacotes de compra, {_plural(late, 'está atrasado', 'estão atrasados')} e "
                       f"{_plural(week, 'precisa ser comprado', 'precisam ser comprados')} nos próximos sete dias.")
-    if tipo in ("consolidado", "qualidade", "inspecoes", "ncs") and indicadores is not None:
+    if tipo in ("consolidado", "qualidade", "inspecoes", "ncs") and VQ and indicadores is not None:
         ap_ = qual.get("aprovacao_1a_pct")
         frases.append(f"Nos 30 dias anteriores à data de status, foram registradas {_plural(qual.get('inspecoes_30d', 0), 'inspeção', 'inspeções')}"
                       + (f", com {ap_}% de aprovação na primeira inspeção," if ap_ is not None else "")
@@ -397,7 +412,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                       "com os itens de verificação e os critérios de aceitação de cada serviço.")
     if tipo != "modelos":
         frases.append("A conclusão reúne os pontos de atenção e os próximos passos recomendados.")
-    chaves = {"consolidado": "prazo; custo; qualidade; avanço físico; gestão de obras.",
+    chaves = {"consolidado": "; ".join(pilares) + ("; avanço físico" if VP else "") + "; gestão de obras.",
               "prazo": "prazo; cronograma; avanço físico; curva S; linha de base.",
               "medicao": "medição; avanço físico; cronograma; prazo.",
               "plano": "plano de ataque; pavimentos; sequência executiva; prazo.",
@@ -431,23 +446,27 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
               "ncs": ["o registro de não conformidades (NC)"],
               "modelos": ["os modelos de FVS cadastrados na obra"]}[tipo]
     if cons:
-        if p:
+        if p and VP:
             fontes.append("o cronograma importado e a medição de avanço físico")
-        if plano:
+        if plano and VP:
             fontes.append("o plano de ataque")
-        if custos:
+        if custos and VC:
             fontes.append("o orçamento e os custos lançados")
-        if indicadores is not None:
-            fontes.append("o planejamento de curto prazo e as fichas de verificação de serviço (FVS)")
+        if indicadores is not None and VP:
+            fontes.append("o planejamento de curto prazo")
+        if indicadores is not None and VQ:
+            fontes.append("as fichas de verificação de serviço (FVS)")
     H.append(Pa("1 INTRODUÇÃO", "h1"))
     if cons:
         txt(f"Este relatório tem como objetivo apresentar a situação da obra {esc(obra)} em {ref:%d/%m/%Y}, "
             "data de status da medição, para apoiar as decisões da obra e do cliente. "
-            "Prazo, custo e qualidade são analisados em conjunto, porque um desvio em um deles afeta os outros dois.")
+            + ("Prazo, custo e qualidade são analisados em conjunto, porque um desvio em um deles afeta os outros dois."
+               if len(pilares) == 3 else f"São analisados os serviços contratados para a obra: {pilares_txt}."))
     else:
         txt(f"Este relatório tem como objetivo apresentar {assunto} da obra {esc(obra)} na data de status de {ref:%d/%m/%Y}, "
-            "para apoiar as decisões da obra e do cliente. O relatório consolidado, com prazo, custo e qualidade "
-            "analisados em conjunto, é emitido no Painel da obra, no sistema Custo Plano.")
+            "para apoiar as decisões da obra e do cliente."
+            + (" O relatório consolidado, com prazo, custo e qualidade analisados em conjunto, é emitido no Painel "
+               "da obra, no sistema Custo Plano." if len(extra.get("servicos") or SERVICOS) == 3 else ""))
     txt(("Os dados vêm do sistema Custo Plano: " + "; ".join(fontes[:-1]) + ("; e " if len(fontes) > 2 else " e " if len(fontes) > 1 else "")
          + fontes[-1] + ". ")
         if fontes else "Os dados vêm do sistema Custo Plano. ")
@@ -775,28 +794,31 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
 
     # ----------------------------------------------------------- por assunto
     if cons:
-        secao("Prazo")
-        if p:
-            tab_prazo()
-            curva_s()
-            tab_etapas()
-            tab_atrasos(12)
-        elif not plano:
-            txt("O cronograma da obra ainda não foi importado no sistema, por isso o avanço físico não é apresentado.")
-        if plano:
-            sec_plano(False)
-        secao("Custo")
-        if custos:
-            sec_custo_totais()
-            sec_custo_etapas()
-            sec_custo_serie()
-        else:
-            txt("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.")
-        secao("Qualidade")
-        if indicadores is not None:
-            tab_qualidade()
-        else:
-            txt("Os indicadores de qualidade não estão disponíveis para esta obra.")
+        if VP:
+            secao("Prazo")
+            if p:
+                tab_prazo()
+                curva_s()
+                tab_etapas()
+                tab_atrasos(12)
+            elif not plano:
+                txt("O cronograma da obra ainda não foi importado no sistema, por isso o avanço físico não é apresentado.")
+            if plano:
+                sec_plano(False)
+        if VC:
+            secao("Custo")
+            if custos:
+                sec_custo_totais()
+                sec_custo_etapas()
+                sec_custo_serie()
+            else:
+                txt("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.")
+        if VQ:
+            secao("Qualidade")
+            if indicadores is not None:
+                tab_qualidade()
+            else:
+                txt("Os indicadores de qualidade não estão disponíveis para esta obra.")
     elif tipo in ("prazo", "medicao"):
         if not p:
             secao("Cronograma")
@@ -961,7 +983,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     itens = []
     tm = (plano or {}).get("termino") or {}
     var_fim = tm.get("var")
-    if p and tipo in ("consolidado", "prazo", "medicao"):
+    if p and VP and tipo in ("consolidado", "prazo", "medicao"):
         n_atr = sum(1 for t in p.tarefas if not t.filhos and not t.marco
                     and p.previsto(t, data_status) - float(atual.get(t.uid, 0)) > 0.5)
         if desv < -5:
@@ -975,7 +997,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         else:
             itens.append(f"<b>Prazo:</b> o avanço real está em linha com o previsto ou à frente "
                          f"({_sn(desv)} p.p.)")
-    if tipo in ("consolidado", "prazo", "plano") and var_fim and var_fim > 0:
+    if VP and tipo in ("consolidado", "prazo", "plano") and var_fim and var_fim > 0:
         itens.append(f"<b>Término:</b> entrega projetada para {_d(tm.get('atual'))}, {_plural(var_fim, 'dia', 'dias')} depois da "
                      f"linha de base ({_d(tm.get('lb'))}); definir as ações de recuperação do prazo")
     elif tipo == "prazo" and p:
@@ -983,13 +1005,13 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if atrasados:
             itens.append(f"<b>Marcos:</b> {_plural(len(atrasados), 'marco está', 'marcos estão')} com data posterior à da "
                          "linha de base; definir as ações de recuperação do prazo")
-    if rp and tipo in ("consolidado", "plano"):
+    if rp and VP and tipo in ("consolidado", "plano"):
         if rp["late"]:
             itens.append(f"<b>Plano de ataque:</b> {_plural(rp['late'], 'pacote atrasado', 'pacotes atrasados')}; reprogramar "
                          "esses pacotes na reunião semanal de planejamento e confirmar as frentes liberadas")
         elif tipo == "plano":
             itens.append("<b>Plano de ataque:</b> todos os pacotes previstos até a data base do plano foram executados")
-    if tipo in ("consolidado", "curto"):
+    if VP and tipo in ("consolidado", "curto"):
         if ppc and ppc["ppc"] < 80:
             itens.append(f"<b>Planejamento semanal:</b> PPC de {ppc['ppc']}%, abaixo da meta de 80%; analisar as causas "
                          "registradas e definir ações para as que se repetem")
@@ -1000,7 +1022,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             top = [k for k, v in causas.items() if v == mx]
             itens.append(f"<b>Causas:</b> {frase_causas()[0].lower()}{frase_causas()[1:]}; tratar "
                          + ("essa restrição" if len(top) == 1 else "essas restrições") + " antes de liberar os pacotes da próxima semana")
-    if tipo in ("consolidado", "custos"):
+    if VC and tipo in ("consolidado", "custos"):
         if idc is not None:
             if idc < 0.98:
                 itens.append(f"<b>Custo:</b> IDC de {_br(idc, 2)}, ou seja, a obra gasta mais do que o orçado para o que executou; "
@@ -1033,7 +1055,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if sem_forn:
             itens.append(f"<b>Fornecedores:</b> {_plural(sem_forn, 'pacote pendente está', 'pacotes pendentes estão')} sem "
                          "fornecedor informado; definir o fornecedor antes da data-limite")
-    if tipo in ("consolidado", "qualidade", "inspecoes") and indicadores is not None:
+    if VQ and tipo in ("consolidado", "qualidade", "inspecoes") and indicadores is not None:
         n_insp = qual.get("inspecoes_30d", 0)
         if not n_insp:
             itens.append("<b>Inspeções:</b> não houve inspeção registrada nos 30 dias anteriores à data de status; programar as "
@@ -1043,7 +1065,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             itens.append(f"<b>Inspeções:</b> {_plural(n_insp, 'inspeção registrada', 'inspeções registradas')} nos 30 dias anteriores "
                          "à data de status" + (f", com {ap_}% de aprovação na primeira inspeção" if ap_ is not None else "")
                          + ("; reforçar o controle dos serviços com mais reprovações" if ap_ is not None and ap_ < 90 else ""))
-    if tipo in ("consolidado", "qualidade", "inspecoes", "ncs"):
+    if VQ and tipo in ("consolidado", "qualidade", "inspecoes", "ncs"):
         venc = len(ncs_venc) if QE else ind.get("ncs_vencidas", 0)
         altas = (sum(1 for n in ncs_ab if n.get("gravidade") == "alta") if QE else ind.get("ncs_altas", 0))
         sem_resp = (sum(1 for n in ncs_ab if not n.get("responsavel")) if QE else qual.get("ncs_sem_responsavel", 0))
