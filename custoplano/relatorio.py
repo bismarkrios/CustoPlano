@@ -196,7 +196,9 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     T = (custos or {}).get("totais") or {}
     idc, idp = T.get("idc"), T.get("idp")
     ppc = ind.get("ppc")
-    brl = lambda v: "-" if v is None else "R$ " + f"{v:,.0f}".replace(",", ".")  # noqa: E731
+    brl = lambda v: "-" if v is None else ("-" if v < -0.5 else "") + "R$ " + f"{abs(v):,.0f}".replace(",", ".")  # noqa: E731
+    # tabelas com várias colunas em R$ mil, para os valores caberem numa linha só
+    mil = lambda v: "-" if v is None else f"{v / 1000:,.0f}".replace(",", ".")  # noqa: E731
 
     # ------------------------------------------------------------------- capa
     logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web", "icon-512.png")
@@ -401,27 +403,25 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         linhas = []
         for e in custos["etapas"]:
             cv = e["va"] - e["cr"]
-            linhas.append([e["codigo"], Pa(esc(e["nome"])), brl(e["orcado"])[3:], brl(e["vp"])[3:], brl(e["va"])[3:], brl(e["cr"])[3:],
-                           Pa(f"<font color='{cor_desv(cv, -0.5)}'>{'-' if cv < 0 else '+'}{brl(abs(cv))[3:]}</font>", "tr"),
+            linhas.append([e["codigo"], Pa(esc(e["nome"])), mil(e["orcado"]), mil(e["vp"]), mil(e["va"]), mil(e["cr"]),
+                           Pa(f"<font color='{cor_desv(cv, -500)}'>{'-' if cv < -500 else '+'}{mil(abs(cv))}</font>", "tr"),
                            "-" if e["idc"] is None else _br(e["idc"], 2)])
         cvt = T["va"] - T["cr"]
-        linhas.append(["", Pa("<b>Total</b>"), brl(T["bac"])[3:], brl(T["vp"])[3:], brl(T["va"])[3:], brl(T["cr"])[3:],
-                       Pa(f"<b>{'-' if cvt < 0 else '+'}{brl(abs(cvt))[3:]}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
-        H.append(Pa(f"A Tabela {ntab[0] + 1} mostra o custo por etapa, em reais.", "txt"))
-        add(H, tabela("Custo por etapa (R$)", ["Cód.", "Etapa", "Orçado", "Previsto", "Agregado", "Realizado", "VA - CR", "IDC"], linhas,
+        linhas.append(["", Pa("<b>Total</b>"), mil(T["bac"]), mil(T["vp"]), mil(T["va"]), mil(T["cr"]),
+                       Pa(f"<b>{'-' if cvt < -500 else '+'}{mil(abs(cvt))}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
+        H.append(Pa(f"A Tabela {ntab[0] + 1} mostra o custo por etapa, em milhares de reais.", "txt"))
+        add(H, tabela("Custo por etapa (R$ mil)", ["Cód.", "Etapa", "Orçado", "Previsto", "Agregado", "Realizado", "VA - CR", "IDC"], linhas,
                       [1.1 * cm, W - 13.1 * cm, 2 * cm, 2 * cm, 2 * cm, 2 * cm, 2.6 * cm, 1.4 * cm],
                       direita=(2, 3, 4, 5, 6, 7), total=True))
         serie = custos.get("serie") or []
-        if 0 < len(serie) <= 12:
-            mil = lambda v: _br(v / 1000, 1) if v else ""  # noqa: E731
-            cab = ["R$ mil"] + [f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][2:4]}" for s_ in serie]
-            larg = [3.4 * cm] + [(W - 3.4 * cm) / len(serie)] * len(serie)
-            add(H, tabela("Cronograma financeiro (R$ mil)", cab, [
-                ["Previsto no mês"] + [mil(s_["previsto"]) for s_ in serie],
-                ["Previsto acumulado"] + [mil(s_["previsto_acum"]) for s_ in serie],
-                ["Realizado no mês"] + [mil(s_["realizado"]) for s_ in serie],
-                ["Realizado acumulado"] + [mil(s_["realizado_acum"]) for s_ in serie],
-            ], larg, direita=tuple(range(1, len(serie) + 1))))
+        if 0 < len(serie) <= 24:
+            # um mês por linha: cabe qualquer duração e qualquer valor sem quebrar os números
+            mes = lambda v: mil(v) if v else ""  # noqa: E731
+            add(H, tabela("Cronograma financeiro (R$ mil)", ["Mês", "Previsto no mês", "Previsto acumulado", "Realizado no mês",
+                                                            "Realizado acumulado"],
+                          [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", mes(s_["previsto"]), mes(s_["previsto_acum"]),
+                            mes(s_["realizado"]), mes(s_["realizado_acum"])] for s_ in serie],
+                          [W - 13.2 * cm, 3.3 * cm, 3.3 * cm, 3.3 * cm, 3.3 * cm], direita=(1, 2, 3, 4)))
     else:
         H.append(Pa("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.", "txt"))
 
