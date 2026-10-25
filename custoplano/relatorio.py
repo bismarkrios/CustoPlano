@@ -159,7 +159,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
-    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (BaseDocTemplate, Frame, Image, KeepTogether, NextPageTemplate, PageBreak,
@@ -273,7 +273,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                 self.notify("TOCEntry", (nivel, f.getPlainText(), self.page - 1))
 
     def pg_texto(c, doc):
-        w, h = A4
+        w, h = c._pagesize  # retrato ou paisagem
         c.saveState()
         c.setFont("Helvetica", 10)
         c.setFillColor(PRETO)
@@ -288,8 +288,13 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     doc = Doc(buf, pagesize=A4, leftMargin=3 * cm, rightMargin=2 * cm, topMargin=3 * cm, bottomMargin=2 * cm,
               title=f"{titulo.capitalize()} - {obra}", author="Custo Plano Consultoria")
     fr = lambda: Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")  # noqa: E731
+    # página em paisagem para a tabela larga de custo por etapa, com as mesmas margens
+    PW, PH = landscape(A4)
+    WL = PW - 5 * cm
     doc.addPageTemplates([PageTemplate(id="pre", frames=[fr()]),
-                          PageTemplate(id="texto", frames=[fr()], onPage=pg_texto)])
+                          PageTemplate(id="texto", frames=[fr()], onPage=pg_texto),
+                          PageTemplate(id="paisagem", frames=[Frame(3 * cm, 2 * cm, WL, PH - 5 * cm, id="fp")],
+                                       onPage=pg_texto, pagesize=(PW, PH))])
     W = doc.width
     H = []
 
@@ -305,8 +310,8 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     idc, idp = T.get("idc"), T.get("idp")
     ppc = ind.get("ppc")
     brl = lambda v: "-" if v is None else ("-" if v < -0.5 else "") + "R$ " + f"{abs(v):,.0f}".replace(",", ".")  # noqa: E731
-    # tabelas com várias colunas em R$ mil, para os valores caberem numa linha só
-    mil = lambda v: "-" if v is None else f"{v / 1000:,.0f}".replace(",", ".")  # noqa: E731
+    # valores em reais inteiros, sem o "R$", nas tabelas com várias colunas
+    rs = lambda v: "-" if v is None else ("-" if v < -0.5 else "") + f"{abs(v):,.0f}".replace(",", ".")  # noqa: E731
     rp = resumo_plano(plano) if plano else None
     sup = suprimentos_modelo(p, A, extra.get("sup") or {}, hoje) if (p and tipo == "suprimentos") else []
     curto = extra.get("curto") or {}
@@ -650,25 +655,30 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                    "sem custo lançado" if idc is None else "VA / CR"],
                   ["IDP", "-" if idp is None else _br(idp, 2), "VA / VP"],
                   ["Estimativa no término", brl(T.get("eac")), "" if T.get("vac") is None else f"variação no término: {brl(T['vac'])}"]]
-        add(tabela("Indicadores de custo", ["Indicador", "Valor", "Observação"], linhas, [5.2 * cm, 3.4 * cm, W - 8.6 * cm],
+        add(tabela("Indicadores de custo", ["Indicador", "Valor", "Observação"], linhas, [5.2 * cm, 3.6 * cm, W - 8.8 * cm],
                    direita=(1,)))
 
-    def sec_custo_etapas():
-        vc = lambda v: "0" if abs(v) < 500 else ("-" if v < 0 else "+") + mil(abs(v))  # noqa: E731
+    def sec_custo_etapas(nome_secao=None):
+        """Custo por etapa em reais inteiros, numa página em paisagem para os valores caberem numa linha."""
+        vc = lambda v: "0" if abs(v) < 0.5 else ("-" if v < 0 else "+") + rs(abs(v))  # noqa: E731
         linhas = []
         for e in custos["etapas"]:
             cv = e["va"] - e["cr"]
-            linhas.append([e["codigo"], Pa(esc(e["nome"])), mil(e["orcado"]), mil(e["vp"]), mil(e["va"]), mil(e["cr"]),
-                           Pa(f"<font color='{cor_desv(cv, -500)}'>{vc(cv)}</font>", "tr"),
+            linhas.append([e["codigo"], Pa(esc(e["nome"])), rs(e["orcado"]), rs(e["vp"]), rs(e["va"]), rs(e["cr"]),
+                           Pa(f"<font color='{cor_desv(cv, -0.5)}'>{vc(cv)}</font>", "tr"),
                            "-" if e["idc"] is None else _br(e["idc"], 2)])
         cvt = T["va"] - T["cr"]
-        linhas.append(["", Pa("<b>Total</b>"), mil(T["bac"]), mil(T["vp"]), mil(T["va"]), mil(T["cr"]),
+        linhas.append(["", Pa("<b>Total</b>"), rs(T["bac"]), rs(T["vp"]), rs(T["va"]), rs(T["cr"]),
                        Pa(f"<b>{vc(cvt)}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
-        txt(f"A {prox()} mostra o custo por etapa, em milhares de reais. A coluna VC (VA − CR) é a variação de custo: "
+        H.extend([NextPageTemplate("paisagem"), PageBreak()])
+        if nome_secao:
+            secao(nome_secao)
+        txt(f"A {prox()} mostra o custo por etapa, em reais. A coluna VC (VA − CR) é a variação de custo: "
             "negativa quando o gasto supera o orçado do que foi executado.")
-        add(tabela("Custo por etapa (R$ mil)", ["Cód.", "Etapa", "Orçado", "VP", "VA", "CR", "VC (VA − CR)", "IDC"], linhas,
-                   [1.1 * cm, W - 12.4 * cm, 2 * cm, 1.8 * cm, 1.8 * cm, 1.8 * cm, 2.6 * cm, 1.3 * cm],
+        add(tabela("Custo por etapa (R$)", ["Cód.", "Etapa", "Orçado", "VP", "VA", "CR", "VC (VA − CR)", "IDC"], linhas,
+                   [1.4 * cm, WL - 18.1 * cm, 3 * cm, 3 * cm, 3 * cm, 3 * cm, 3.2 * cm, 1.5 * cm],
                    direita=(2, 3, 4, 5, 6, 7), total=True))
+        H.extend([NextPageTemplate("texto"), PageBreak()])
 
     def sec_custo_tipos():
         tipos = custos.get("tipos") or []
@@ -686,9 +696,9 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if not (0 < len(serie) <= 36):
             return
         # um mês por linha: cabe qualquer duração e qualquer valor sem quebrar os números
-        mes = lambda v: mil(v) if v else ""  # noqa: E731
-        txt(f"A {prox()} apresenta o cronograma financeiro: desembolso previsto e realizado, mês a mês, em milhares de reais.")
-        add(tabela("Cronograma financeiro (R$ mil)", ["Mês", "Previsto no mês", "Previsto acumulado", "Realizado no mês",
+        mes = lambda v: rs(v) if v else ""  # noqa: E731
+        txt(f"A {prox()} apresenta o cronograma financeiro: desembolso previsto e realizado, mês a mês, em reais.")
+        add(tabela("Cronograma financeiro (R$)", ["Mês", "Previsto no mês", "Previsto acumulado", "Realizado no mês",
                                                      "Realizado acumulado"],
                    [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", mes(s_["previsto"]), mes(s_["previsto_acum"]),
                      *(("", "") if s_["mes"][:7] > f"{data_status:%Y-%m}" else (mes(s_["realizado"]), mes(s_["realizado_acum"])))]
@@ -848,8 +858,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if custos:
             secao("Indicadores de custo")
             sec_custo_totais()
-            secao("Custo por etapa")
-            sec_custo_etapas()
+            sec_custo_etapas("Custo por etapa")
             secao("Composição do custo direto")
             sec_custo_tipos()
             if custos.get("serie"):
