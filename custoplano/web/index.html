@@ -3053,7 +3053,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   var NUM = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 4 });
   function brl(v) { return v == null ? '—' : BRL0.format(v); }
   function brl2(v) { return v == null ? '—' : BRL2.format(v); }
-  function mil(v) { return v ? (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) : ''; }
+  function mil(v) { return v ? Math.round(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ''; }
   function mesLab(m) { return MES[+m.slice(5, 7) - 1] + '/' + m.slice(2, 4); }
   function isoBr(s) { return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '—'; }
   var TIPO_COR = { mat: 'var(--pa0)', mo: 'var(--pa2)', eq: 'var(--pa3)', sv: 'var(--pa1)', out: 'var(--pa5)' };
@@ -3193,7 +3193,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var tl = function (rot, k, total, forte) { return '<tr class="cu-et"><th scope="row" class="pa-row cu-sticky">' + rot + '</th>' + S2.map(function (s) { return '<td class="mono num">' + mil(s[k]) + '</td>'; }).join('') + '<td class="mono num">' + (total != null ? mil(total) : '') + '</td></tr>'; };
     rows += tl('Previsto no mês', 'previsto', CU.totais.bac) + tl('Previsto acumulado', 'previsto_acum') + (CU.sem_realizado ? '' : tl('Realizado no mês', 'realizado', CU.totais.cr) + tl('Realizado acumulado', 'realizado_acum'));
     return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><div class="card-head"><h2>Desembolso mensal e acumulado</h2></div>' + stTxt + legenda + '<div class="scroll-x cu-wrap">' + g + '<div class="cu-tip" role="status" hidden></div></div></section>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Cronograma físico-financeiro (R$ mil)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Cronograma físico-financeiro (R$)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
       '<p style="font-size:12.5px;color:var(--muted)">O custo de cada item é distribuído pelos dias da tarefa ligada a ele, pela linha de base do cronograma (ou pelas datas da planilha, se não houver tarefa).</p>';
   }
 
