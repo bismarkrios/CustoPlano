@@ -428,6 +428,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 @media (max-width:860px){.app-top{flex-wrap:nowrap}.app-top .obra-nome{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.app-top .obra-nome .chip{display:none}.user{flex:none}}
 .app-head h1{font-size:clamp(26px,2.6vw,32px);font-weight:800;letter-spacing:0}
 .app-head p{color:var(--muted);margin-top:4px}
+.app-head-row{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
 .card h2{font-family:var(--body);font-size:17px;font-weight:700;letter-spacing:-.005em}
 .card-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}
@@ -576,7 +577,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 @media print{
   @page{size:A4 landscape;margin:8mm}
   body.imp-pa{background:#fff}
-  body.imp-pa .side,body.imp-pa .app-top,body.imp-pa .app-head p,body.imp-pa .app-body>.grid4,body.imp-pa .torre-sel,body.imp-pa .app-body>p,body.imp-pa .pa-parte>p,body.imp-pa .prj-bar>:not(:first-child),body.imp-pa .note{display:none!important}
+  body.imp-pa .side,body.imp-pa .app-top,body.imp-pa .app-head p,body.imp-pa .app-head-row>button,body.imp-pa .app-body>.grid4,body.imp-pa .torre-sel,body.imp-pa .app-body>p,body.imp-pa .pa-parte>p,body.imp-pa .prj-bar>:not(:first-child),body.imp-pa .note{display:none!important}
   body.imp-pa .app{display:block}
   body.imp-pa .app-body{padding:0}
   body.imp-pa .app-head h1{font-size:18px;margin:0}
@@ -2320,7 +2321,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexport">Exportar para o MS Project (.xml)</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pcsv">Boletim de medição (.csv)</button>' +
-          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button><button type="button" class="btn btn-primary btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
+          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button><button type="button" class="btn btn-primary btn-sm" data-a="prel:prazo">Relatório de prazo (PDF)</button>' : '') +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pclose" title="A medição atual passa a ser a medição anterior">Fechar medição</button>' +
           '<span style="flex:1"></span>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexp">Expandir tudo</button>' +
@@ -2543,7 +2544,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '<div><span class="kpi-t">Última medição fechada</span><b>' + (ult ? fdate(ult.t) + ' · ' + fmt1(ult.r) + '%' : 'nenhuma ainda') + '</b></div>' +
       '<div><span class="kpi-t">Avanço desde a última medição</span><b style="color:' + (ult ? cor(real - ult.r >= 0) : 'inherit') + '">' + (ult ? sinal(real - ult.r) + ' p.p.' : '—') + '</b></div>' +
       '<div><span class="kpi-t">Término previsto</span><b>' + fdate(fim) + (varFim != null ? ' <span style="color:' + cor(varFim <= 0) + ';font-weight:600">· ' + prazoTxt(varFim) + '</span>' : '') + '</b></div>' +
-      (API ? '<button type="button" class="btn btn-primary btn-sm" data-a="prel">Relatório da obra (PDF)</button>' : '') +
+      (API ? '<button type="button" class="btn btn-primary btn-sm" data-a="prel:consolidado">Relatório consolidado (PDF)</button>' : '') +
       '</section>';
 
     // indicadores
@@ -2802,7 +2803,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
       (baseD ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(baseD.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
       '<button type="button" class="btn btn-ghost btn-sm" data-a="paimp">Imprimir escadinha</button>' +
-      (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel">Relatório mensal (PDF)</button>' : '') +
+      (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel:plano">Relatório do plano de ataque (PDF)</button>' : '') +
       (D.origem === 'project' || contaReal() ? '' : '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
       (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '')) +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
@@ -2910,10 +2911,16 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     if (f && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: d.nome }).catch(function () {}); return; }
     var a = document.createElement('a'); a.href = d.url; a.download = d.nome; document.body.appendChild(a); a.click(); a.remove();
   }
-  function baixarRelatorio() {
+  // cada tela tem o seu relatório; o consolidado (prazo, custo e qualidade) fica no Painel
+  var REL_TELA = { cron: ['prazo', 'Relatório de prazo'], lb: ['plano', 'Relatório do plano de ataque'],
+    cp: ['curto', 'Relatório de curto prazo'], res: ['curto', 'Relatório de curto prazo'], cus: ['custos', 'Relatório de custos'],
+    sup: ['suprimentos', 'Relatório de suprimentos'], qp: ['qualidade', 'Relatório de qualidade'], qi: ['inspecoes', 'Relatório de inspeções'],
+    qc: ['inspecoes', 'Relatório de inspeções'], qm: ['inspecoes', 'Relatório de inspeções'], qn: ['ncs', 'Relatório de não conformidades'],
+    qmod: ['modelos', 'Relatório dos modelos de FVS'] };
+  function baixarRelatorio(tipo) {
     if (NATIVO) { relatorioApp(); return; }
     if (precisaRede()) return;
-    var ir = function () { location.href = '/api/relatorio.pdf'; };
+    var ir = function () { location.href = '/api/relatorio.pdf' + (tipo && tipo !== 'consolidado' ? '?tipo=' + tipo : ''); };
     if (P) persist(true).then(ir); else ir();
   }
 
@@ -3000,7 +3007,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       '</section>' +
       '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
-      (API && !NATIVO ? '<button type="button" class="btn btn-ghost" data-a="prel" style="align-self:flex-start">Relatório mensal (PDF)</button>' : '') +
+      (API && !NATIVO ? '<button type="button" class="btn btn-ghost" data-a="prel:medicao" style="align-self:flex-start">Relatório de medição (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
   }
 
@@ -3972,7 +3979,9 @@ footer.site .copy{flex-basis:100%;font-size:13px}
     var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
     var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
-    body.innerHTML = '<div class="app-head"><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' + v;
+    var rel = API && !NATIVO && REL_TELA[S.screen];
+    body.innerHTML = '<div class="app-head"><div class="app-head-row"><div><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' +
+      (rel ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel:' + rel[0] + '">' + rel[1] + ' (PDF)</button>' : '') + '</div></div>' + v;
     if (S.screen !== telaAntes) { telaAntes = S.screen; body.classList.remove('entra'); void body.offsetWidth; body.classList.add('entra'); clearTimeout(entraT); entraT = setTimeout(function () { body.classList.remove('entra'); }, 900); contarKpis(); }
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
     paintSync();
@@ -4084,7 +4093,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
       case 'mstep': case 'mset':
         var cur = Math.round(P.meas[a[1]] || 0), nv = a[0] === 'mset' ? parseInt(a[2], 10) : cur + parseInt(a[2], 10);
         P.meas[a[1]] = Math.max(0, Math.min(100, nv)); persist(); break;
-      case 'prel': baixarRelatorio(); return;
+      case 'prel': baixarRelatorio(a[1]); return;
       case 'mex':
         if (precisaRede()) return;
         S.prjMsg = 'Carregando o exemplo…'; render();

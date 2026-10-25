@@ -1124,33 +1124,45 @@ def qualidade_inspecao_pdf(iid):
 
 
 # ----------------------------------------------------------- relatório mensal
-def gerar_relatorio(obra_id: int):
-    """PDF do relatório mensal da obra: (pdf, nome do arquivo) ou None se a obra ainda não tem dados."""
+def gerar_relatorio(obra_id: int, tipo: str = "consolidado"):
+    """PDF do relatório da obra: (pdf, nome do arquivo) ou None se a obra ainda não tem dados.
+    tipo: consolidado (Painel) ou o relatório específico de uma tela (relatorio.TIPOS)."""
     import relatorio
 
     c = banco.cronograma(obra_id)
     p = projeto_de(c) if c else None
     plano, _ = plano_de(obra_id)
     cus = analise_custos(obra_id)
-    if not c and not plano and not cus:
+    tipo = tipo if tipo in relatorio.TIPOS else "consolidado"
+    extra = {}
+    if tipo in ("qualidade", "inspecoes", "ncs", "modelos"):
+        extra["qualidade"] = ql.estado(obra_id)
+    elif tipo == "curto":
+        extra["curto"] = banco.curto_prazo(obra_id)
+    elif tipo == "suprimentos":
+        extra["sup"] = banco.suprimentos(obra_id)
+    # o consolidado precisa de algum dado de prazo ou custo; os de qualidade saem mesmo sem cronograma
+    if not c and not plano and not cus and tipo not in ("qualidade", "inspecoes", "ncs", "modelos", "curto"):
         return None
     o = banco.obra(obra_id)
     obra = (p.titulo if p else (plano or {}).get("titulo")) or (o["nome"] if o else "") or "Obra"
     hist = [dict(h) for h in banco.historico(obra_id)]
-    ind = resumo.indicadores_obra(obra_id)
+    # indicadores na data de status, para os números do relatório baterem entre si
+    sd = para_data(c["data_status"]) if c else dt.datetime.now()
+    ind = resumo.indicadores_obra(obra_id, sd.date())
     if c:
-        sd = para_data(c["data_status"])
-        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus, ind)
+        pdf = relatorio.gerar(p, json.loads(c["atual"]), json.loads(c["anterior"]), sd, c["peso"], hist, plano, obra, cus, ind,
+                              tipo, extra)
     else:
-        sd = dt.datetime.now()
-        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus, ind)
-    return pdf, f"{nome_base(obra)}_relatorio_{sd:%Y-%m}.pdf"
+        pdf = relatorio.gerar(None, {}, {}, sd, None, [], plano, obra, cus, ind, tipo, extra)
+    sufixo = "relatorio" if tipo == "consolidado" else f"relatorio-{tipo}"
+    return pdf, f"{nome_base(obra)}_{sufixo}_{sd:%Y-%m}.pdf"
 
 
 @app.get("/api/relatorio.pdf")
 @logado
 def relatorio_pdf():
-    r = gerar_relatorio(oid())
+    r = gerar_relatorio(oid(), request.args.get("tipo") or "consolidado")
     if not r:
         return erro("Importe o cronograma (tela Project), o plano de ataque ou o orçamento para gerar o relatório.", 404)
     return download(r[0], r[1], "application/pdf")
