@@ -1,7 +1,7 @@
 """
 Relatório mensal de avanço em PDF, no padrão ABNT (NBR 10719): capa, folha de rosto, resumo, sumário,
-introdução, prazo (Curva S, avanço por etapa, maiores atrasos, plano de ataque), custo, qualidade, conclusão
-e referências.
+introdução, prazo (Curva S, avanço por etapa, maiores atrasos, plano de ataque), custo, qualidade e conclusão.
+Relatório gerencial: sem página de referências.
 
 Usa só as fontes padrão do PDF (Helvetica), que funcionam no servidor sem instalar nada.
 """
@@ -159,7 +159,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
           historico: list, plano: dict | None, obra: str, custos: dict | None = None,
           indicadores: dict | None = None, tipo: str = "consolidado", extra: dict | None = None) -> bytes:
     """Relatório no padrão ABNT (NBR 10719): capa, folha de rosto, resumo, sumário, introdução,
-    desenvolvimento, conclusão e referências. `tipo` escolhe o assunto (uma chave de TIPOS); o consolidado
+    desenvolvimento e conclusão (sem página de referências). `tipo` escolhe o assunto (uma chave de TIPOS); o consolidado
     traz prazo, custo e qualidade juntos. `extra` traz os dados das telas específicas: qualidade (estado
     completo), curto (apontamentos semanais) e sup (suprimentos)."""
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
@@ -1105,13 +1105,6 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                              ("LINEBELOW", (2, 0), (2, 0), 0.7, NAVY), ("LEFTPADDING", (0, 0), (-1, -1), 6),
                              ("RIGHTPADDING", (0, 0), (-1, -1), 6)]))
     H.append(KeepTogether([Spacer(1, 10), Pa("Observações:", "t"), obs, Spacer(1, 6), ass]))
-
-    # ------------------------------------------------------------- referências
-    H += [PageBreak(), Pa("REFERÊNCIAS", "tsnref"),
-          Pa("ASSOCIAÇÃO BRASILEIRA DE NORMAS TÉCNICAS. <b>NBR 10719</b>: informação e documentação: relatório técnico e/ou "
-             "científico: apresentação. Rio de Janeiro: ABNT, 2015.", "ref"),
-          Pa(f"CUSTO PLANO CONSULTORIA. <b>Sistema Custo Plano</b>: dados da obra {esc(obra)}. Guarulhos, {ref.year}. "
-             f"Acesso em: {gerado.day} {MESES[gerado.month - 1]}. {gerado.year}.", "ref")]
 
     doc.multiBuild(H)
     return buf.getvalue()
