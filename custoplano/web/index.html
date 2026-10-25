@@ -681,7 +681,13 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .adm-serv{flex:1 1 100%;order:3;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:14px}
 .adm-serv>span{font-weight:600}
 .adm-serv label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0}
-button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
+button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inline-flex;align-items:center;gap:5px}
+@media (max-width:700px){.adm-serv{order:1}}
+.adm-ico{flex:none;vertical-align:-2px;margin-right:6px}
+.chip .adm-ico,.adm-serv .adm-ico{margin-right:0}
+.adm-card h2{display:flex;align-items:center;gap:2px}
+.adm-card h2 .adm-ico{color:var(--accent)}
+.adm-acoes .btn{display:inline-flex;align-items:center}
 .adm-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-radius:8px;background:var(--blue-soft)}
 .adm-link input{flex:1 1 260px;min-height:40px;font-family:var(--mono);font-size:12.5px}
 .adm-acoes{display:flex;flex-wrap:wrap;gap:6px}
@@ -4351,6 +4357,26 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
   function mb(n) { return n ? (n / 1048576).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + ' MB' : '—'; }
   function dataHora(iso) { return iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(2, 4) + ' ' + iso.slice(11, 16) : '—'; }
   var SERV_ROT = [['planejamento', 'Planejamento'], ['custos', 'Custos'], ['qualidade', 'Qualidade']];
+  // ícones da Administração (mesmo traço dos ícones do menu do sistema)
+  var ADM_ICO = {
+    planejamento: '<path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M3 20V4"></path>',
+    custos: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18"></path><path d="M7 15h3M14 15h3"></path>',
+    qualidade: '<rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 3v2h6V3"></path><path d="M9 12l2 2 4-4"></path>',
+    obras: '<path d="M3 21h18"></path><path d="M5 21V8l7-5 7 5v13"></path><path d="M9 21v-6h6v6"></path>',
+    pessoas: '<circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><circle cx="17" cy="9" r="2.5"></circle><path d="M17.5 14.5c2.2.3 3.6 2 4 5"></path>',
+    copias: '<ellipse cx="12" cy="5.5" rx="8" ry="3"></ellipse><path d="M4 5.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"></path><path d="M4 11.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"></path>',
+    abrir: '<path d="M14 4h6v6"></path><path d="M20 4l-9 9"></path><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path>',
+    renomear: '<path d="M4 20h4L19 9l-4-4L4 16v4z"></path><path d="M13.5 6.5l4 4"></path>',
+    apagar: '<path d="M4 7h16"></path><path d="M9 7V4h6v3"></path><path d="M6 7l1 13h10l1-13"></path><path d="M10 11v6M14 11v6"></path>',
+    link: '<circle cx="8" cy="15" r="4"></circle><path d="M11 12l9-9"></path><path d="M16 7l3 3"></path>',
+    zap: '<path d="M4 20l1.4-4A8 8 0 1 1 8 18.6L4 20z"></path><path d="M9.5 9.5c0 2.5 2.5 5 5 5"></path>',
+    remover: '<circle cx="10" cy="8" r="4"></circle><path d="M3 20c.9-3.8 3.6-6 7-6s6.1 2.2 7 6"></path><path d="M17 4l4 4M21 4l-4 4"></path>',
+    liberar: '<path d="M12 5v14M5 12h14"></path>',
+    baixar: '<path d="M12 4v11"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path>'
+  };
+  function aico(n, t) {
+    return '<svg class="adm-ico" width="' + (t || 15) + '" height="' + (t || 15) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ADM_ICO[n] + '</svg>';
+  }
   function renderAdm() {
     var d = ADM, nomeObra = {};
     d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
@@ -4362,12 +4388,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
       '<a class="btn btn-primary btn-sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Olá! Este é o seu acesso ao sistema da Custo Plano. Abra o link para criar a sua senha (vale 7 dias): ' + ADM_LINK.link) + '">Enviar pelo WhatsApp</a></div>' : '';
     var h = '<div><p class="eyebrow">Equipe Custo Plano</p><h1 style="margin-top:8px">Administração</h1></div>' + linkBox;
     // obras
-    h += '<section class="adm-card"><h2>Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade. ' +
+    h += '<section class="adm-card"><h2>' + aico('obras', 20) + 'Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade. ' +
       'Em Serviços, marque o que a construtora contratou: o cliente vê só as telas e os relatórios desses serviços.</p>' +
       '<form class="adm-form" id="admObraForm" novalidate><div class="field"><label for="ao-nome">Nome da obra</label><input id="ao-nome" maxlength="120" placeholder="Ex.: Residencial Jardins – Torre A" required></div>' +
       '<div class="field"><label for="ao-emp">Construtora</label><input id="ao-emp" maxlength="120" placeholder="Ex.: Construtora Exemplo"></div>' +
       '<div class="adm-serv" role="group" aria-labelledby="ao-serv-t"><span id="ao-serv-t">Serviços contratados:</span>' + SERV_ROT.map(function (r) {
-        return '<label><input type="checkbox" name="ao-serv" value="' + r[0] + '" checked> ' + r[1] + '</label>';
+        return '<label><input type="checkbox" name="ao-serv" value="' + r[0] + '" checked> ' + aico(r[0]) + r[1] + '</label>';
       }).join('') + '</div>' +
       '<button class="btn btn-primary" type="submit" style="order:2">Criar obra</button></form>' +
       '<div class="adm-scroll"><table class="tbl adm-tbl"><thead><tr><th>Obra</th><th>Serviços</th><th>Cronograma</th><th class="num">Pessoas</th><th class="num">Fotos</th><th></th></tr></thead><tbody>' +
@@ -4377,16 +4403,16 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
           '<td><div class="adm-acessos">' + SERV_ROT.map(function (r) {
             var on = sv.indexOf(r[0]) >= 0;
             return '<button type="button" class="chip ' + (on ? 'c-ok' : 'c-muted') + '" aria-pressed="' + on + '" data-adm="serv:' + o.id + ':' + r[0] + '" title="' +
-              (on ? 'Contratado. Clique para tirar.' : 'Não contratado. Clique para incluir.') + '">' + (on ? '✓ ' : '') + r[1] + '</button>';
+              (on ? 'Contratado. Clique para tirar.' : 'Não contratado. Clique para incluir.') + '">' + aico(r[0], 14) + r[1] + (on ? ' ✓' : '') + '</button>';
           }).join('') + '</div></td>' +
           '<td>' + (o.cronograma ? esc(o.cronograma) + '<small>atualizado ' + dataHora(o.atualizado_em) + '</small>' : '<span class="chip c-muted">não importado</span>') + '</td>' +
           '<td class="num">' + o.usuarios + '</td><td class="num">' + mb(o.bytes_fotos) + '</td>' +
-          '<td><div class="adm-acoes"><button class="btn btn-primary btn-sm" type="button" data-adm="abrir:' + o.id + '">Abrir</button>' +
-          '<button class="btn btn-ghost btn-sm" type="button" data-adm="renomear:' + o.id + '">Renomear</button>' +
-          '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">Apagar</button></div></td></tr>';
+          '<td><div class="adm-acoes"><button class="btn btn-primary btn-sm" type="button" data-adm="abrir:' + o.id + '">' + aico('abrir') + 'Abrir</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-adm="renomear:' + o.id + '">' + aico('renomear') + 'Renomear</button>' +
+          '<button class="btn btn-ghost btn-sm" type="button" data-adm="apagar:' + o.id + '">' + aico('apagar') + 'Apagar</button></div></td></tr>';
       }).join('') : '<tr><td colspan="6">Nenhuma obra ainda.</td></tr>') + '</tbody></table></div></section>';
     // pessoas
-    h += '<section class="adm-card"><h2>Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada. A equipe Custo Plano vê todas as obras e esta Administração.</p>' +
+    h += '<section class="adm-card"><h2>' + aico('pessoas', 20) + 'Pessoas</h2><p>Quem edita lança medição, curto prazo, suprimentos e FVS. Quem só consulta vê tudo e baixa os relatórios, sem alterar nada. A equipe Custo Plano vê todas as obras e esta Administração.</p>' +
       '<form class="adm-form" id="admUsuForm" novalidate><div class="field"><label for="au-email">E-mail</label><input id="au-email" type="email" maxlength="200" placeholder="engenheiro@construtora.com.br" required></div>' +
       '<div class="field"><label for="au-nome">Nome</label><input id="au-nome" maxlength="120"></div>' +
       '<div class="field"><label for="au-obra">Obra</label><select id="au-obra"><option value="">Nenhuma por enquanto</option>' + optObras + '</select></div>' +
@@ -4401,14 +4427,14 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit}
             (demo ? '' : '<button type="button" data-adm="tirar:' + u.id + ':' + a.obra_id + '" aria-label="Tirar o acesso a ' + esc(nomeObra[a.obra_id] || '') + '">×</button>') + '</span>';
         }).join('') : '<span class="chip c-muted">nenhuma obra</span>') + '</div>' +
           (demo || !d.obras.length ? '' : '<div class="adm-acoes" style="margin-top:8px"><select aria-label="Obra" data-sel="obra:' + u.id + '">' + optObras + '</select><select aria-label="Acesso" data-sel="papel:' + u.id + '">' + optPapel + '</select>' +
-            '<button class="btn btn-ghost btn-sm" type="button" data-adm="liberar:' + u.id + '">Liberar</button></div>');
+            '<button class="btn btn-ghost btn-sm" type="button" data-adm="liberar:' + u.id + '">' + aico('liberar') + 'Liberar</button></div>');
         return '<tr><td><b>' + esc(u.nome || u.email) + '</b><small>' + esc(u.email) + '</small>' + (u.whatsapp ? '<small>WhatsApp ' + esc(zapFmt(u.whatsapp)) + '</small>' : '') + '</td><td>' + obras + '</td><td>' + dataHora(u.ultimo_login) + '</td>' +
-          '<td><div class="adm-acoes">' + (demo ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="link:' + u.id + '">Link de senha</button><button class="btn btn-ghost btn-sm" type="button" data-adm="zap:' + u.id + '">WhatsApp</button>') +
-          (demo || u.admin || u.id === d.eu ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="remover:' + u.id + '">Remover</button>') + '</div></td></tr>';
+          '<td><div class="adm-acoes">' + (demo ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="link:' + u.id + '">' + aico('link') + 'Link de senha</button><button class="btn btn-ghost btn-sm" type="button" data-adm="zap:' + u.id + '">' + aico('zap') + 'WhatsApp</button>') +
+          (demo || u.admin || u.id === d.eu ? '' : '<button class="btn btn-ghost btn-sm" type="button" data-adm="remover:' + u.id + '">' + aico('remover') + 'Remover</button>') + '</div></td></tr>';
       }).join('') + '</tbody></table></div></section>';
     // cópias
-    h += '<section class="adm-card"><h2>Cópias de segurança</h2><p>O servidor faz uma cópia completa (todas as obras, com fotos) todo dia e guarda as 7 últimas. Uma vez por semana, baixe uma cópia e guarde no seu computador ou no OneDrive: assim os dados ficam salvos mesmo se o servidor tiver um problema.</p>' +
-      '<div class="adm-acoes"><a class="btn btn-primary" href="/api/admin/copia" style="text-decoration:none">Baixar cópia agora</a></div>' +
+    h += '<section class="adm-card"><h2>' + aico('copias', 20) + 'Cópias de segurança</h2><p>O servidor faz uma cópia completa (todas as obras, com fotos) todo dia e guarda as 7 últimas. Uma vez por semana, baixe uma cópia e guarde no seu computador ou no OneDrive: assim os dados ficam salvos mesmo se o servidor tiver um problema.</p>' +
+      '<div class="adm-acoes"><a class="btn btn-primary" href="/api/admin/copia" style="text-decoration:none">' + aico('baixar') + 'Baixar cópia agora</a></div>' +
       (d.copias.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópias no servidor</th><th class="num">Tamanho</th></tr></thead><tbody>' +
         d.copias.map(function (c) { return '<tr><td class="mono">' + esc(c.nome) + '</td><td class="num">' + mb(c.bytes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p>Nenhuma cópia ainda; a primeira sai em até uma hora depois de o servidor ligar.</p>') +
       '</section>';
