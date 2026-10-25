@@ -134,6 +134,32 @@ try:
 except cst.ErroCustos as e:
     checar("xlsx" in str(e), "mensagem do .xls não orienta salvar como .xlsx")
 
+# arquivo exportado do ERP da construtora (Orçado x Realizado por UC, etapa, item e credor)
+wb = openpyxl.Workbook()
+ws = wb.active
+ws.title = "Orçado x Realizado"
+cab = ["Orçado Inicial", "Contratado", "Saldo de Pedido", "Saldo de Contrato", "Ajustes", "Orçado Tendência",
+       "Saldo de Orçamento", "Realizado", "A Pagar", "Apropriado financeiro", "% comprometido"]
+ws.append(["Orçado x Realizado"])
+ws.append([None, "RESUMO EXECUTIVO"] + cab)
+ws.append([None, "Total", 1000, 900, 10, 200, 0, 900, 100, 600, 50, 650, 0.9])
+ws.append(["Ref.", "Descrição / Credor"] + cab + ["●", "Justificativa"])
+ws.append([None, "2 - CUSTOS INDIRETOS", 1000, 900, 10, 200, 0, 900, 100, 600, 50, 650, 0.9])
+ws.append(["01", "SERVIÇOS TÉCNICOS", 400, 500, 10, 100, 0, 500, -100, 350, 50, 400, 1.25])
+ws.append(["01.000.000.001", "Projetos", 400, 500, 10, 100, 0, 500, -100, 350, 50, 400, 1.25])
+ws.append(["CTPS/1", "Fornecedor X", None, 500, None, 100, None, None, None, 350, None, 350])
+ws.append(["02", "CANTEIRO", 600, 400, 0, 100, 50, 400, 200, 250, 0, 250, 0.67])
+ws.append(["02.000.000.001", "Barracão", 600, 400, 0, 100, 50, 400, 200, 250, 0, 250, 0.67])
+out = io.BytesIO()
+wb.save(out)
+x = cst.ler_controle("erp.xlsx", out.getvalue())
+checar([y["codigo"] for y in x["linhas"]] == ["2.01", "2.02"], f"ERP: etapas lidas erradas: {x['linhas']}")
+e1, e2 = x["linhas"]
+checar(e1["incorrido"] == 400 and e1["saldo_pedido"] == 10 and e1["saldo_contrato"] == 100 and e1["a_contratar"] == 0,
+       f"ERP: colunas da etapa 1 erradas: {e1}")
+checar(e2["oatu"] == 650 and e2["a_contratar"] == 250, f"ERP: ajustes ou saldo a contratar (b − c) errados: {e2}")
+checar(any("premissa" in a_ for a_ in x["avisos"]), "ERP: não avisou que o saldo a contratar é premissa")
+
 if falhas:
     print("FALHAS:\n- " + "\n- ".join(falhas))
     sys.exit(1)

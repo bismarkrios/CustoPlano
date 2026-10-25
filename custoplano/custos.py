@@ -1020,7 +1020,7 @@ def _linhas_csv(conteudo: bytes) -> list:
     sep = ";" if amostra.count(";") >= amostra.count(",") else ","
     if "\t" in amostra and amostra.count("\t") > amostra.count(sep):
         sep = "\t"
-    return [r for r in csv.reader(io.StringIO(texto_), delimiter=sep)][:400]
+    return [r for r in csv.reader(io.StringIO(texto_), delimiter=sep)][:6000]
 
 
 def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
@@ -1041,13 +1041,16 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
                 ws = wb.worksheets[0]
             if ws is None:
                 raise ErroCustos("Não achei a aba Orçado x Realizado. Use a planilha de controle no padrão Custo Plano.")
-            L = _linhas(ws, 400, 20)
+            L = _linhas(ws, 6000, 20)
         finally:
             wb.close()
     elif re.search(r"\.xls$", nome, re.I):
         raise ErroCustos("Arquivos .xls (Excel antigo) não são lidos. No Excel, use Salvar como > Pasta de Trabalho do Excel (.xlsx) ou CSV.")
     else:
         raise ErroCustos("Envie a planilha Orçado x Realizado em Excel (.xlsx, .xlsm) ou CSV (.csv).")
+    erp = _ler_controle_erp(L)
+    if erp:
+        return dict(erp, arquivo=nome_arquivo)
     r0 = col = None
     for r, linha in enumerate(L[:40]):
         m = {}
@@ -1090,6 +1093,70 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
     if vazias:
         avisos.append("Valores que não consegui ler e ficaram zerados: " + ", ".join(vazias[:8]) + ("…" if len(vazias) > 8 else ""))
     return {"arquivo": nome_arquivo, "linhas": linhas, "avisos": avisos}
+
+
+ERP_COLS = {"oin": ("orcado inicial",), "contratado": ("contratado",), "saldo_pedido": ("saldo de pedido",),
+            "saldo_contrato": ("saldo de contrato",), "ajustes": ("ajustes",), "realizado": ("realizado",),
+            "a_pagar": ("a pagar",), "apropriado": ("apropriado financeiro",), "tendencia": ("orcado tendencia",)}
+
+
+def _ler_controle_erp(L) -> dict | None:
+    """Orçado x Realizado exportado do ERP da construtora (colunas Ref., Descrição / Credor, Orçado Inicial,
+    Contratado, Saldo de Pedido, Saldo de Contrato, Ajustes, Orçado Tendência, Saldo de Orçamento, Realizado,
+    A Pagar, Apropriado financeiro). Lê uma linha por etapa de cada unidade de custo (UC) e leva para (a)...(h):
+    (b) = orçado inicial + ajustes; (d) = apropriado financeiro (realizado + a pagar); (h) não existe no ERP e
+    entra como premissa (regra do gerente de orçamento, 25/10/2026): zero com contratado ≥ 95% de (b); (b) − (c)
+    quando falta contratar parte do escopo; (b) − (g) sem contrato. A tendência do ERP não é usada: ela repete o contratado."""
+    r0 = m = None
+    for r, linha in enumerate(L[:40]):
+        nomes = [norm(v) for v in linha]
+        if not any(n.startswith("ref") for n in nomes) or not any(n.startswith("descricao") for n in nomes):
+            continue
+        mm = {k: nomes.index(n) for k, ops in ERP_COLS.items() for n in nomes if n in ops}
+        if all(k in mm for k in ("oin", "contratado", "saldo_pedido", "saldo_contrato", "realizado")):
+            r0, m = r, mm
+            m["ref"] = next(i for i, n in enumerate(nomes) if n.startswith("ref"))
+            m["desc"] = next(i for i, n in enumerate(nomes) if n.startswith("descricao"))
+            break
+    if r0 is None:
+        return None
+    val = lambda linha, k: int(_arred(numero(linha[m[k]]) or 0)) if k in m and m[k] < len(linha) else 0  # noqa: E731
+    linhas, uc, total_uc = [], None, 0
+    for linha in L[r0 + 1:]:
+        ref, desc = texto(linha[m["ref"]]), texto(linha[m["desc"]])
+        uc_m = re.match(r"(\d+)\s*-\s*(.+)", desc) if not ref else None
+        if uc_m and numero(linha[m["oin"]]) is not None:
+            uc = uc_m[1]
+            total_uc += val(linha, "oin")
+            continue
+        if uc is None or not re.fullmatch(r"\d{1,3}", ref):
+            continue
+        a, c = val(linha, "oin"), val(linha, "contratado")
+        b = a + val(linha, "ajustes")
+        d = val(linha, "apropriado") if "apropriado" in m else val(linha, "realizado") + val(linha, "a_pagar")
+        e, f = val(linha, "saldo_contrato"), val(linha, "saldo_pedido")
+        g = d + e + f
+        if c and c >= 0.95 * b:  # escopo considerado todo contratado
+            h = 0
+        elif c:  # falta contratar parte do escopo: valorizada pelo orçamento
+            h = max(0, b - c)
+        else:  # sem contrato
+            h = max(0, b - g)
+        linhas.append({"codigo": f"{uc}.{ref}", "servico": desc, "oin": a, "oatu": b, "contratado": c, "incorrido": d,
+                       "saldo_contrato": e, "saldo_pedido": f, "a_contratar": h})
+    if not linhas:
+        return None
+    avisos = ["Planilha do ERP: o incorrido (d) é o apropriado financeiro (realizado + a pagar). O saldo a contratar (h) "
+              "não vem do ERP (a tendência do ERP repete o contratado) e é premissa: zero quando o contratado já passa de 95% de (b); "
+              "(b) − (c) quando falta contratar parte do escopo; (b) − (g) quando não há contrato."]
+    acima = [x["incorrido"] + x["saldo_contrato"] + x["saldo_pedido"] - x["contratado"] for x in linhas if x["contratado"]]
+    acima = [v for v in acima if v > 1]
+    if acima:
+        avisos.append(f"R$ {sum(acima):,.0f} de gasto fora de contrato: em {len(acima)} etapas o incorrido mais os saldos passa "
+                      "do contratado (confira a aba Fora do Orçamento do ERP).".replace(",", "."))
+    if abs(sum(x["oin"] for x in linhas) - total_uc) > len(linhas):
+        avisos.append("A soma das etapas não fecha com o total das unidades de custo da planilha. Confira a exportação do ERP.")
+    return {"linhas": linhas, "avisos": avisos, "origem": "erp"}
 
 
 def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, realizado_sistema: float | None = None):
