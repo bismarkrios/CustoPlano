@@ -11,6 +11,7 @@ from __future__ import annotations
 import base64
 import datetime as dt
 import json
+import math
 import re
 import secrets
 
@@ -463,3 +464,173 @@ def salvar_nc(uid: int, d: dict) -> None:
                     VALUES (?,?,?,?,{','.join('?' * len(campos))},?,?,?)""",
                 (uid, cid, _proximo_nc(con, uid), str(d.get("origem") or "Obra")[:30], *campos.values(),
                  dt.date.today().isoformat() if status == "fechada" else None, _agora(), _agora()))
+
+
+# ------------------------- FVS do cronograma fora da tela (resumo diário): as mesmas regras da tela FVS do cronograma
+# (web/index.html: fvsChaves, fvsAuto, qcLocal, mesmoLocal e qcModel). Mudou lá, mude aqui.
+FVS_SIN = {"ceram": ["porce", "azule", "piso "], "hidro": ["hidra", "esgot", "sanit", "agua "],
+           "esqua": ["janel", "porta", "alumi", "caixi", "vidro"], "forma": ["forma", "armac", "arma "],
+           "concr": ["concr"], "gesso": ["forro"], "imper": ["imper"], "pintu": ["textu", "massa"]}
+FVS_GEN = {"instalacoes", "revestimento", "servico", "servicos", "execucao"}
+_TORRE_RX = re.compile(r"\b(torre|bloco|edificio|predio)(?:\s+|\s*[-–—:]\s*)(norte|sul|leste|oeste|central|(?!e\b)[a-z](?:\d{1,2})?|\d{1,3})\b")
+_PAV_RX = [
+    (re.compile(r"\b(?:pav(?:to|imento)?\.?\s*)?tipo\s*(\d{1,3})\b"), lambda m: float(m[1])),
+    (re.compile(r"\b(\d{1,3})\s*o?\s*(?:pav(?:to|imento)?|andar|pvto)\b\.?"), lambda m: float(m[1])),
+    (re.compile(r"\b(?:pav(?:to|imento)?|andar|pvto|piso)\.?\s*(\d{1,3})\b"), lambda m: float(m[1])),
+    (re.compile(r"\b(\d{1,3})\s*o?\s*subsolo\b|\bsubsolo\s*(\d{0,2})\b"), lambda m: -(float(m[1] or m[2] or 0) or 1)),
+    (re.compile(r"\bterreo\b"), lambda m: 0.0), (re.compile(r"\bmezanino\b"), lambda m: 0.5),
+    (re.compile(r"\bcobertura\b"), lambda m: 1000.0), (re.compile(r"\batico\b"), lambda m: 1001.0),
+    (re.compile(r"\bbarrilete\b"), lambda m: 1002.0), (re.compile(r"\bcasa de maquinas\b"), lambda m: 1003.0),
+]
+
+
+def _sem_acento(s) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", str(s or "")) if not unicodedata.combining(c)).lower()
+
+
+def _acha_pav(nome: str):
+    t = re.sub("º|ª", "o", _sem_acento(nome))
+    for rx, f in _PAV_RX:
+        m = rx.search(t)
+        if m:
+            return f(m), m
+    return None
+
+
+def _rot_pav(n: float) -> str:
+    if n == 0:
+        return "Térreo"
+    if n == 0.5:
+        return "Mezanino"
+    if n < 0:
+        return f"Subsolo {int(-n)}"
+    return {1000: "Cobertura", 1001: "Ático", 1002: "Barrilete", 1003: "Casa de máquinas"}.get(n, f"{int(n)}º pavimento")
+
+
+def _subindo(t):
+    while t is not None:
+        yield t
+        t = t.pai
+
+
+def _torre_de(t) -> str:
+    for a in _subindo(t):
+        m = _TORRE_RX.search(_sem_acento(a.nome))
+        if m:
+            w = {"Edificio": "Edifício", "Predio": "Prédio"}.get(m[1].capitalize(), m[1].capitalize())
+            return w + " " + (m[2].upper() if len(m[2]) == 1 or m[2][-1].isdigit() else m[2].capitalize())
+    return ""
+
+
+def _pav_de(t):
+    for a in _subindo(t):
+        r = _acha_pav(a.nome)
+        if r:
+            return r[0]
+    return None
+
+
+def _serv_de(t) -> str:
+    def limpa(nome):
+        out, r = nome, _acha_pav(nome)
+        if r:
+            out = nome[:r[1].start()] + " " + nome[r[1].end():]
+        tm = _TORRE_RX.search(_sem_acento(out))
+        if tm:
+            out = out[:tm.start()] + " " + out[tm.end():]
+        out = re.sub(r"\(\s*\)|\[\s*\]", " ", out)
+        out = re.sub(r"^[\s\-–—:|/.,]+|[\s\-–—:|/.,(]+$", "", out)
+        return re.sub(r"\s{2,}", " ", out).strip()
+    for a in _subindo(t):
+        n = limpa(a.nome)
+        if n:
+            return n
+    return t.nome
+
+
+def _fvs_chaves(m) -> list:
+    ks: list = []
+    for w in re.split(r"\s+", re.sub(r"[^a-z\s]", " ", _sem_acento(m["servico"]))):
+        if len(w) < 4:
+            continue
+        p = w[:5]
+        if p not in ks:
+            ks.append(p)
+        for s in FVS_SIN.get(p, []):
+            if s not in ks:
+                ks.append(s)
+        if w in FVS_GEN and p in ks:
+            ks[ks.index(p)] = {"fraca": p}
+    return ks
+
+
+def _fvs_auto(t, modelos: list):
+    nomes = [_serv_de(t) + " " + t.nome] + [a.nome for a in _subindo(t.pai)]
+    for nome in nomes:
+        txt = " " + re.sub(r"\s+", " ", re.sub(r"[^a-z\s]", " ", _sem_acento(nome))) + " "
+        tem = lambda p: (" " + p.strip()) in txt  # noqa: E731
+        best, bs = None, 0
+        for m in modelos:
+            s, forte = 0, False
+            for k in _fvs_chaves(m):
+                if isinstance(k, str):
+                    if tem(k):
+                        s += 2
+                        forte = True
+                elif tem(k["fraca"]):
+                    s += 1
+            if forte and s > bs:
+                bs, best = s, m
+        if best:
+            return best
+    return None
+
+
+def _mesmo_local(local: str, rotulo: str, torre: str, pav) -> bool:
+    if local == rotulo:
+        return True
+    if pav is None:
+        return False
+    r = _acha_pav(local)
+    if not r or r[0] != pav:
+        return False
+    return not torre or not _TORRE_RX.search(_sem_acento(local)) or _sem_acento(torre) in _sem_acento(local)
+
+
+def fvs_atrasadas(uid: int, projeto, hoje: dt.date) -> int | None:
+    """FVS do cronograma com o prazo de inspeção vencido (término da tarefa + 2 dias) e sem inspeção aprovada,
+    como na tela FVS do cronograma. None quando a obra não tem cronograma ou modelos de FVS."""
+    if projeto is None:
+        return None
+    with banco.conectar() as con:
+        modelos = [dict(r) for r in con.execute("SELECT id, servico FROM fvs_modelos WHERE usuario_id=? ORDER BY codigo, id", (uid,))]
+        insp = [dict(r) for r in con.execute("SELECT id, modelo_id, local, data, resultado FROM inspecoes WHERE usuario_id=?", (uid,))]
+    if not modelos:
+        return None
+    insp.sort(key=lambda i: (i["data"] or "") + str(i["id"]))
+    lig = tarefas(uid)
+    por_id = {m["id"]: m for m in modelos}
+    agora = dt.datetime.combine(hoje, dt.time())
+    n = 0
+    for t in projeto.tarefas:
+        if t.filhos or t.marco or t.inicio is None or t.termino is None:
+            continue
+        escolha, auto = lig.get(t.uid), _fvs_auto(t, modelos)
+        if escolha and escolha.get("modelo_id") == 0:
+            continue
+        m = por_id.get(escolha["modelo_id"], auto) if escolha and escolha.get("modelo_id") else auto
+        if not m:
+            continue
+        torre, pav = _torre_de(t), _pav_de(t)
+        loc = _rot_pav(pav) if pav is not None else ""
+        rotulo = f"{torre} · {loc}" if torre and loc else (torre or loc or t.nome)
+        ult = None
+        for i in insp:
+            if i["modelo_id"] == m["id"] and _mesmo_local(i["local"] or "", rotulo, torre, pav):
+                ult = i
+        ate = t.termino + dt.timedelta(days=2)
+        dias = math.floor((agora - ate).total_seconds() / 86400 + 0.5)  # Math.round do JavaScript
+        if dias > 0 and not (ult and ult["resultado"] == "aprovada"):
+            n += 1
+    return n

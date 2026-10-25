@@ -108,6 +108,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: python teste_fvs_cronograma.py
 
+      - name: Testar as melhorias da engenharia (custo sem dado suposto, orçamento padrão, FVS atrasadas, medição parada)
+        env:
+          CP_BANCO: ${{ runner.temp }}/engenharia.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: python teste_engenharia.py
+
       - name: Testar os serviços contratados por obra (planejamento, custos, qualidade)
         env:
           CP_BANCO: ${{ runner.temp }}/servicos.db

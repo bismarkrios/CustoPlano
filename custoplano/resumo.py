@@ -1,10 +1,11 @@
 """Resumo de engenharia de cada obra de cliente nos 3 pilares: prazo (PPC, medição), custo (orçado x realizado,
-IDC/IDP) e qualidade (NCs e indicadores), escrito uma vez por dia no log do servidor. A conferência semanal da equipe lê essa linha nos logs do Render, sem precisar de login.
+IDC/IDP) e qualidade (NCs, FVS atrasadas e indicadores), com os alertas que pedem ação, escrito uma vez por dia no log do servidor. A conferência semanal da equipe lê essa linha nos logs do Render, sem precisar de login.
 Só números e o nome da obra: nenhum e-mail, senha ou dado pessoal vai para o log."""
 import datetime as dt
 import json
 
 import banco
+import qualidade
 
 MARCA = "RESUMO-ENGENHARIA"
 DIAS_MEDICAO = 7  # data de status mais antiga que isso = medição atrasada
@@ -56,14 +57,32 @@ def _custo(analise: dict | None) -> dict:
     if not analise:
         return {"orcamento": "não importado"}
     t = analise["totais"]
+    if analise.get("sem_realizado"):  # sem lançamento real não há realizado nem IDC: nada é estimado
+        pct = lambda v: round(100 * v / t["bac"], 1) if v is not None and t.get("bac") else None  # noqa: E731
+        r2 = lambda v: round(v, 2) if v is not None else None  # noqa: E731
+        return {"realizado": "sem lançamentos reais", "idp": r2(t["idp"]), "previsto_ate_hoje_pct": pct(t["vp"]),
+                "agregado_pct": pct(t["va"])}
     r2 = lambda v: round(v, 2) if v is not None else None  # noqa: E731
     pct = lambda v: round(100 * v / t["bac"], 1) if v is not None and t.get("bac") else None  # noqa: E731
     return {"idc": r2(t["idc"]), "idp": r2(t["idp"]), "previsto_ate_hoje_pct": pct(t["vp"]), "agregado_pct": pct(t["va"]),
             "realizado_pct": pct(t["cr"]), "desvio_final_pct": pct(t["vac"])}
 
 
-def resumo_obras(hoje: dt.date | None = None, analise_custos=None) -> list[dict]:
-    """analise_custos(obra_id) -> análise de custos da obra (app.analise_custos); sem ela, o custo fica de fora."""
+def _alertas(r: dict) -> list[str]:
+    """O que pede ação da equipe nesta obra, em frases curtas (só números, sem dado pessoal)."""
+    a = []
+    if r.get("medicao_atrasada_dias"):
+        a.append(f"medição física parada há {r['medicao_atrasada_dias']} dias (data de status {r['data_status']})")
+    if isinstance(r.get("fvs_atrasadas"), int) and r["fvs_atrasadas"]:
+        a.append(f"{r['fvs_atrasadas']} FVS do cronograma com a inspeção vencida")
+    if r.get("ncs_vencidas"):
+        a.append(f"{r['ncs_vencidas']} NCs com o prazo vencido")
+    return a
+
+
+def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_obra=None) -> list[dict]:
+    """analise_custos(obra_id) -> análise de custos da obra (app.analise_custos); sem ela, o custo fica de fora.
+    projeto_da_obra(obra_id) -> cronograma da obra (Projeto), para contar as FVS atrasadas; sem ele, elas ficam de fora."""
     hoje = hoje or dt.date.today()
     with banco.conectar() as con:
         obras = con.execute(
@@ -93,11 +112,17 @@ def resumo_obras(hoje: dt.date | None = None, analise_custos=None) -> list[dict]
             r["ncs_vencidas"] = sum(1 for n in ncs if n["prazo"] and n["prazo"][:10] < hoje.isoformat())
             r["ncs_altas"] = sum(1 for n in ncs if n["gravidade"] == "alta")
             r["qualidade"] = _qualidade(con, o["id"], hoje)
+            if projeto_da_obra and c:
+                try:
+                    r["fvs_atrasadas"] = qualidade.fvs_atrasadas(o["id"], projeto_da_obra(o["id"]), hoje)
+                except Exception as e:  # noqa: BLE001 - um cronograma com problema não tira a obra do resumo
+                    r["fvs_atrasadas"] = {"erro": str(e)[:120]}
             if analise_custos:
                 try:
                     r["custo"] = _custo(analise_custos(o["id"]))
                 except Exception as e:  # noqa: BLE001 - um orçamento com problema não tira a obra do resumo
                     r["custo"] = {"erro": str(e)[:120]}
+            r["alertas"] = _alertas(r)
             saida.append(r)
     return saida
 
@@ -114,7 +139,7 @@ def indicadores_obra(obra_id: int, hoje: dt.date | None = None) -> dict:
                 "ncs_altas": sum(1 for n in ncs if n["gravidade"] == "alta"), "qualidade": _qualidade(con, obra_id, hoje)}
 
 
-def registrar_no_log(hoje: dt.date | None = None, analise_custos=None) -> None:
+def registrar_no_log(hoje: dt.date | None = None, analise_custos=None, projeto_da_obra=None) -> None:
     hoje = hoje or dt.date.today()
-    obras = resumo_obras(hoje, analise_custos)
+    obras = resumo_obras(hoje, analise_custos, projeto_da_obra)
     print(f"{MARCA} {json.dumps({'data': hoje.isoformat(), 'obras': obras}, ensure_ascii=False)}", flush=True)

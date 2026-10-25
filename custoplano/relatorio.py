@@ -322,6 +322,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         desv = round(real - prev, 1)
     T = (custos or {}).get("totais") or {}
     idc, idp = T.get("idc"), T.get("idp")
+    sem_real = bool(custos and custos.get("sem_realizado"))  # sem lançamento real: o CR não existe, não é zero
     ppc = ind.get("ppc")
     brl = lambda v: "-" if v is None else ("-" if v < -0.5 else "") + "R$ " + f"{abs(v):,.0f}".replace(",", ".")  # noqa: E731
     # valores em reais inteiros, sem o "R$", nas tabelas com várias colunas
@@ -669,9 +670,10 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         linhas = [["Orçamento (custo direto)", brl(T["bac"]), bdi],
                   ["Valor planejado (VP)", brl(T["vp"]), "previsto até a data de status"],
                   ["Valor agregado (VA)", brl(T["va"]), "orçado do trabalho executado"],
+                  ["Custo realizado (CR)", "-", "sem lançamentos reais (nada é estimado)"] if sem_real else
                   ["Custo realizado (CR)", brl(T["cr"]), f"{_br(T['cr'] / T['bac'] * 100 if T['bac'] else 0)}% do orçamento"],
                   ["IDC", Pa(f"<font color='{cor_desv(idc or 1, 0.98)}'><b>{'-' if idc is None else _br(idc, 2)}</b></font>", "tr"),
-                   "sem custo lançado" if idc is None else "VA / CR"],
+                   ("sem lançamentos reais" if sem_real else "sem custo lançado") if idc is None else "VA / CR"],
                   ["IDP", "-" if idp is None else _br(idp, 2), "VA / VP"],
                   ["Estimativa no término", brl(T.get("eac")), "" if T.get("vac") is None else f"variação no término: {brl(T['vac'])}"]]
         add(tabela("Indicadores de custo", ["Indicador", "Valor", "Observação"], linhas, [5.2 * cm, 3.6 * cm, W - 8.8 * cm],
@@ -683,12 +685,12 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         linhas = []
         for e in custos["etapas"]:
             cv = e["va"] - e["cr"]
-            linhas.append([e["codigo"], Pa(esc(e["nome"])), rs(e["orcado"]), rs(e["vp"]), rs(e["va"]), rs(e["cr"]),
-                           Pa(f"<font color='{cor_desv(cv, -0.5)}'>{vc(cv)}</font>", "tr"),
+            linhas.append([e["codigo"], Pa(esc(e["nome"])), rs(e["orcado"]), rs(e["vp"]), rs(e["va"]), "-" if sem_real else rs(e["cr"]),
+                           "-" if sem_real else Pa(f"<font color='{cor_desv(cv, -0.5)}'>{vc(cv)}</font>", "tr"),
                            "-" if e["idc"] is None else _br(e["idc"], 2)])
         cvt = T["va"] - T["cr"]
-        linhas.append(["", Pa("<b>Total</b>"), rs(T["bac"]), rs(T["vp"]), rs(T["va"]), rs(T["cr"]),
-                       Pa(f"<b>{vc(cvt)}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
+        linhas.append(["", Pa("<b>Total</b>"), rs(T["bac"]), rs(T["vp"]), rs(T["va"]), "-" if sem_real else rs(T["cr"]),
+                       "-" if sem_real else Pa(f"<b>{vc(cvt)}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
         H.extend([NextPageTemplate("paisagem"), PageBreak()])
         if nome_secao:
             secao(nome_secao)
@@ -720,7 +722,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         add(tabela("Cronograma financeiro (R$)", ["Mês", "Previsto no mês", "Previsto acumulado", "Realizado no mês",
                                                      "Realizado acumulado"],
                    [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", mes(s_["previsto"]), mes(s_["previsto_acum"]),
-                     *(("", "") if s_["mes"][:7] > f"{data_status:%Y-%m}" else (mes(s_["realizado"]), mes(s_["realizado_acum"])))]
+                     *(("", "") if sem_real or s_["mes"][:7] > f"{data_status:%Y-%m}" else (mes(s_["realizado"]), mes(s_["realizado_acum"])))]
                     for s_ in serie],
                    [W - 13.2 * cm, 3.3 * cm, 3.3 * cm, 3.3 * cm, 3.3 * cm], direita=(1, 2, 3, 4)))
 

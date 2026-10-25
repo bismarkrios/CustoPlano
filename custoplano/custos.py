@@ -159,6 +159,136 @@ SIN_REAL = {
 }
 
 
+# ------------------------------- orçamento no padrão Custo Plano (árvore UA, gerado por planilha_custoplano.py)
+def _cabecalho_ua(L) -> tuple[int, dict] | None:
+    """Linha do cabeçalho UA | CÓDIGO | NÍVEL | DESCRIÇÃO | QTDE | UNID. | UNITÁRIO | VALOR e a coluna de cada um."""
+    for r, linha in enumerate(L):
+        m = {}
+        for c, v in enumerate(linha):
+            n = norm(v).rstrip(".")
+            for chave, nomes in (("ua", ("ua",)), ("sigla", ("codigo",)), ("nivel", ("nivel",)), ("desc", ("descricao",)),
+                                 ("qtd", ("qtde", "quantidade")), ("un", ("unid", "unidade")),
+                                 ("unit", ("unitario (r$)", "unitario")), ("valor", ("valor (r$)", "valor"))):
+                if n in nomes and chave not in m:
+                    m[chave] = c
+        if {"ua", "nivel", "desc", "qtd", "valor"} <= set(m):
+            return r, m
+    return None
+
+
+def _arred(v: float, casas: int = 0) -> float:
+    """ROUND do Excel (metade para longe do zero), não o arredondamento bancário do Python."""
+    from decimal import ROUND_HALF_UP, Decimal
+    return float(Decimal(repr(v)).quantize(Decimal(1).scaleb(-int(casas)), rounding=ROUND_HALF_UP))
+
+
+class _Formulas:
+    """Calcula as fórmulas simples da planilha UA (referências, SUM, ROUND e as quatro operações), para ler
+    um arquivo gerado pelo Python que nunca foi aberto no Excel e por isso não tem os valores guardados."""
+    REF = re.compile(r"(?:'?([A-Za-zÀ-ú ]+)'?!)?\$?([A-Z]{1,2})\$?(\d+)")
+
+    def __init__(self, wb_f, wb_v, aba: str):
+        self.f, self.v, self.aba, self.memo = wb_f, wb_v, aba, {}
+
+    def valor(self, aba: str, col: str, lin: int, prof: int = 0):
+        chave = (aba, col, lin)
+        if chave in self.memo:
+            return self.memo[chave]
+        if prof > 200 or aba not in self.f.sheetnames:
+            raise ValueError("referência")
+        guardado = self.v[aba][f"{col}{lin}"].value
+        bruto = self.f[aba][f"{col}{lin}"].value
+        if isinstance(guardado, (int, float)) and not isinstance(guardado, bool):
+            r = float(guardado)
+        elif bruto is None or bruto == "":
+            r = 0.0
+        elif isinstance(bruto, (int, float)) and not isinstance(bruto, bool):
+            r = float(bruto)
+        elif isinstance(bruto, str) and bruto.startswith("="):
+            r = self.calcular(aba, bruto[1:], prof)
+        else:
+            n = numero(bruto)
+            if n is None:
+                raise ValueError("texto")
+            r = n
+        self.memo[chave] = r
+        return r
+
+    def calcular(self, aba: str, expr: str, prof: int) -> float:
+        from openpyxl.utils import column_index_from_string, get_column_letter
+
+        def soma(m):
+            a, b = m[1], m[2]
+            ra, rb = self.REF.fullmatch(a), self.REF.fullmatch(b)
+            if not ra or not rb:
+                raise ValueError("intervalo")
+            folha = ra[1] or aba
+            c0, c1 = sorted((column_index_from_string(ra[2]), column_index_from_string(rb[2])))
+            l0, l1 = sorted((int(ra[3]), int(rb[3])))
+            return "(" + "+".join(repr(self.valor(folha, get_column_letter(c), lin, prof + 1))
+                                  for c in range(c0, c1 + 1) for lin in range(l0, l1 + 1)) + ")"
+        e = re.sub(r"(?i)\bSUM\(\s*([^:()]+?)\s*:\s*([^:()]+?)\s*\)", soma, expr)
+        e = re.sub(r"(?i)\bROUND\(", "R(", e)
+        e = self.REF.sub(lambda m: repr(self.valor((m[1] or aba).strip(), m[2], int(m[3]), prof + 1)), e)
+        if not re.fullmatch(r"[0-9eE.+\-*/(), R]*", e):
+            raise ValueError("fórmula")
+        return float(eval(e, {"__builtins__": {}}, {"R": _arred}))  # noqa: S307 - só números e operadores
+
+
+def _ler_padrao(nome_arquivo: str, conteudo: bytes) -> dict:
+    """Orçamento analítico do padrão Custo Plano: UA-2 viram etapas, UA-3 (GSA/GSE) viram subetapas e os
+    serviços UA-4 viram itens com o código UA, que liga cada item às tarefas do cronograma padrão."""
+    wb_f = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=False)
+    wb_v = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=True)
+    aba = next(w.title for w in wb_f.worksheets if norm(w.title) == "planilha de orcamento")
+    L = _linhas(wb_f[aba])
+    r0, m = _cabecalho_ua(L)
+    from openpyxl.utils import get_column_letter
+    calc = _Formulas(wb_f, wb_v, aba)
+    col = {k: get_column_letter(c + 1) for k, c in m.items()}
+    g = lambda linha, k: linha[m[k]] if k in m and m[k] < len(linha) else None  # noqa: E731
+    itens, ua2, ua3, n, sem_valor = [], "", None, 0, []
+    for i, linha in enumerate(L[r0 + 1:], start=r0 + 2):
+        nivel = norm(g(linha, "nivel")).upper()
+        desc = texto(g(linha, "desc"))
+        if nivel in ("UA-0", "UA-1"):
+            continue
+        if nivel == "UA-2":
+            ua2 = texto(g(linha, "ua")).split(" ")[0] or ua2
+            ua3 = None
+            itens.append({"codigo": ua2, "descricao": desc, "titulo": True, "unidade": "", "qtd": 0.0, "comp": "",
+                          "preco": None, "total_planilha": None, "tarefa": "", "inicio": None, "termino": None})
+        elif nivel == "UA-3":
+            sig = texto(g(linha, "sigla")) or texto(g(linha, "ua"))
+            ua3, n = sig, 0
+            itens.append({"codigo": f"{ua2}.{sig}", "descricao": desc, "titulo": True, "unidade": "", "qtd": 0.0,
+                          "comp": "", "preco": None, "total_planilha": None, "tarefa": "", "inicio": None, "termino": None})
+        elif nivel == "UA-4" and desc:
+            n += 1
+            try:
+                valor = calc.valor(aba, col["valor"], i)
+                qtd = calc.valor(aba, col["qtd"], i)
+            except (ValueError, KeyError, SyntaxError, ZeroDivisionError):
+                sem_valor.append(desc)
+                continue
+            itens.append({"codigo": f"{ua2}.{ua3 or 'SEM'}.{n}", "descricao": desc, "titulo": False,
+                          "unidade": texto(g(linha, "un")), "qtd": qtd if qtd else 1.0, "comp": "",
+                          "preco": (valor / qtd) if qtd else valor, "total_planilha": round(valor, 2),
+                          "tarefa": "", "ua": ua3, "inicio": None, "termino": None})
+    wb_f.close()
+    wb_v.close()
+    if not any(not x["titulo"] for x in itens):
+        raise ErroCustos("Na Planilha de Orçamento não encontrei nenhum serviço (linhas UA-4) com valor.")
+    avisos = []
+    if sem_valor:
+        avisos.append(f"{len(sem_valor)} serviços ficaram de fora porque o valor não pôde ser calculado: "
+                      + ", ".join(sem_valor[:5]) + ("…" if len(sem_valor) > 5 else "")
+                      + ". Abra a planilha no Excel, salve e envie de novo.")
+    # o BDI da planilha padrão é só de referência (o orçamento é de custo): não entra
+    return {"arquivo": nome_arquivo, "origem": "padrao", "bdi": 0.0, "itens": itens, "composicoes": {},
+            "realizado": [], "avisos": avisos}
+
+
 def ler_custos(nome_arquivo: str, conteudo: bytes) -> dict:
     if not re.search(r"\.xls[xm]$", nome_arquivo or "", re.I):
         raise ErroCustos("Envie o orçamento em Excel (.xlsx). Baixe o modelo na tela Custos se precisar.")
@@ -169,6 +299,9 @@ def ler_custos(nome_arquivo: str, conteudo: bytes) -> dict:
     except Exception:
         raise ErroCustos("Não consegui abrir a planilha. Confira se é um arquivo .xlsx válido.")
     try:
+        ws_ua = next((w for w in wb.worksheets if norm(w.title) == "planilha de orcamento"), None)
+        if ws_ua is not None and _cabecalho_ua(_linhas(ws_ua, 40, 20)) is not None:
+            return _ler_padrao(nome_arquivo, conteudo)
         ws_orc = _aba(wb, "orcament") or wb.worksheets[0]
         L = _linhas(ws_orc)
         r0, m = _cabecalho(L, SIN_ORC, ("codigo", "descricao"))
@@ -296,6 +429,56 @@ def _fracao(ini: dt.date, fim: dt.date, em: dt.date) -> float:
     return ((em - ini).days + 1) / ((fim - ini).days + 1)
 
 
+def _ua_das_tarefas(projeto) -> dict[str, list]:
+    """Tarefas de cada código UA, lido do campo Texto "Código UA" do cronograma padrão Custo Plano
+    (ex.: "GSE20", "GSE01/GSE03" ou "GSA" para todos os GSA). Cronograma sem esse campo: dicionário vazio."""
+    from cronograma import Q, _filho, _txt
+    ea = _filho(projeto.raiz, "ExtendedAttributes")
+    fid = None
+    for d in (ea.findall(Q + "ExtendedAttribute") if ea is not None else []):
+        if norm(_txt(d, "Alias") or _txt(d, "FieldName")) == "codigo ua":
+            fid = _txt(d, "FieldID")
+    if not fid:
+        return {}
+    por_ua: dict[str, list] = {}
+    for t in projeto.tarefas:
+        if t.filhos:
+            continue
+        for x in t.el.findall(Q + "ExtendedAttribute"):
+            if _txt(x, "FieldID") == fid:
+                for cod in re.split(r"\s*[/,;]\s*|\s+e\s+", _txt(x, "Value")):
+                    if cod.strip():
+                        por_ua.setdefault(cod.strip().upper(), []).append(t)
+    return por_ua
+
+
+def _tarefas_da_ua(por_ua: dict, ua: str | None) -> list:
+    """[(tarefa, fração do custo)] de um código UA. A fração segue o custo de cada tarefa no cronograma
+    (linha de base, senão custo atual); sem custo, segue a duração."""
+    if not ua or not por_ua:
+        return []
+    ua = ua.strip().upper()
+    ts = por_ua.get(ua)
+    if not ts:  # "GSA" no cronograma vale para GSA01, GSA02...
+        fam = re.match(r"[A-Z]+", ua)
+        ts = por_ua.get(fam[0]) if fam and fam[0] != ua else None
+    if not ts:
+        return []
+    from cronograma import Q, _txt
+
+    def peso(t):
+        for b in t.el.findall(Q + "Baseline"):
+            if _txt(b, "Number") in ("", "0") and _moeda(b, "Cost") > 0:
+                return _moeda(b, "Cost")
+        return _moeda(t.el, "Cost")
+    ws = [peso(t) for t in ts]
+    if sum(ws) <= 0:
+        ws = [max(t.dur_h, 0.0) for t in ts]
+    if sum(ws) <= 0:
+        ws = [1.0] * len(ts)
+    return [(t, w / sum(ws)) for t, w in zip(ts, ws)]
+
+
 def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = None,
              data_status: dt.date | None = None) -> dict:
     atual = atual or {}
@@ -311,6 +494,7 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
             por_eap[t.eap] = t
             por_nome.setdefault(norm(t.nome), t)
             pct[t.uid] = projeto.pct(A[t.uid], "r") if t.filhos else float(atual.get(t.uid, 0))
+    por_ua = _ua_das_tarefas(projeto) if projeto is not None else {}
 
     def datas_tarefa(t):
         i, f = t.lb_inicio or t.inicio, t.lb_termino or t.termino
@@ -366,43 +550,57 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
         for k in TIPOS:
             tot_tipo[k] += por_tipo[k] * float(it["qtd"] or 0)
 
-        # vínculo com o cronograma
+        # vínculo com o cronograma: pelo código UA (orçamento e cronograma do padrão Custo Plano), pela EAP ou pelo nome.
+        # Um grupo UA pode estar repartido em várias tarefas: o custo do item segue a mesma repartição do cronograma.
+        partes = _tarefas_da_ua(por_ua, it.get("ua"))
         t = None
-        if it["tarefa"]:
-            t = por_eap.get(it["tarefa"]) or por_nome.get(norm(it["tarefa"]))
-        if t is None and it["codigo"] in por_eap:
-            t = por_eap[it["codigo"]]
-        if t is None and et is not None:
-            if et.get("tarefa"):
-                t = por_eap.get(et["tarefa"]) or por_nome.get(norm(et["tarefa"]))
-            t = t or por_eap.get(et["codigo"]) or por_nome.get(norm(et["descricao"]))
-        ini = fim = None
-        if t is not None:
-            ini, fim = datas_tarefa(t)
-        if not ini and it.get("inicio"):
-            ini = dt.date.fromisoformat(it["inicio"])
-            fim = dt.date.fromisoformat(it["termino"]) if it.get("termino") else ini
-        fisico = pct.get(t.uid) if t is not None else None
+        if not partes:
+            if it["tarefa"]:
+                t = por_eap.get(it["tarefa"]) or por_nome.get(norm(it["tarefa"]))
+            if t is None and it["codigo"] in por_eap:
+                t = por_eap[it["codigo"]]
+            if t is None and et is not None:
+                if et.get("tarefa"):
+                    t = por_eap.get(et["tarefa"]) or por_nome.get(norm(et["tarefa"]))
+                t = t or por_eap.get(et["codigo"]) or por_nome.get(norm(et["descricao"]))
+            if t is not None:
+                partes = [(t, 1.0)]
+        trechos = []  # (início, término, % físico, fração do custo)
+        for tp, w in partes:
+            a, b = datas_tarefa(tp)
+            trechos.append((a, b, pct.get(tp.uid), w))
+        if not trechos and it.get("inicio"):
+            a = dt.date.fromisoformat(it["inicio"])
+            trechos.append((a, dt.date.fromisoformat(it["termino"]) if it.get("termino") else a, None, 1.0))
 
         vp = va = 0.0
-        if ini and fim:
-            for mes, v in _distribuir(total, ini, fim).items():
-                meses_prev[mes] = meses_prev.get(mes, 0.0) + v
-                E["meses"][mes] = E["meses"].get(mes, 0.0) + v
-            vp = total * _fracao(ini, fim, ds)
-        if fisico is not None:
-            va = total * fisico / 100
-        if t is None:
+        for a, b, f, w in trechos:
+            if a and b:
+                for mes, v in _distribuir(total * w, a, b).items():
+                    meses_prev[mes] = meses_prev.get(mes, 0.0) + v
+                    E["meses"][mes] = E["meses"].get(mes, 0.0) + v
+                vp += total * w * _fracao(a, b, ds)
+            if f is not None:
+                va += total * w * f / 100
+        medidos = [(f, w) for _, _, f, w in trechos if f is not None]
+        fisico = sum(f * w for f, w in medidos) / sum(w for _, w in medidos) if medidos and sum(w for _, w in medidos) else None
+        inis = [a for a, _, _, _ in trechos if a]
+        fins = [b for _, b, _, _ in trechos if b]
+        ini, fim = (min(inis) if inis else None), (max(fins) if fins else None)
+        if not partes and total:  # item sem custo não precisa de tarefa
             sem_vinculo["n"] += 1
             sem_vinculo["valor"] += total
         E["orcado"] += total
         E["vp"] += vp
         E["va"] += va
+        rotulo = (partes[0][0].eap + " " + partes[0][0].nome) if partes else ""
+        if len(partes) > 1:
+            rotulo += f" (+{len(partes) - 1} tarefas)"
         itens_out.append({
             "codigo": it["codigo"], "descricao": it["descricao"], "unidade": it["unidade"], "qtd": it["qtd"],
             "comp": it["comp"], "comp_desc": comp["descricao"] if comp else "", "unit": unit, "direto": direto,
             "total": total, "venda": direto * (1 + bdi), "tipos": por_tipo, "insumos": insumos, "etapa": chave,
-            "tarefa": (t.eap + " " + t.nome) if t is not None else "", "fisico": fisico,
+            "tarefa": rotulo, "fisico": fisico,
             "inicio": ini.isoformat() if ini else None, "termino": fim.isoformat() if fim else None, "vp": vp, "va": va,
         })
 
@@ -476,6 +674,8 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
         "tipos": [{"tipo": k, "nome": TIPOS[k], "valor": v, "com_bdi": v * (1 + bdi)} for k, v in tot_tipo.items() if v],
         "etapas": etapas_out, "itens": itens_out, "serie": serie, "lancamentos": lanc_out,
         "sem_vinculo": sem_vinculo, "avisos": dados.get("avisos") or [],
+        # sem nenhum lançamento real: o realizado e o IDC não existem (não mostrar R$ 0 como se fosse gasto)
+        "sem_realizado": not todos,
     }
 
 
@@ -751,12 +951,13 @@ def _moeda(el, nome) -> float:
 
 
 def dados_do_projeto(p) -> dict | None:
-    """Orçamento e realizado tirados das colunas de custo do próprio cronograma (Custo, Custo da
-    linha de base e Custo real). Devolve None se o cronograma não tiver custos."""
+    """Orçamento tirado das colunas de custo do próprio cronograma (Custo e Custo da linha de base).
+    O Custo real do Project não entra como realizado: o Project calcula esse valor sozinho (% concluído × custo),
+    e ele não é gasto real. O realizado vem só dos lançamentos. Devolve None se o cronograma não tiver custos."""
     from cronograma import Q, _txt
     raizes = [t for t in p.tarefas if t.pai is None]
     pular = {raizes[0].uid} if len(raizes) == 1 and raizes[0].filhos else set()
-    itens, realizado = [], []
+    itens, custo_real_project = [], 0.0
     for t in p.tarefas:
         if t.uid in pular:
             continue
@@ -775,16 +976,16 @@ def dados_do_projeto(p) -> dict | None:
             itens.append({"codigo": t.eap, "descricao": t.nome, "titulo": False, "unidade": "vb", "qtd": 1.0,
                           "comp": "", "preco": round(orcado, 2), "total_planilha": round(orcado, 2), "tarefa": t.eap,
                           "inicio": None, "termino": None})
-        real = _moeda(t.el, "ActualCost")
-        if real > 0:
-            quando = data(_txt(t.el, "ActualFinish")[:10]) or (p.data_status.date() if p.data_status else None) \
-                or (t.termino.date() if t.termino else dt.date.today())
-            realizado.append({"data": quando.isoformat(), "codigo": t.eap, "descricao": t.nome, "fornecedor": "",
-                              "tipo": "out", "valor": round(real, 2), "origem": "project"})
+        custo_real_project += _moeda(t.el, "ActualCost")
     if not any(not i["titulo"] for i in itens):
         return None
+    avisos = []
+    if custo_real_project > 0:
+        avisos.append("O cronograma traz a coluna Custo real do Project, mas ela não foi usada como realizado: o Project "
+                      "calcula esse valor sozinho (% concluído × custo) e ele não é gasto real. O realizado vem só dos "
+                      "custos lançados aqui.")
     return {"arquivo": p.arquivo, "origem": "project", "bdi": 0.0, "itens": itens, "composicoes": {},
-            "realizado": realizado, "avisos": []}
+            "realizado": [], "avisos": avisos}
 
 
 def _zip_seguro(conteudo: bytes, limite: int = 150_000_000) -> bool:

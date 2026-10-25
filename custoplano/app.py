@@ -895,6 +895,11 @@ def orcamento_de(uid: int, p=None):
     return reg, dados
 
 
+def projeto_da_obra(uid: int):
+    c = banco.cronograma(uid)
+    return projeto_de(c) if c else None
+
+
 def analise_custos(uid: int):
     c = banco.cronograma(uid)
     p = projeto_de(c) if c else None
@@ -1342,7 +1347,7 @@ def _resumo_diario() -> None:
     while True:
         try:
             if feito != dt.date.today():
-                resumo.registrar_no_log(analise_custos=analise_custos)
+                resumo.registrar_no_log(analise_custos=analise_custos, projeto_da_obra=projeto_da_obra)
                 feito = dt.date.today()
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa do resumo
             print(f"Não consegui montar o resumo de engenharia: {e}", flush=True)
