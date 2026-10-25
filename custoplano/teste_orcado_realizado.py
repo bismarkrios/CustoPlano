@@ -3,6 +3,7 @@ a planilha entra pela tela Custos, o sistema calcula (g), (i), (j) e (k), confer
 e com os custos lançados, aparece no relatório de custos e a obra de demonstração já vem preenchida.
 Rodar com:  CP_BANCO=/tmp/ctl.db CP_SECRET=x CP_COPIAS_AUTO=0 python teste_orcado_realizado.py
 """
+import datetime as dt
 import io
 import os
 import sys
@@ -150,9 +151,33 @@ ws.append(["01.000.000.001", "Projetos", 400, 500, 10, 100, 0, 500, -100, 350, 5
 ws.append(["CTPS/1", "Fornecedor X", None, 500, None, 100, None, None, None, 350, None, 350])
 ws.append(["02", "CANTEIRO", 600, 400, 0, 100, 50, 400, 200, 250, 0, 250, 0.67])
 ws.append(["02.000.000.001", "Barracão", 600, 400, 0, 100, 50, 400, 200, 250, 0, 250, 0.67])
+wo = wb.create_sheet("Orçamento")
+wo.append(["Orçamento - versão"])
+wo.append(["UC", "Etapa", "Subetapa", "Apropriação", "Descrição", "Un.", "Qtde orçada", "Preço unitário", "Orçado"])
+wo.append(["2 - CUSTOS INDIRETOS", "01 - SERVIÇOS TÉCNICOS", "", 1000000001, "Projetos", "vb", 1, 400, 400])
+wo.append(["2 - CUSTOS INDIRETOS", "02 - CANTEIRO", "02.001 - INSTALAÇÕES", 2001000001, "Barracão", "m2", 10, 60, 600])
+wo.append(["Total", None, None, None, None, None, None, None, 1000])
+wa = wb.create_sheet("Analítico")
+wa.append(["Analítico de Apropriação"])
+wa.append(["Situação", "UC", "Apropriação", "Serviço", "Documento", "Credor / Histórico", "Data da baixa", "Valor", "Considerado"])
+wa.append(["Pago", "2 - CUSTOS INDIRETOS", 1000000001, "01.000.000.001 - Projetos", "NFSE/1", "Fornecedor X", dt.datetime(2026, 8, 10), 150, 150])
+wa.append(["Pago", "2 - CUSTOS INDIRETOS", 1000000001, "01.000.000.001 - Projetos", "NFSE/2", "Fornecedor X", dt.datetime(2026, 9, 5), 200, 200])
+wa.append(["Pago", "2 - CUSTOS INDIRETOS", 2001000001, "02.001.000.001 - Barracão", "NFSE/3", "Fornecedor Y", dt.datetime(2026, 9, 20), 250, 250])
+wa.append(["A pagar", "2 - CUSTOS INDIRETOS", 1000000001, "01.000.000.001 - Projetos", "NFSE/4", "Fornecedor X", None, 50, 50])
+wa.append(["Previsão (não entra)", "2 - CUSTOS INDIRETOS", 1000000001, "01.000.000.001 - Projetos", "PPC/9", "Fornecedor Z", None, 99, 0])
 out = io.BytesIO()
 wb.save(out)
 x = cst.ler_controle("erp.xlsx", out.getvalue())
+o = x.get("orcamento") or {}
+checar([i["codigo"] for i in o.get("itens", [])] == ["2.01", "2.01.000.000.001", "2.02", "2.02.001", "2.02.001.000.001"],
+       f"ERP: orçamento lido errado: {[i['codigo'] for i in o.get('itens', [])]}")
+checar(len(o.get("realizado", [])) == 3 and o.get("a_pagar") == 50, f"ERP: analítico lido errado: {o.get('realizado')} {o.get('a_pagar')}")
+an = cst.analisar(o, [], None, {}, dt.date(2026, 10, 25))
+checar(round(an["totais"]["bac"]) == 1000 and round(an["totais"]["cr"]) == 600 and an["totais"]["idc"] is None,
+       f"ERP: totais do orçamento errados: {an['totais']}")
+checar([(s_["mes"], round(s_["realizado"])) for s_ in an["serie"]] == [("2026-08", 150), ("2026-09", 450)],
+       f"ERP: mês a mês errado: {an['serie']}")
+checar([round(e["cr"]) for e in an["etapas"]] == [350, 250], f"ERP: realizado por etapa errado: {an['etapas']}")
 checar([y["codigo"] for y in x["linhas"]] == ["2.01", "2.02"], f"ERP: etapas lidas erradas: {x['linhas']}")
 e1, e2 = x["linhas"]
 checar(e1["incorrido"] == 400 and e1["saldo_pedido"] == 10 and e1["saldo_contrato"] == 100 and e1["a_contratar"] == 0,
@@ -173,6 +198,24 @@ checar(r.status_code == 200, f"ERP: importação pelo site falhou: {r.get_json()
 nv = adm.get("/api/custos/controle/niveis").get_json()["niveis"]
 checar(len(nv) == 6 and nv[0]["tipo"] == "uc", f"ERP: endpoint de níveis errado: {nv}")
 checar(lei.get("/api/custos/controle/niveis").status_code == 200, "leitor não vê todos os níveis")
+cu = adm.get("/api/custos").get_json()["custos"]
+checar(cu.get("origem") == "erp" and not cu.get("so_controle") and len(cu["serie"]) == 2 and round(cu["totais"]["bac"]) == 1000,
+       f"ERP: tela Custos não montou a estrutura pela planilha: {cu.get('origem')} {cu.get('so_controle')} {cu.get('totais')}")
+checar(not any("diferente do custo realizado" in a_ for a_ in cu["controle"]["avisos"]),
+       f"ERP: acusou diferença entre incorrido e pago + a pagar: {cu['controle']['avisos']}")
+
+# relatório: número nunca quebra em duas linhas (a coluna cresce ou a letra diminui)
+import relatorio
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph
+st = ParagraphStyle("tr8", fontName="Helvetica", fontSize=8, leading=10)
+dados = [["cab", "cab"], [Paragraph("Serviço com nome comprido", st), Paragraph("-25.391.014", st)]]
+lg = relatorio._sem_quebra_numeros(dados, [6 * cm, 1.0 * cm], (1,))
+checar(dados[1][1].minWidth() + 8.5 <= lg[1] + 0.01 and abs(sum(lg) - 7 * cm) < 0.01, f"relatório: número quebraria a linha: {lg}")
+dados = [["cab", "cab"], [Paragraph("x", st), Paragraph("-25.391.014", st)]]
+lg = relatorio._sem_quebra_numeros(dados, [2.5 * cm, 1.0 * cm], (1,))
+checar(dados[1][1].minWidth() + 8.5 <= lg[1] + 0.01, f"relatório: sem espaço, a letra não diminuiu: {lg} {dados[1][1].style.fontSize}")
 
 if falhas:
     print("FALHAS:\n- " + "\n- ".join(falhas))

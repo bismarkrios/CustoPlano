@@ -654,14 +654,14 @@ def analisar(dados: dict, lancamentos: list, projeto=None, atual: dict | None = 
     vp = sum(E["vp"] for E in etapas.values())
     va = sum(E["va"] for E in etapas.values())
     cr = cr_total
-    idc = va / cr if cr > 0 else None
+    idc = va / cr if cr > 0 and (va or vp) else None  # sem nenhum avanço físico ligado ao custo, o IDC não existe
     idp = va / vp if vp > 0 else None
     eac = (cr + (bac - va) / idc) if idc else None
     etapas_out = []
     for k in ordem:
         E = etapas[k]
         etapas_out.append({"chave": k, "codigo": E["codigo"], "nome": E["nome"], "orcado": E["orcado"], "vp": E["vp"],
-                           "va": E["va"], "cr": E["cr"], "idc": (E["va"] / E["cr"]) if E["cr"] > 0 else None,
+                           "va": E["va"], "cr": E["cr"], "idc": (E["va"] / E["cr"]) if E["cr"] > 0 and (va or vp) else None,
                            "meses": E["meses"]})
     if nao_ligados:
         etapas_out.append({"chave": "Sem etapa", "codigo": "", "nome": "Lançamentos sem etapa", "orcado": 0.0, "vp": 0.0,
@@ -1027,7 +1027,7 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
     """Aceita Excel (.xlsx, .xlsm; aba "Orçado x Realizado" ou a única aba) ou texto separado (.csv, .txt)."""
     nome = nome_arquivo or ""
     if re.search(r"\.(csv|txt)$", nome, re.I):
-        L = _linhas_csv(conteudo)
+        L, extra = _linhas_csv(conteudo), None
     elif re.search(r"\.xls[xm]$", nome, re.I):
         try:
             if not _zip_seguro(conteudo):
@@ -1042,6 +1042,7 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
             if ws is None:
                 raise ErroCustos("Não achei a aba Orçado x Realizado. Use a planilha de controle no padrão Custo Plano.")
             L = _linhas(ws, 6000, 20)
+            extra = _erp_orcamento_analitico(wb)
         finally:
             wb.close()
     elif re.search(r"\.xls$", nome, re.I):
@@ -1050,6 +1051,9 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
         raise ErroCustos("Envie a planilha Orçado x Realizado em Excel (.xlsx, .xlsm) ou CSV (.csv).")
     erp = _ler_controle_erp(L)
     if erp:
+        if extra:
+            extra["arquivo"] = nome_arquivo
+            erp["orcamento"] = extra
         return dict(erp, arquivo=nome_arquivo)
     r0 = col = None
     for r, linha in enumerate(L[:40]):
@@ -1179,6 +1183,79 @@ def _ler_controle_erp(L) -> dict | None:
     if abs(sum(x["oin"] for x in linhas) - total_uc) > len(linhas):
         avisos.append("A soma das etapas não fecha com o total das unidades de custo da planilha. Confira a exportação do ERP.")
     return {"linhas": linhas, "niveis": niveis, "avisos": avisos, "origem": "erp"}
+
+
+def _erp_orcamento_analitico(wb) -> dict | None:
+    """Abas Orçamento e Analítico do arquivo do ERP viram o orçamento da obra (itens por etapa) e os custos realizados
+    com data, no mesmo formato do orçamento importado. Assim a tela Custos volta a ter Orçamento, Financeiro mês a mês e
+    Valor agregado sem o Project. Realizado mês a mês = pago, pela data da baixa. "A pagar" não tem data: entra no
+    incorrido (d), não no mês a mês. "Previsão (não entra)" fica de fora, como no ERP."""
+    abas = {norm(w.title): w for w in wb.worksheets}
+    if "orcamento" not in abas:
+        return None
+    cod_uc = lambda v: (re.match(r"\s*(\d+)\s*-", texto(v)) or [None, None])[1]  # noqa: E731
+    L = _linhas(abas["orcamento"], 20000, 12)
+    r0 = next((r for r, x in enumerate(L[:30]) if [norm(v) for v in x[:5]] == ["uc", "etapa", "subetapa", "apropriacao", "descricao"]), None)
+    if r0 is None:
+        return None
+    itens, vistos = [], set()
+
+    def titulo(cod, desc):
+        if cod not in vistos:
+            vistos.add(cod)
+            itens.append({"codigo": cod, "descricao": desc, "titulo": True, "unidade": "", "qtd": 0.0, "comp": "",
+                          "preco": None, "total_planilha": None, "tarefa": "", "inicio": None, "termino": None})
+    for x in L[r0 + 1:]:
+        x = list(x) + [None] * 9
+        uc, ap = cod_uc(x[0]), re.sub(r"\D", "", texto(x[3]).split(".")[0])
+        if not uc or len(ap) < 10:
+            continue
+        et = re.match(r"\s*(\d+)\s*-\s*(.*)", texto(x[1]))
+        if not et:
+            continue
+        cet = f"{uc}.{int(et[1]):02d}"
+        titulo(cet, et[2].strip())
+        sub = re.match(r"\s*\d+\.(\d+)\s*-\s*(.*)", texto(x[2]))
+        if sub:
+            titulo(f"{cet}.{sub[1]}", sub[2].strip())
+        valor = numero(x[8]) or 0.0
+        qtd = numero(x[6]) or 0.0
+        itens.append({"codigo": f"{cet}.{ap[-9:-6]}.{ap[-6:-3]}.{ap[-3:]}", "descricao": texto(x[4]), "titulo": False,
+                      "unidade": texto(x[5]), "qtd": qtd or (1.0 if valor else 0.0), "comp": "", "preco": valor / qtd if qtd else valor,
+                      "total_planilha": round(valor, 2), "tarefa": "", "inicio": None, "termino": None})
+    if not any(not i["titulo"] for i in itens):
+        return None
+    realizado, a_pagar = [], 0.0
+    if "analitico" in abas:
+        A = _linhas(abas["analitico"], 40000, 10)
+        a0 = next((r for r, x in enumerate(A[:30]) if any(norm(v).startswith("data da baixa") for v in x)), None)
+        if a0 is not None:
+            m = {norm(v): c for c, v in enumerate(A[a0])}
+            ci = lambda *ks: next((m[k] for k in m for p in ks if k.startswith(p)), None)  # noqa: E731
+            c_sit, c_uc, c_serv, c_doc, c_cred, c_data, c_val = (ci("situacao"), ci("uc"), ci("servico"), ci("documento"),
+                                                                 ci("credor"), ci("data da baixa"), ci("considerado"))
+            for x in A[a0 + 1:]:
+                x = list(x) + [None] * 10
+                sit = norm(x[c_sit])
+                v = numero(x[c_val]) or 0.0
+                uc = cod_uc(x[c_uc])
+                if not uc or not v or sit.startswith("previsao") or sit == "total":
+                    continue
+                d = data(x[c_data])
+                if d is None:  # a pagar: sem data da baixa
+                    a_pagar += v
+                    continue
+                serv = texto(x[c_serv]).split(" - ")[0].strip()
+                realizado.append({"data": d.isoformat(), "codigo": f"{uc}.{serv}" if re.fullmatch(r"[\d.]+", serv) else uc,
+                                  "descricao": texto(x[c_doc]), "fornecedor": texto(x[c_cred])[:120], "tipo": "out",
+                                  "valor": round(v, 2)})
+    avisos = ["Orçamento e custos tirados do arquivo do ERP: o orçamento vem da aba Orçamento e o realizado mês a mês da aba "
+              "Analítico (o que foi pago, pela data da baixa)."]
+    if a_pagar:
+        avisos.append(f"R$ {a_pagar:,.0f}".replace(",", ".") + " a pagar ainda não têm data da baixa: entram no incorrido (d) "
+                      "do Orçado x Realizado, mas não no mês a mês.")
+    return {"origem": "erp", "bdi": 0.0, "itens": itens, "composicoes": {}, "realizado": realizado,
+            "a_pagar": round(a_pagar, 2), "avisos": avisos}
 
 
 def calcular_controle(dados: dict | None, orcado_sistema: float | None = None, realizado_sistema: float | None = None):

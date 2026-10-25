@@ -18,6 +18,37 @@ MESES_EXT = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho"
 MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
 
+
+def _sem_quebra_numeros(dados, larg, direita, folga=8.5):
+    """Número nunca quebra em duas linhas (Bismark, 25/10/2026): a coluna numérica cresce até caber o maior valor,
+    tirando a largura da coluna de texto mais larga (que pode quebrar entre palavras). Se ainda não couber, a letra
+    da coluna diminui até caber."""
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph
+    texto = [j for j in range(len(larg)) if j not in direita]
+    for i in direita:
+        cel = [ln[i] for ln in dados[1:] if i < len(ln) and isinstance(ln[i], Paragraph)]
+        if not cel:
+            continue
+        precisa = max(c.minWidth() for c in cel) + folga
+        if precisa <= larg[i]:
+            continue
+        j = max(texto, key=lambda k: larg[k]) if texto else None
+        tira = min(precisa - larg[i], max(0.0, larg[j] - 2.5 * cm)) if j is not None else 0.0
+        if tira > 0:
+            larg[j] -= tira
+            larg[i] += tira
+        if precisa > larg[i] + 0.01:  # sem espaço: letra menor nessa coluna
+            f = (larg[i] - folga) / (precisa - folga)
+            for ln in dados[1:]:
+                c = ln[i] if i < len(ln) else None
+                if isinstance(c, Paragraph):
+                    st = ParagraphStyle(c.style.name + "_n", parent=c.style, fontSize=c.style.fontSize * f,
+                                        leading=c.style.leading * f)
+                    ln[i] = Paragraph(c.text, st)
+    return larg
+
 def _br(v: float, casas: int = 1) -> str:
     return f"{v:.{casas}f}".replace(".", ",")
 
@@ -254,6 +285,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         dados = [[Pa(h, ("thr" if i in direita else "th") + corpo) for i, h in enumerate(cab)]]
         for ln in linhas:
             dados.append([c if not isinstance(c, str) else Pa(esc(c), ("tr" if i in direita else "t") + corpo) for i, c in enumerate(ln)])
+        larg = _sem_quebra_numeros(dados, list(larg), direita)
         t = Table(dados, colWidths=larg, repeatRows=1)
         estilo = [("BACKGROUND", (0, 0), (-1, 0), NAVY), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                   ("LINEABOVE", (0, 0), (-1, 0), 0.8, NAVY), ("LINEBELOW", (0, -1), (-1, -1), 0.8, NAVY),
@@ -763,12 +795,18 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                    [[x["nome"], brl(x["valor"]), brl(x["com_bdi"]), f"{_br(x['valor'] / soma * 100)}%"] for x in tipos],
                    [W - 10.2 * cm, 3.8 * cm, 3.8 * cm, 2.6 * cm], direita=(1, 2, 3)))
 
-    def sec_custo_serie():
+    def sec_custo_serie(so_realizado=False):
         serie = custos.get("serie") or []
-        if not (0 < len(serie) <= 36):
+        if not (0 < len(serie) <= (72 if so_realizado else 36)):
             return
         # um mês por linha: cabe qualquer duração e qualquer valor sem quebrar os números
         mes = lambda v: rs(v) if v else ""  # noqa: E731
+        if so_realizado:
+            txt(f"A {prox()} apresenta o realizado mês a mês, em reais: o que foi pago, pela data da baixa no ERP.")
+            add(tabela("Realizado mês a mês (R$)", ["Mês", "Realizado no mês", "Realizado acumulado"],
+                       [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", mes(s_["realizado"]), mes(s_["realizado_acum"])]
+                        for s_ in serie], [W - 8 * cm, 4 * cm, 4 * cm], direita=(1, 2)))
+            return
         txt(f"A {prox()} apresenta o cronograma financeiro: desembolso previsto e realizado, mês a mês, em reais.")
         add(tabela("Cronograma financeiro (R$)", ["Mês", "Previsto no mês", "Previsto acumulado", "Realizado no mês",
                                                      "Realizado acumulado"],
@@ -936,7 +974,12 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if custos:
             # com a planilha Orçado x Realizado, o relatório começa por ela (mesma estrutura da tela Custos)
             sec_custo_controle("Orçado x Realizado")
-            if not custos.get("so_controle"):
+            if custos.get("origem") == "erp":
+                # base na planilha do ERP: sem valor agregado nem comparação com o Project (Bismark, 25/10/2026)
+                if custos.get("serie") and not sem_real:
+                    secao("Realizado mês a mês")
+                    sec_custo_serie(so_realizado=True)
+            elif not custos.get("so_controle"):
                 secao("Indicadores de custo")
                 sec_custo_totais()
                 sec_custo_etapas("Custo por etapa")

@@ -475,6 +475,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .svc-prog{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:14px}
 .svc-prog div{display:flex;flex-direction:column;gap:6px;font-size:13px}
 .mono{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+/* número nunca quebra em duas linhas (Bismark, 25/10/2026) */
+.kpi-v,.kpi-s b,.cu-sum b,td.mono,td.num,th.num,.cu-ctl td{white-space:nowrap}
 .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .curve text{font-family:var(--body);font-size:12px;fill:var(--muted)}
 /* LB */
@@ -3115,13 +3117,14 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (!S.cu.tabEscolhida) S.cu.tab = CT ? 'ctl' : (S.cu.tab === 'ctl' ? 'orc' : S.cu.tab);
     var avisos = (CU.avisos || []).slice();
     if (CU.sem_realizado) avisos.unshift('Sem lançamentos reais: o custo realizado e o IDC só aparecem quando houver custos reais lançados (notas, pagamentos, medições de empreiteiro). Nada é estimado ou suposto.');
-    if (!CU.tem_cronograma) avisos.push('Sem cronograma importado: o custo só é distribuído no tempo para itens com Início e Término, e o valor agregado fica zerado. Importe o cronograma na tela Project.');
-    else if (CU.sem_vinculo.n) avisos.push(CU.sem_vinculo.n + ' itens (' + brl(CU.sem_vinculo.valor) + ') não foram ligados a nenhuma tarefa do cronograma. ' + (CU.origem === 'padrao' ? 'Confira se o código UA deles (GSA/GSE) está no campo Código UA de alguma tarefa do cronograma.' : 'Preencha a coluna Tarefa (EAP) na planilha.'));
+    if (CU.origem === 'erp') { /* base na planilha do ERP: sem previsto nem valor agregado do Project */ } else if (!CU.tem_cronograma) avisos.push('Sem cronograma importado: o custo só é distribuído no tempo para itens com Início e Término, e o valor agregado fica zerado. Importe o cronograma na tela Project.');
+    else if (CU.sem_vinculo.n) avisos.push(CU.sem_vinculo.n + ' itens (' + brl(CU.sem_vinculo.valor) + ') não foram ligados a nenhuma tarefa do cronograma. ' + (CU.origem === 'padrao' ? 'Confira se o código UA deles (GSA/GSE) está no campo Código UA de alguma tarefa do cronograma.' : CU.origem === 'erp' ? 'Para ter o previsto e o valor agregado, o nome da etapa do ERP precisa ser igual ao nome de uma tarefa do cronograma.' : 'Preencha a coluna Tarefa (EAP) na planilha.'));
     var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
     var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
-      '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('ctl', 'Orçado x Realizado') + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + tab('real', 'Valor agregado') + '</div></div>' +
-      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
+      '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('ctl', 'Orçado x Realizado') + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + (CU.origem === 'erp' ? '' : tab('real', 'Valor agregado')) + '</div></div>' +
+      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'erp' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento e custos do arquivo do ERP (abas Orçamento e Analítico)</span>' + (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro arquivo do ERP</label>') : CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
       (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
+    if (CU.origem === 'erp' && S.cu.tab === 'real') S.cu.tab = 'fin';
     var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'ctl' ? vCusCtl() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
     return kpis + '<section class="card" style="display:flex;flex-direction:column;gap:12px">' + bar + '</section>' + corpo;
   }
@@ -3131,6 +3134,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var comp = '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="card-head"><h2>Composição do custo direto</h2></div>' +
       '<div style="display:flex;height:14px;border-radius:3px;overflow:hidden">' + CU.tipos.map(function (t) { return '<i title="' + esc(t.nome) + '" style="width:' + (t.valor / tot * 100) + '%;background:' + TIPO_COR[t.tipo] + '"></i>'; }).join('') + '</div>' +
       '<div class="legend-row">' + CU.tipos.map(function (t) { return '<span><i class="sw" style="background:' + TIPO_COR[t.tipo] + '"></i>' + esc(t.nome) + ' <b class="mono" style="color:var(--ink)">' + brl(t.valor) + '</b> (' + fmt1(t.valor / tot * 100) + '%)</span>'; }).join('') + '</div></section>';
+    if (CU.tipos.length < 2) comp = '';  // sem insumos por tipo (ex.: orçamento do ERP): a barra de 100% em Outros não informa nada
     var linhas = '';
     CU.etapas.forEach(function (e) {
       var its = CU.itens.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.etapa === e.chave; });
@@ -3182,7 +3186,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     g += '<text x="' + L + '" y="' + (T1 - 14) + '" class="cu-tit">Acumulado</text>' + grade(A, T1, H1);
     g += '<text x="' + L + '" y="' + (T2 - 14) + '" class="cu-tit">No mês</text>' + grade(M, T2, H2);
     var linha = function (k, ate) { return S2.slice(0, ate).map(function (s, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + A.Y(s[k]).toFixed(1); }).join(' '); };
-    g += '<path d="' + linha('previsto_acum', n) + '" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:6 4;stroke-linejoin:round"></path>';
+    if (CU.origem !== 'erp') g += '<path d="' + linha('previsto_acum', n) + '" style="fill:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:6 4;stroke-linejoin:round"></path>';
     if (ateHoje && !CU.sem_realizado) g += '<path d="' + linha('realizado_acum', ateHoje) + '" style="fill:none;stroke:var(--pa2);stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round"></path>';
     var bW = Math.min(14, bw * 0.32);
     S2.forEach(function (s, i) {
@@ -3198,10 +3202,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (ateHoje) {
       var sr = S2[iDs], yR = A.Y(sr.realizado_acum), yV = A.Y(CU.totais.va), xr = X(iDs), dir = xr > W - 200 ? 'end' : 'start', dx = dir === 'end' ? -12 : 12;
       if (!CU.sem_realizado) g += '<circle cx="' + xr + '" cy="' + yR + '" r="4.5" style="fill:var(--pa2);stroke:var(--surface);stroke-width:2"></circle>';
-      g += '<circle cx="' + xr + '" cy="' + yV + '" r="5" style="fill:var(--accent);stroke:var(--surface);stroke-width:2"></circle>';
+      if (CU.origem !== 'erp') g += '<circle cx="' + xr + '" cy="' + yV + '" r="5" style="fill:var(--accent);stroke:var(--surface);stroke-width:2"></circle>';
       var yRt = yR - 14, yVt = yV + 20; if (yV < yR) { yRt = yR + 20; yVt = yV - 14; }
       if (!CU.sem_realizado) g += '<text x="' + (xr + dx) + '" y="' + (yRt + 4) + '" text-anchor="' + dir + '" class="cu-val">Realizado ' + rs(sr.realizado_acum) + '</text>';
-      g += '<text x="' + (xr + dx) + '" y="' + (yVt + 4) + '" text-anchor="' + dir + '" class="cu-val cu-va">Valor agregado ' + rs(CU.totais.va) + '</text>';
+      if (CU.origem !== 'erp') g += '<text x="' + (xr + dx) + '" y="' + (yVt + 4) + '" text-anchor="' + dir + '" class="cu-val cu-va">Valor agregado ' + rs(CU.totais.va) + '</text>';
     }
     if (iSt >= 0) { var pl = mesLab(S2[iSt].mes) + ' · status', pw = pl.length * 7.4 + 16, px = Math.min(Math.max(X(iSt) - pw / 2, L), W - R - pw);
       g += '<rect x="' + px + '" y="' + (T1 - 40) + '" width="' + pw + '" height="20" rx="10" style="fill:var(--ink)"></rect><text x="' + (px + pw / 2) + '" y="' + (T1 - 26) + '" text-anchor="middle" class="cu-pill">' + pl + '</text>'; }
@@ -3211,25 +3215,36 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     CU._graf = S2;
     var stTxt = iSt >= 0 ? '<div class="cu-sum"><span><b>' + mesLab(S2[iSt].mes) + '</b> mês de status</span><span>Previsto no mês <b>' + brl(S2[iSt].previsto) + '</b></span>' + (CU.sem_realizado ? '<span>Realizado <b>sem lançamentos reais</b></span>' : '<span>Realizado no mês <b>' + brl(S2[iSt].realizado) + '</b></span><span>Acumulado real × previsto <b>' + brl(S2[iSt].realizado_acum) + '</b> × ' + brl(S2[iSt].previsto_acum) + '</span>') + '</div>' : '';
     var legenda = '<div class="legend-row"><span><svg width="24" height="8" aria-hidden="true"><path d="M1 4H23" style="stroke:var(--muted);stroke-width:2;stroke-dasharray:5 3"></path></svg>Previsto</span><span><svg width="24" height="8" aria-hidden="true"><path d="M1 4H23" style="stroke:var(--pa2);stroke-width:2.5"></path></svg>Realizado</span><span><i class="sw" style="background:color-mix(in srgb,var(--muted) 38%,transparent)"></i>Previsto no mês</span><span><i class="sw" style="background:var(--pa2)"></i>Realizado no mês</span><span><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5" style="fill:var(--accent)"></circle></svg>Valor agregado na data de status</span></div>';
+    if (CU.origem === 'erp') {  // base na planilha do ERP: só o realizado (pago pela data da baixa)
+      stTxt = iSt >= 0 ? '<div class="cu-sum"><span><b>' + mesLab(S2[iSt].mes) + '</b> mês de status</span><span>Realizado no mês <b>' + brl(S2[iSt].realizado) + '</b></span><span>Realizado acumulado <b>' + brl(S2[iSt].realizado_acum) + '</b></span></div>' : '';
+      legenda = '<div class="legend-row"><span><svg width="24" height="8" aria-hidden="true"><path d="M1 4H23" style="stroke:var(--pa2);stroke-width:2.5"></path></svg>Realizado acumulado</span><span><i class="sw" style="background:var(--pa2)"></i>Realizado no mês</span></div>';
+    }
     var cab = '<tr><th class="pa-row" style="position:sticky;left:0">Etapa</th>' + S2.map(function (s) { return '<th style="text-align:right">' + mesLab(s.mes) + '</th>'; }).join('') + '<th style="text-align:right">Total</th></tr>';
     var rows = CU.etapas.filter(function (e) { return e.orcado; }).map(function (e) {
       return '<tr><th scope="row" class="pa-row cu-sticky">' + esc((e.codigo ? e.codigo + ' ' : '') + e.nome) + '</th>' + S2.map(function (s) { return '<td class="mono num">' + mil(e.meses[s.mes]) + '</td>'; }).join('') + '<td class="mono num" style="font-weight:600">' + mil(e.orcado) + '</td></tr>';
     }).join('');
     var tl = function (rot, k, total, forte) { return '<tr class="cu-et"><th scope="row" class="pa-row cu-sticky">' + rot + '</th>' + S2.map(function (s) { return '<td class="mono num">' + mil(s[k]) + '</td>'; }).join('') + '<td class="mono num">' + (total != null ? mil(total) : '') + '</td></tr>'; };
     rows += tl('Previsto no mês', 'previsto', CU.totais.bac) + tl('Previsto acumulado', 'previsto_acum') + (CU.sem_realizado ? '' : tl('Realizado no mês', 'realizado', CU.totais.cr) + tl('Realizado acumulado', 'realizado_acum'));
+    // realizado por etapa, mês a mês (no arquivo do ERP vem da aba Analítico, pela data da baixa)
+    var temPrev = S2.some(function (s) { return s.previsto; });
+    // sem previsto: só o realizado no mês e o acumulado, sem abrir por etapa (Bismark, 25/10/2026)
+    var rowsR = CU.sem_realizado || temPrev ? '' : tl('Realizado no mês', 'realizado', CU.totais.cr) + tl('Realizado acumulado', 'realizado_acum');
+    var tabR = rowsR ? '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Realizado mês a mês (R$)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab.replace('>Etapa<', '>Mês<') + '</thead><tbody>' + rowsR + '</tbody></table></div></section>' : '';
     return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><div class="card-head"><h2>Desembolso mensal e acumulado</h2></div>' + stTxt + legenda + '<div class="scroll-x cu-wrap">' + g + '<div class="cu-tip" role="status" hidden></div></div></section>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Cronograma físico-financeiro (R$)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
-      '<p style="font-size:12.5px;color:var(--muted)">O custo de cada item é distribuído pelos dias da tarefa ligada a ele, pela linha de base do cronograma (ou pelas datas da planilha, se não houver tarefa).</p>';
+      tabR + (temPrev ? '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Cronograma físico-financeiro (R$)</h2></div><div class="scroll-x"><table class="tbl cu-fin"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' : '') +
+      '<p style="font-size:12.5px;color:var(--muted)">' + (temPrev ? 'O previsto de cada item é distribuído pelos dias da tarefa ligada a ele, pela linha de base do cronograma (ou pelas datas da planilha, se não houver tarefa)' + (CU.origem === 'erp' ? ' e é premissa' : '') + '. ' : CU.origem === 'erp' ? '' : 'Sem previsto mês a mês: nenhuma etapa está ligada a uma tarefa do cronograma, e o sistema não inventa a distribuição. ') + (rowsR ? 'O realizado é ' + (CU.origem === 'erp' ? 'o que foi pago, pela data da baixa na aba Analítico do ERP.' : 'o custo lançado, pela data do lançamento.') : '') + '</p>';
   }
 
   function vCusReal() {
+    var semFis = !CU.totais.va && !CU.totais.vp;  // nenhum custo ligado a tarefa com avanço físico: não há valor agregado
+    var vf = function (v) { return semFis ? '—' : brl(v); };
     var rows = CU.etapas.map(function (e) {
       var cv = e.va - e.cr;
-      return '<tr><td class="mono">' + esc(e.codigo) + '</td><td>' + esc(e.nome) + '</td><td class="mono num">' + brl(e.orcado) + '</td><td class="mono num">' + brl(e.vp) + '</td><td class="mono num">' + brl(e.va) + '</td><td class="mono num">' + (CU.sem_realizado ? '—' : brl(e.cr)) + '</td>' +
-        '<td class="mono num" style="color:' + (cv < -0.5 ? 'var(--bad)' : 'var(--good)') + ';font-weight:600">' + (!CU.sem_realizado && (e.cr || e.va) ? (cv < 0 ? '−' : '+') + brl(Math.abs(cv)) : '—') + '</td><td class="mono num" style="color:' + (e.idc == null ? 'inherit' : e.idc < 0.98 ? 'var(--bad)' : 'var(--good)') + '">' + (e.idc == null ? '—' : e.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
+      return '<tr><td class="mono">' + esc(e.codigo) + '</td><td>' + esc(e.nome) + '</td><td class="mono num">' + brl(e.orcado) + '</td><td class="mono num">' + vf(e.vp) + '</td><td class="mono num">' + vf(e.va) + '</td><td class="mono num">' + (CU.sem_realizado ? '—' : brl(e.cr)) + '</td>' +
+        '<td class="mono num" style="color:' + (cv < -0.5 ? 'var(--bad)' : 'var(--good)') + ';font-weight:600">' + (!semFis && !CU.sem_realizado && (e.cr || e.va) ? (cv < 0 ? '−' : '+') + brl(Math.abs(cv)) : '—') + '</td><td class="mono num" style="color:' + (e.idc == null ? 'inherit' : e.idc < 0.98 ? 'var(--bad)' : 'var(--good)') + '">' + (e.idc == null ? '—' : e.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
     }).join('');
     var T = CU.totais, cvT = T.va - T.cr;
-    rows += '<tr class="cu-et"><td></td><td>Total</td><td class="mono num">' + brl(T.bac) + '</td><td class="mono num">' + brl(T.vp) + '</td><td class="mono num">' + brl(T.va) + '</td><td class="mono num">' + (CU.sem_realizado ? '—' : brl(T.cr)) + '</td><td class="mono num" style="color:' + (cvT < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (CU.sem_realizado ? '—' : (cvT < 0 ? '−' : '+') + brl(Math.abs(cvT))) + '</td><td class="mono num">' + (T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
+    rows += '<tr class="cu-et"><td></td><td>Total</td><td class="mono num">' + brl(T.bac) + '</td><td class="mono num">' + vf(T.vp) + '</td><td class="mono num">' + vf(T.va) + '</td><td class="mono num">' + (CU.sem_realizado ? '—' : brl(T.cr)) + '</td><td class="mono num" style="color:' + (cvT < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (CU.sem_realizado || semFis ? '—' : (cvT < 0 ? '−' : '+') + brl(Math.abs(cvT))) + '</td><td class="mono num">' + (T.idc == null ? '—' : T.idc.toFixed(2).replace('.', ',')) + '</td></tr>';
     var opts = CU.etapas.filter(function (e) { return e.codigo; }).map(function (e) {
       var its = CU.itens.filter(function (it) { return it.etapa === e.chave; });
       return '<optgroup label="' + esc(e.codigo + ' ' + e.nome) + '"><option value="' + esc(e.codigo) + '">' + esc(e.codigo + ' ' + e.nome) + ' (etapa toda)</option>' + its.map(function (it) { return '<option value="' + esc(it.codigo) + '">' + esc(it.codigo + ' ' + it.descricao) + '</option>'; }).join('') + '</optgroup>';
@@ -3244,15 +3259,16 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<label>Valor (R$)<input name="valor" inputmode="decimal" required placeholder="0,00"></label>' +
       '<button type="submit" class="btn btn-primary">Lançar</button></form></section>';
     var L = CU.lancamentos, mostrar = L.slice(0, 60);
-    var lanc = '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Lançamentos (' + L.length + ')</h2></div><div class="scroll-x"><table class="tbl" style="min-width:760px"><thead><tr><th>Data</th><th>Etapa</th><th>Descrição</th><th>Fornecedor</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>' +
+    var lanc = '<section class="card" style="padding:0;overflow:hidden"><div class="card-head" style="padding:14px 18px 8px"><h2>Lançamentos (' + (CU.lancamentos_n || L.length) + ')</h2></div><div class="scroll-x"><table class="tbl" style="min-width:760px"><thead><tr><th>Data</th><th>Etapa</th><th>Descrição</th><th>Fornecedor</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>' +
       (mostrar.map(function (x) {
         return '<tr><td class="mono">' + isoBr(x.data) + '</td><td>' + esc(x.codigo || '') + '<span class="cu-tar">' + esc(x.etapa) + '</span></td><td>' + esc(x.descricao || '') + '</td><td>' + esc(x.fornecedor || '') + '</td><td>' + (TIPO_NOME[x.tipo] || 'Outros') + '</td><td class="mono num">' + brl2(x.valor) + '</td>' +
           '<td>' + (x.origem === 'sistema' ? '<button type="button" class="linkbtn" data-a="cudel:' + esc(x.id) + '" style="font-size:12.5px">Excluir</button>' : '<span class="kpi-s">planilha</span>') + '</td></tr>';
       }).join('') || '<tr><td colspan="7" style="color:var(--muted)">Nenhum custo lançado ainda.</td></tr>') +
-      '</tbody></table></div>' + (L.length > 60 ? '<p class="kpi-s" style="padding:8px 18px">Mostrando os 60 mais recentes. O Excel exportado traz todos.</p>' : '') + '</section>';
+      '</tbody></table></div>' + ((CU.lancamentos_n || L.length) > 60 ? '<p class="kpi-s" style="padding:8px 18px">Mostrando os 60 mais recentes. O Excel exportado traz todos.</p>' : '') + '</section>';
     return '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl" style="min-width:880px"><thead><tr><th>Código</th><th>Etapa</th><th style="text-align:right">Orçado</th><th style="text-align:right">Previsto até a data</th><th style="text-align:right">Valor agregado</th><th style="text-align:right">Realizado</th><th style="text-align:right">Variação (VA − CR)</th><th style="text-align:right">IDC</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>' +
+      (semFis ? '<div class="notebox">Sem valor agregado: nenhuma etapa do orçamento está ligada a uma tarefa do cronograma com avanço físico medido. ' + (CU.origem === 'erp' ? 'Para ligar, o nome da etapa do ERP precisa ser igual ao nome de uma tarefa do cronograma (tela Project). ' : '') + 'O sistema não estima avanço.</div>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">Valor agregado = orçado × % físico medido. Variação negativa ou IDC abaixo de 1 = gastou mais do que o avanço físico justifica. Previsto até a data = custo que a linha de base previa gastar até a data de status.</p>' +
-      form + lanc;
+      (CU.origem === 'erp' ? '' : form) + lanc;
   }
 
   // Orçado x Realizado: estrutura da planilha de controle da Engenharia. (a) a (h) vêm da planilha;
@@ -4182,8 +4198,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var x = +hit.getAttribute('x') + +hit.getAttribute('width') / 2;
     cross.setAttribute('x1', x); cross.setAttribute('x2', x); cross.style.opacity = .35;
     tip.innerHTML = '<b>' + mesLab(s.mes) + '</b>' +
-      '<span>Previsto no mês <em>' + brl(s.previsto) + '</em></span>' + (fut || CU.sem_realizado ? '' : '<span>Realizado no mês <em>' + brl(s.realizado) + '</em></span>') +
-      '<span>Previsto acumulado <em>' + brl(s.previsto_acum) + '</em></span>' + (fut || CU.sem_realizado ? '' : '<span>Realizado acumulado <em>' + brl(s.realizado_acum) + '</em></span>');
+      (CU.origem === 'erp' ? '' : '<span>Previsto no mês <em>' + brl(s.previsto) + '</em></span>') + (fut || CU.sem_realizado ? '' : '<span>Realizado no mês <em>' + brl(s.realizado) + '</em></span>') +
+      (CU.origem === 'erp' ? '' : '<span>Previsto acumulado <em>' + brl(s.previsto_acum) + '</em></span>') + (fut || CU.sem_realizado ? '' : '<span>Realizado acumulado <em>' + brl(s.realizado_acum) + '</em></span>');
     tip.hidden = false;
     var r = wrap.getBoundingClientRect(), px = e.clientX - r.left + wrap.scrollLeft + 14, py = e.clientY - r.top + 10;
     if (px + tip.offsetWidth > wrap.scrollLeft + wrap.clientWidth) px -= tip.offsetWidth + 28;

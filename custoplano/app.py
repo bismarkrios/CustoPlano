@@ -903,6 +903,10 @@ def analise_custos(uid: int):
     p = projeto_de(c) if c else None
     reg, dados = orcamento_de(uid, p)
     ctl = banco.controle_custos(uid)
+    if ctl and ctl.get("orcamento"):
+        # arquivo do ERP é sempre a base (Bismark, 25/10/2026): as abas Orçamento e Analítico dão o orçamento e o
+        # realizado mês a mês, no lugar de qualquer orçamento importado antes (e nunca do Project)
+        dados, reg = ctl["orcamento"], None
     if not dados:
         if not ctl:
             return None
@@ -913,11 +917,16 @@ def analise_custos(uid: int):
                 "lancamentos": [], "sem_vinculo": {"n": 0, "valor": 0}, "avisos": [], "sem_realizado": True}
     atual = json.loads(c["atual"]) if c else {}
     ds = para_data(c["data_status"]).date() if c else dt.date.today()
-    a = cst.analisar(dados, json.loads(reg["lancamentos"]) if reg else [], p, atual, ds)
+    # base na planilha do ERP: sem previsto nem valor agregado do Project (Bismark, 25/10/2026)
+    a = cst.analisar(dados, json.loads(reg["lancamentos"]) if reg else [], None if dados.get("origem") == "erp" else p, atual, ds)
     a["atualizado_em"] = reg["atualizado_em"] if reg else None
-    a["origem"] = dados.get("origem") or "planilha"
     t = a.get("totais") or {}
-    a["controle"] = cst.calcular_controle(ctl, t.get("bac"), None if a.get("sem_realizado") else t.get("cr"))
+    a["origem"] = dados.get("origem") or "planilha"
+    if a["origem"] == "erp":
+        a["arquivo"] = ctl.get("arquivo")
+        a["atualizado_em"] = ctl.get("atualizado_em")
+    real = None if a.get("sem_realizado") else (t.get("cr") or 0) + (dados.get("a_pagar") or 0)
+    a["controle"] = cst.calcular_controle(ctl, t.get("bac"), real)
     return a
 
 
@@ -925,7 +934,11 @@ def analise_custos(uid: int):
 @logado
 @servico("custos")
 def ver_custos():
-    return jsonify(custos=analise_custos(oid()))
+    a = analise_custos(oid())
+    if a and len(a.get("lancamentos") or []) > 200:  # a tela mostra os mais recentes; o Excel exportado traz todos
+        a["lancamentos_n"] = len(a["lancamentos"])
+        a["lancamentos"] = a["lancamentos"][:200]
+    return jsonify(custos=a)
 
 
 @app.post("/api/custos/importar")
