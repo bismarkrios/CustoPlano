@@ -1464,7 +1464,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       <input type="file" id="prjFile" accept=".xml,.mpp" hidden>
       <input type="file" id="paFile" accept=".xlsx,.xlsm" hidden>
       <input type="file" id="cuFile" accept=".xlsx,.xlsm" hidden>
-      <input type="file" id="cuCtlFile" accept=".xlsx,.xlsm" hidden>
+      <input type="file" id="cuCtlFile" accept=".xlsx,.xlsm,.csv,.txt" hidden>
       <div class="app-body" id="appBody"></div>
     </div>
   </div>
@@ -1771,7 +1771,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   /* ---------- Telas ---------- */
   var HEADS_REAL = {
     painel: ['Painel da obra', 'Situação de prazo, avanço físico e produção da obra.'],
-    cus: ['Custos', 'Orçamento, cronograma físico-financeiro e custo orçado × realizado, a partir das colunas de custo do cronograma.'],
+    cus: ['Custos', 'Orçado x Realizado da obra: orçamento, contratado, incorrido e estimativa no término, a partir da planilha de custos.'],
     sup: ['Suprimentos', 'Compras puxadas pelas linhas resumo do cronograma: a data de início de cada linha resumo menos o prazo do fornecedor.'],
     cp: ['Planejamento de curto prazo', 'Pacotes do cronograma previstos na semana. Aponte a execução e o PPC é recalculado na hora.']
   };
@@ -2673,7 +2673,16 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
             '<span class="pn-et-v">' + fmt1(rr) + '%</span><span class="pn-et-s" style="color:' + (ruim ? 'var(--bad)' : 'var(--muted)') + '">' + nota + '</span></div>';
         }).join('') + '</div></section>';
     }
-    if (CU && CU.totais && temServ('custos')) {
+    var CTp = CU && CU.controle && CU.controle.total;
+    if (CTp && temServ('custos')) {  // custos da planilha Orçado x Realizado
+      var brc = function (v) { return 'R$ ' + rs0(v); };
+      html += '<div class="grid4">' +
+        kpi('Orçamento atualizado', brc(CTp.oatu), 'inicial: ' + brc(CTp.oin), null, 'nav:cus') +
+        kpi('Contratado', brc(CTp.contratado), CTp.oatu ? fmt1(CTp.contratado / CTp.oatu * 100) + '% do orçamento' : '', null, 'nav:cus') +
+        kpi('Incorrido', brc(CTp.incorrido), CTp.oatu ? fmt1(CTp.incorrido / CTp.oatu * 100) + '% do orçamento' : '', null, 'nav:cus') +
+        kpi('Estimativa no término', brc(CTp.estimativa), Math.abs(CTp.desvio) < 0.5 ? 'igual ao orçamento' : (CTp.desvio < 0 ? brc(-CTp.desvio) + ' acima do orçamento' : brc(CTp.desvio) + ' abaixo do orçamento'), CTp.desvio < -0.5 ? 'var(--bad)' : null, 'nav:cus') +
+        '</div>';
+    } else if (CU && CU.totais && CU.totais.bac != null && temServ('custos')) {
       var T = CU.totais, br = function (v) { return 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR'); };
       html += '<div class="grid4">' +
         kpi('Orçado', br(T.bac), 'custo total do cronograma', null, 'nav:cus') +
@@ -3079,10 +3088,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var msg = S.cu.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.cu.msg) + '</p>' : '';
     if (!CU) {
       if (S.cu.carregando) return '<section class="card"><p class="kpi-s">Carregando…</p></section>';
-      if (contaReal()) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>' + (P ? 'O cronograma não tem custos' : 'Nenhum cronograma importado') + '</b>' +
-        '<p style="color:var(--muted);font-size:14px">' + (P ? 'Os custos vêm do próprio MS Project. Preencha a coluna <b>Custo</b> das tarefas (ou atribua recursos com custo), salve a linha de base e lance o <b>Custo real</b> conforme a obra anda. Depois importe o .mpp de novo na tela Project.' : 'Os custos vêm do próprio cronograma. Importe o .mpp na tela Project.') + '</p>' +
-        '<p style="color:var(--muted);font-size:14px">Se o orçamento está no padrão Custo Plano (Planilha de Orçamento com os códigos UA), ele entra direto e cada serviço é ligado às tarefas do cronograma pelo código UA.</p>' +
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (P ? '<label for="cuFile" class="btn btn-primary" style="cursor:pointer">Importar o orçamento (.xlsx)</label><button type="button" class="btn btn-ghost" data-a="nav:prj">Ir para a tela Project</button>' : '<button type="button" class="btn btn-primary" data-a="nav:prj">Ir para a tela Project</button>') + '</div>' + msg + '</section>';
+      if (contaReal()) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhuma planilha de custos importada</b>' +
+        '<p style="color:var(--muted);font-size:14px">Os custos da obra vêm da planilha <b>Orçado x Realizado</b>: por serviço, orçamento inicial (a) e atualizado (b), contratado (c), incorrido (d), saldos de contrato (e) e de pedido (f) e saldo a contratar (h). Pode ser Excel (.xlsx) ou CSV. O sistema calcula o comprometido, a estimativa no término, o desvio e o índice. O cronograma (MS Project) não é usado para custos.</p>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuCtlFile" class="btn btn-primary" style="cursor:pointer">Importar a planilha Orçado x Realizado</label><label for="cuFile" class="btn btn-ghost" style="cursor:pointer">Importar o orçamento detalhado (UA)</label></div>' + msg + '</section>';
       return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum orçamento importado</b>' +
         '<p style="color:var(--muted);font-size:14px">Envie o orçamento em Excel com as abas <b>Orçamento</b> (itens com quantidade e código da composição), <b>Composições</b> (insumos com coeficiente e preço) e, se quiser, <b>Realizado</b> (custos já pagos). Cada item é ligado a uma tarefa do cronograma pela EAP, para distribuir o custo no tempo e medir o valor agregado. O orçamento no padrão Custo Plano (Planilha de Orçamento com os códigos UA) entra direto, sem montar planilha: cada serviço é ligado às tarefas do cronograma pelo código UA.</p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuFile" class="btn btn-primary" style="cursor:pointer">Importar orçamento (.xlsx)</label>' +
@@ -3098,16 +3106,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '</div>';
     // com a planilha Orçado x Realizado, a tela segue a estrutura dela: (b) orçamento, (c) contratado, (d) incorrido, (i)/(j)/(k)
     var CT = CU.controle && CU.controle.total;
-    if (CT) {
-      var pc = function (v) { return CT.oatu ? fmt1(v / CT.oatu * 100) + '% do orçamento atualizado' : ''; };
-      var bar = function (v) { return '<div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, CT.oatu ? v / CT.oatu * 100 : 0) + '%;background:var(--accent)"></i></div>'; };
-      kpis = '<div class="grid4">' +
-        '<div class="card"><div class="kpi-t">Orçamento atualizado (b)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.oatu) + '</div><div class="kpi-s">inicial (a): R$ ' + rs0(CT.oin) + '</div></div>' +
-        '<div class="card"><div class="kpi-t">Contratado (c)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.contratado) + '</div><div class="kpi-s">' + pc(CT.contratado) + '</div>' + bar(CT.contratado) + '</div>' +
-        '<div class="card"><div class="kpi-t">Incorrido (d)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.incorrido) + '</div><div class="kpi-s">' + pc(CT.incorrido) + '</div>' + bar(CT.incorrido) + '</div>' +
-        '<div class="card"><div class="kpi-t">Estimativa no término (i)</div><div class="kpi-v" style="font-size:22px;color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'inherit') + '">R$ ' + rs0(CT.estimativa) + '</div><div class="kpi-s">desvio (j): <b style="color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (Math.abs(CT.desvio) < 0.5 ? '0' : (CT.desvio < 0 ? '−' : '+') + rs0(Math.abs(CT.desvio))) + '</b> · índice (k): ' + (CT.indice == null ? '–' : CT.indice.toFixed(3).replace('.', ',')) + '</div></div>' +
-        '</div>';
-    }
+    if (CT) kpis = kpisCtl(CT);
+    if (CU.so_controle) return kpis + msg + vCusCtl();
     if (!S.cu.tabEscolhida) S.cu.tab = CT ? 'ctl' : (S.cu.tab === 'ctl' ? 'orc' : S.cu.tab);
     var avisos = (CU.avisos || []).slice();
     if (CU.sem_realizado) avisos.unshift('Sem lançamentos reais: o custo realizado e o IDC só aparecem quando houver custos reais lançados (notas, pagamentos, medições de empreiteiro). Nada é estimado ou suposto.');
@@ -3257,6 +3257,16 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   var CTL_COLS = [['oin', 'Orçamento|inicial', 'a'], ['oatu', 'Orçamento|atualizado', 'b'], ['contratado', 'Valor|contratado', 'c'], ['incorrido', 'Valor|incorrido', 'd'],
     ['saldo_contrato', 'Saldo de|contrato', 'e'], ['saldo_pedido', 'Saldo de|pedido', 'f'], ['comprometido', 'Incorrido|+ saldos', 'g'],
     ['a_contratar', 'A contratar|(premissa)', 'h'], ['estimativa', 'Estimativa|no término', 'i'], ['desvio', 'Desvio|previsto', 'j'], [null, 'Índice|de custo', 'k']];
+  function kpisCtl(CT) {
+      var pc = function (v) { return CT.oatu ? fmt1(v / CT.oatu * 100) + '% do orçamento atualizado' : ''; };
+      var bar = function (v) { return '<div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, CT.oatu ? v / CT.oatu * 100 : 0) + '%;background:var(--accent)"></i></div>'; };
+      return '<div class="grid4">' +
+        '<div class="card"><div class="kpi-t">Orçamento atualizado (b)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.oatu) + '</div><div class="kpi-s">inicial (a): R$ ' + rs0(CT.oin) + '</div></div>' +
+        '<div class="card"><div class="kpi-t">Contratado (c)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.contratado) + '</div><div class="kpi-s">' + pc(CT.contratado) + '</div>' + bar(CT.contratado) + '</div>' +
+        '<div class="card"><div class="kpi-t">Incorrido (d)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.incorrido) + '</div><div class="kpi-s">' + pc(CT.incorrido) + '</div>' + bar(CT.incorrido) + '</div>' +
+        '<div class="card"><div class="kpi-t">Estimativa no término (i)</div><div class="kpi-v" style="font-size:22px;color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'inherit') + '">R$ ' + rs0(CT.estimativa) + '</div><div class="kpi-s">desvio (j): <b style="color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (Math.abs(CT.desvio) < 0.5 ? '0' : (CT.desvio < 0 ? '−' : '+') + rs0(Math.abs(CT.desvio))) + '</b> · índice (k): ' + (CT.indice == null ? '–' : CT.indice.toFixed(3).replace('.', ',')) + '</div></div>' +
+        '</div>';
+  }
   function rs0(v) { return !v ? '–' : (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
   function vCusCtl() {
     var C = CU.controle;

@@ -884,14 +884,12 @@ def remover_plano():
 
 # ------------------------------------------------------------------- custos
 def orcamento_de(uid: int, p=None):
-    """Orçamento em uso: o das colunas de custo do cronograma importado; a planilha só entra
-    se o cronograma não tiver custos."""
+    """Orçamento importado em planilha. Custo nunca sai do MS Project (Bismark, 25/10/2026): o cronograma
+    só distribui o orçamento no tempo; um orçamento antigo tirado das colunas de custo do Project é ignorado."""
     reg = banco.custos(uid)
     dados = json.loads(reg["dados"]) if reg else None
-    if p is not None and (dados is None or dados.get("origem") == "project"):
-        dp = cst.dados_do_projeto(p)
-        if dp or (dados and dados.get("origem") == "project"):
-            dados = dp
+    if dados and dados.get("origem") == "project":
+        dados = None
     return reg, dados
 
 
@@ -904,15 +902,22 @@ def analise_custos(uid: int):
     c = banco.cronograma(uid)
     p = projeto_de(c) if c else None
     reg, dados = orcamento_de(uid, p)
+    ctl = banco.controle_custos(uid)
     if not dados:
-        return None
+        if not ctl:
+            return None
+        # só a planilha Orçado x Realizado: ela é toda a informação de custo da obra
+        return {"so_controle": True, "controle": cst.calcular_controle(ctl), "origem": "controle", "arquivo": None,
+                "bdi": 0.0, "data_status": (para_data(c["data_status"]).date() if c else dt.date.today()).isoformat(),
+                "tem_cronograma": p is not None, "totais": {}, "tipos": [], "etapas": [], "itens": [], "serie": [],
+                "lancamentos": [], "sem_vinculo": {"n": 0, "valor": 0}, "avisos": [], "sem_realizado": True}
     atual = json.loads(c["atual"]) if c else {}
     ds = para_data(c["data_status"]).date() if c else dt.date.today()
     a = cst.analisar(dados, json.loads(reg["lancamentos"]) if reg else [], p, atual, ds)
     a["atualizado_em"] = reg["atualizado_em"] if reg else None
     a["origem"] = dados.get("origem") or "planilha"
     t = a.get("totais") or {}
-    a["controle"] = cst.calcular_controle(banco.controle_custos(uid), t.get("bac"), None if a.get("sem_realizado") else t.get("cr"))
+    a["controle"] = cst.calcular_controle(ctl, t.get("bac"), None if a.get("sem_realizado") else t.get("cr"))
     return a
 
 
@@ -989,7 +994,7 @@ def modelo_custos():
 @servico("custos")
 def exportar_financeiro():
     a = analise_custos(oid())
-    if not a:
+    if not a or a.get("so_controle"):
         return erro("Importe o orçamento primeiro.", 404)
     return download(cst.exportar_xlsx(a), "cronograma_financeiro.xlsx",
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

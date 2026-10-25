@@ -328,6 +328,8 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         desv = round(real - prev, 1)
     T = (custos or {}).get("totais") or {}
     idc, idp = T.get("idc"), T.get("idp")
+    # com a planilha Orçado x Realizado, ela é a informação de custo entregue ao cliente (padrão do Bismark, 25/10/2026)
+    CT = ((custos or {}).get("controle") or {}).get("total")
     sem_real = bool(custos and custos.get("sem_realizado"))  # sem lançamento real: o CR não existe, não é zero
     ppc = ind.get("ppc")
     brl = lambda v: "-" if v is None else ("-" if v < -0.5 else "") + "R$ " + f"{abs(v):,.0f}".replace(",", ".")  # noqa: E731
@@ -397,7 +399,13 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     if rp and tipo == "plano":
         frases.append(f"Foram executados {rp['ok']} de {rp['tot']} pacotes de serviço por pavimento, e "
                       f"{_plural(rp['late'], 'pacote está atrasado', 'pacotes estão atrasados')}.")
-    if tipo in ("consolidado", "custos") and VC:
+    if tipo in ("consolidado", "custos") and VC and CT:
+        dv = CT["desvio"]
+        frases.append(f"{'No custo, a' if cons else 'A'} estimativa no término é de R$ {rs(CT['estimativa'])}, "
+                      + ("igual ao orçamento atualizado" if abs(dv) < 0.5 else
+                         f"R$ {rs(abs(dv))} {'acima' if dv < 0 else 'abaixo'} do orçamento atualizado de R$ {rs(CT['oatu'])}")
+                      + f"; já foram contratados R$ {rs(CT['contratado'])} e incorridos R$ {rs(CT['incorrido'])}.")
+    elif tipo in ("consolidado", "custos") and VC:
         if idc is not None:
             frases.append(f"{'No custo, o' if cons else 'O'} índice de desempenho de custo (IDC) é {_br(idc, 2)}"
                           + (f" e o índice de desempenho de prazo (IDP) é {_br(idp, 2)}." if idp is not None else "."))
@@ -424,7 +432,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
               "medicao": "medição; avanço físico; cronograma; prazo.",
               "plano": "plano de ataque; pavimentos; sequência executiva; prazo.",
               "curto": "planejamento de curto prazo; PPC; causas de não cumprimento.",
-              "custos": "custo; orçamento; valor agregado; IDC; IDP.",
+              "custos": "custo; orçado x realizado; contratado; incorrido; estimativa no término." if CT else "custo; orçamento; valor agregado; IDC; IDP.",
               "suprimentos": "suprimentos; compras; prazo de fornecedor.",
               "qualidade": "qualidade; inspeção; não conformidade.",
               "inspecoes": "qualidade; inspeção; ficha de verificação de serviço.",
@@ -731,9 +739,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             "término (i) soma o incorrido, os saldos de contrato e de pedido e o saldo a contratar; o desvio (j) é o "
             "orçamento atualizado menos essa estimativa, negativo quando o serviço deve estourar. O saldo a contratar (h) "
             f"é premissa do gerente de orçamento, não dado medido. A obra deve terminar em R$ {rs(T_['estimativa'])}, "
-            f"contra R$ {rs(T_['oatu'])} do orçamento atualizado"
-            + (f". Essa estimativa parte dos contratos; a projeção pelo IDC, nos indicadores, é de R$ {rs(T['eac'])}."
-               if T.get("eac") and not sem_real else "."))
+            f"contra R$ {rs(T_['oatu'])} do orçamento atualizado.")
         for a_ in C.get("avisos") or []:
             txt(a_)
         n = 1.78 * cm
@@ -854,10 +860,12 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                 sec_plano(False)
         if VC:
             secao("Custo")
-            if custos:
+            if custos and CT:
+                sec_custo_controle()
+                sec_custo_serie()
+            elif custos:
                 sec_custo_totais()
                 sec_custo_etapas()
-                sec_custo_controle()
                 sec_custo_serie()
             else:
                 txt("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.")
@@ -928,14 +936,15 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if custos:
             # com a planilha Orçado x Realizado, o relatório começa por ela (mesma estrutura da tela Custos)
             sec_custo_controle("Orçado x Realizado")
-            secao("Indicadores de custo")
-            sec_custo_totais()
-            sec_custo_etapas("Custo por etapa")
-            secao("Composição do custo direto")
-            sec_custo_tipos()
-            if custos.get("serie"):
-                secao("Cronograma financeiro")
-                sec_custo_serie()
+            if not custos.get("so_controle"):
+                secao("Indicadores de custo")
+                sec_custo_totais()
+                sec_custo_etapas("Custo por etapa")
+                secao("Composição do custo direto")
+                sec_custo_tipos()
+                if custos.get("serie"):
+                    secao("Cronograma financeiro")
+                    sec_custo_serie()
         else:
             secao("Orçamento")
             txt("O orçamento da obra ainda não foi importado no sistema, por isso o custo não é apresentado.")
@@ -1072,7 +1081,19 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             top = [k for k, v in causas.items() if v == mx]
             itens.append(f"<b>Causas:</b> {frase_causas()[0].lower()}{frase_causas()[1:]}; tratar "
                          + ("essa restrição" if len(top) == 1 else "essas restrições") + " antes de liberar os pacotes da próxima semana")
-    if VC and tipo in ("consolidado", "custos"):
+    if VC and tipo in ("consolidado", "custos") and CT:
+        piores = sorted((x for x in custos["controle"]["linhas"] if x["desvio"] < -0.5), key=lambda x: x["desvio"])[:3]
+        if piores:
+            itens.append(f"<b>Custo:</b> estimativa no término de R$ {rs(CT['estimativa'])}, R$ {rs(-CT['desvio'])} acima do "
+                         "orçamento atualizado; os maiores desvios estão em "
+                         + ", ".join(f"{x['servico']} (R$ {rs(-x['desvio'])})" for x in piores)
+                         + "; renegociar os saldos de contrato e conter os aditivos nesses serviços")
+        else:
+            itens.append(f"<b>Custo:</b> estimativa no término de R$ {rs(CT['estimativa'])}, dentro do orçamento atualizado")
+        if CT["a_contratar"]:
+            itens.append(f"<b>A contratar:</b> R$ {rs(CT['a_contratar'])} ainda são premissa do gerente de orçamento; "
+                         "fechar essas contratações para transformar a estimativa em valor contratado")
+    elif VC and tipo in ("consolidado", "custos"):
         if idc is not None:
             if idc < 0.98:
                 itens.append(f"<b>Custo:</b> IDC de {_br(idc, 2)}, ou seja, a obra gasta mais do que o orçado para o que executou; "

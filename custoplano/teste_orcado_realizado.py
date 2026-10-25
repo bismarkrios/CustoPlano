@@ -59,7 +59,7 @@ checar(T["oin"] == 800000 and T["estimativa"] == 848000 and T["desvio"] == -2800
 checar(r["avisos"] == [], "avisou sem motivo")
 r = cst.calcular_controle(x, orcado_sistema=900000, realizado_sistema=350000)
 checar(len(r["avisos"]) == 2, "não avisou que a planilha difere do orçamento e do realizado do sistema")
-for ruim, msg in ((b"nada", "aceitou arquivo que não é xlsx"), (planilha(LINHAS, "Plan1"), "aceitou planilha sem a aba")):
+for ruim, msg in ((b"nada", "aceitou arquivo que não é xlsx"),):
     try:
         cst.ler_controle("x.xlsx", ruim)
         falhas.append(msg)
@@ -95,17 +95,44 @@ checar(adm.post("/api/custos/controle/remover").status_code == 200, "remover fal
 checar(adm.get("/api/custos").get_json()["custos"]["controle"] is None, "a planilha continuou depois de removida")
 checar(adm.get("/api/custos").get_json()["custos"]["totais"]["bac"] > 0, "remover a planilha apagou o orçamento")
 
-# obra de demonstração: preenchida, coerente com o orçamento e os lançamentos do próprio sistema
+# obra de demonstração: só a planilha (custo não sai do Project), igual à planilha de exemplo da Engenharia
 do = banco.criar_obra("Demo teste", "x")
 demo.semear(do)
 a = app.analise_custos(do)
-C = a["controle"]
-checar(C and C["total"]["oin"] == round(a["totais"]["bac"]), "orçamento inicial da demonstração não bate com o sistema")
-checar(C and abs(C["total"]["incorrido"] - a["totais"]["cr"]) <= len(C["linhas"]), "incorrido da demonstração não bate com o realizado")
-checar(C and C["avisos"] == [], f"demonstração com aviso: {C and C['avisos']}")
+C = a and a["controle"]
+checar(a and a.get("so_controle"), "a demonstração ainda usa orçamento tirado do cronograma")
+checar(C and C["total"]["oin"] == 7888000 and C["total"]["incorrido"] == 5056766, "demonstração fora da planilha de exemplo")
+checar(C and C["total"]["estimativa"] == 8120760 and C["total"]["desvio"] == -192760, "estimativa da demonstração errada")
 checar(C and all(y["contratado"] == y["incorrido"] + y["saldo_contrato"] + y["saldo_pedido"] for y in C["linhas"]),
        "na demonstração o contratado não fecha com incorrido + saldos")
-checar(C and C["total"]["estimativa"] == 8120760 and C["total"]["desvio"] == -192760, "demonstração fora dos números da Engenharia")
+r = app.gerar_relatorio(do, "custos")
+checar(r and r[0][:4] == b"%PDF", "relatório de custos só com a planilha não saiu")
+r = app.gerar_relatorio(do, "consolidado")
+checar(r and r[0][:4] == b"%PDF", "consolidado só com a planilha não saiu")
+
+# custo nunca sai do MS Project: cronograma com custos e sem planilha não mostra custo
+oc = adm.post("/api/admin/obra", json={"nome": "Obra com custo no Project"}).get_json()["id"]
+assert adm.post("/api/obra/abrir", json={"id": oc}).status_code == 200
+import demo as _d
+from cronograma import Projeto  # noqa: E402
+xml_custo = _d._xml(_d._tarefas(__import__("datetime").date.today()), __import__("datetime").date.today())
+assert adm.post("/api/importar", data={"arquivo": (io.BytesIO(xml_custo.encode()), "obra.xml")}, content_type="multipart/form-data").status_code == 200
+checar(adm.get("/api/custos").get_json()["custos"] is None, "custos tirados das colunas de custo do Project")
+
+# outros formatos: CSV com ; e números brasileiros, e Excel com uma aba só de outro nome
+csv_ = ("CÓDIGO;SERVIÇO;ORÇAMENTO INICIAL (a);ORÇAMENTO ATUALIZADO (b);CONTRATADO (c);INCORRIDO (d);SALDO DE CONTRATO (e);"
+        "SALDO DE PEDIDO (f);SALDO A CONTRATAR (h)\n1.1;Canteiro;100.000;100.000;98.000;98.000;-;-;-\n"
+        "2.1;Estrutura;500.000;520.000;560.000;300.000;240.000;20.000;0\n").encode("cp1252")
+x = cst.ler_controle("controle.csv", csv_)
+checar(len(x["linhas"]) == 2 and x["linhas"][1]["oatu"] == 520000 and x["linhas"][0]["saldo_contrato"] == 0 and not x["avisos"],
+       f"CSV lido errado: {x}")
+x = cst.ler_controle("qualquer.xlsx", planilha(LINHAS, "Plan1"))
+checar(len(x["linhas"]) == 3, "Excel com uma aba só não foi lido")
+try:
+    cst.ler_controle("antigo.xls", b"x")
+    falhas.append("aceitou .xls")
+except cst.ErroCustos as e:
+    checar("xlsx" in str(e), "mensagem do .xls não orienta salvar como .xlsx")
 
 if falhas:
     print("FALHAS:\n- " + "\n- ".join(falhas))

@@ -1006,22 +1006,48 @@ CONTROLE_ENTRADAS = {"a": "oin", "b": "oatu", "c": "contratado", "d": "incorrido
                      "f": "saldo_pedido", "h": "a_contratar"}
 
 
+def _linhas_csv(conteudo: bytes) -> list:
+    import csv
+    if len(conteudo) > 5_000_000:
+        raise ErroCustos("O arquivo é grande demais para ser lido.")
+    for cod in ("utf-8-sig", "cp1252"):
+        try:
+            texto_ = conteudo.decode(cod)
+            break
+        except UnicodeDecodeError:
+            continue
+    amostra = texto_[:4000]
+    sep = ";" if amostra.count(";") >= amostra.count(",") else ","
+    if "\t" in amostra and amostra.count("\t") > amostra.count(sep):
+        sep = "\t"
+    return [r for r in csv.reader(io.StringIO(texto_), delimiter=sep)][:400]
+
+
 def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
-    if not re.search(r"\.xls[xm]$", nome_arquivo or "", re.I):
-        raise ErroCustos("Envie a planilha Orçado x Realizado em Excel (.xlsx).")
-    try:
-        if not _zip_seguro(conteudo):
-            raise ErroCustos("A planilha é grande demais para ser lida.")
-        wb = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=True, read_only=True)
-    except Exception:
-        raise ErroCustos("Não consegui abrir a planilha. Confira se é um arquivo .xlsx válido.")
-    try:
-        ws = next((w for w in wb.worksheets if "orcado x realizado" in norm(w.title).replace("×", "x")), None)
-        if ws is None:
-            raise ErroCustos("Não achei a aba Orçado x Realizado. Use a planilha de controle no padrão Custo Plano.")
-        L = _linhas(ws, 400, 20)
-    finally:
-        wb.close()
+    """Aceita Excel (.xlsx, .xlsm; aba "Orçado x Realizado" ou a única aba) ou texto separado (.csv, .txt)."""
+    nome = nome_arquivo or ""
+    if re.search(r"\.(csv|txt)$", nome, re.I):
+        L = _linhas_csv(conteudo)
+    elif re.search(r"\.xls[xm]$", nome, re.I):
+        try:
+            if not _zip_seguro(conteudo):
+                raise ErroCustos("A planilha é grande demais para ser lida.")
+            wb = openpyxl.load_workbook(io.BytesIO(conteudo), data_only=True, read_only=True)
+        except Exception:
+            raise ErroCustos("Não consegui abrir a planilha. Confira se é um arquivo .xlsx válido.")
+        try:
+            ws = next((w for w in wb.worksheets if "orcado x realizado" in norm(w.title).replace("×", "x")), None)
+            if ws is None and len(wb.worksheets) == 1:
+                ws = wb.worksheets[0]
+            if ws is None:
+                raise ErroCustos("Não achei a aba Orçado x Realizado. Use a planilha de controle no padrão Custo Plano.")
+            L = _linhas(ws, 400, 20)
+        finally:
+            wb.close()
+    elif re.search(r"\.xls$", nome, re.I):
+        raise ErroCustos("Arquivos .xls (Excel antigo) não são lidos. No Excel, use Salvar como > Pasta de Trabalho do Excel (.xlsx) ou CSV.")
+    else:
+        raise ErroCustos("Envie a planilha Orçado x Realizado em Excel (.xlsx, .xlsm) ou CSV (.csv).")
     r0 = col = None
     for r, linha in enumerate(L[:40]):
         m = {}
@@ -1052,6 +1078,8 @@ def ler_controle(nome_arquivo: str, conteudo: bytes) -> dict:
         x = {"codigo": cod, "servico": serv}
         for letra, campo in CONTROLE_ENTRADAS.items():
             v = linha[col[letra]] if col[letra] < len(linha) else None
+            if isinstance(v, str) and v.strip() in ("-", "–", "—"):
+                v = 0
             n = numero(v)
             if n is None and v not in (None, ""):
                 vazias.append(f"{cod or serv} ({letra})")

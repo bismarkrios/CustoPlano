@@ -56,6 +56,11 @@ def _custo(analise: dict | None) -> dict:
     """Só índices e percentuais da análise de custos (a mesma da tela Custos): nenhum valor em reais vai para o log."""
     if not analise:
         return {"orcamento": "não importado"}
+    C = (analise.get("controle") or {}).get("total")
+    if C:  # a planilha Orçado x Realizado é a informação de custo da obra
+        pc = lambda v: round(100 * v / C["oatu"], 1) if C["oatu"] else None  # noqa: E731
+        return {"fonte": "orcado x realizado", "indice": C["indice"], "contratado_pct": pc(C["contratado"]),
+                "incorrido_pct": pc(C["incorrido"]), "a_contratar_pct": pc(C["a_contratar"]), "desvio_final_pct": pc(C["desvio"])}
     t = analise["totais"]
     if analise.get("sem_realizado"):  # sem lançamento real não há realizado nem IDC: nada é estimado
         pct = lambda v: round(100 * v / t["bac"], 1) if v is not None and t.get("bac") else None  # noqa: E731
