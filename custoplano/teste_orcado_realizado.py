@@ -219,6 +219,9 @@ st = ParagraphStyle("tr8", fontName="Helvetica", fontSize=8, leading=10)
 dados = [["cab", "cab"], [Paragraph("Serviço com nome comprido", st), Paragraph("-25.391.014", st)]]
 lg = relatorio._sem_quebra_numeros(dados, [6 * cm, 1.0 * cm], (1,))
 checar(dados[1][1].minWidth() + 8.5 <= lg[1] + 0.01 and abs(sum(lg) - 7 * cm) < 0.01, f"relatório: número quebraria a linha: {lg}")
+dados = [[Paragraph("x", st), Paragraph("DEPARTAMENTO", st)], [Paragraph("x", st), Paragraph("1", st)]]
+lg = relatorio._sem_quebra_numeros(dados, [3 * cm, 1.0 * cm], (1,))
+checar(dados[0][1].minWidth() + 8.5 <= lg[1] + 0.01, "relatório: palavra do cabeçalho se partiria no meio")
 dados = [["cab", "cab"], [Paragraph("x", st), Paragraph("-25.391.014", st)]]
 lg = relatorio._sem_quebra_numeros(dados, [2.5 * cm, 1.0 * cm], (1,))
 checar(dados[1][1].minWidth() + 8.5 <= lg[1] + 0.01, f"relatório: sem espaço, a letra não diminuiu: {lg} {dados[1][1].style.fontSize}")

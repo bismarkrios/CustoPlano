@@ -48,6 +48,12 @@ def _sem_quebra_numeros(dados, larg, direita, folga=8.5):
                     st = ParagraphStyle(c.style.name + "_n", parent=c.style, fontSize=c.style.fontSize * f,
                                         leading=c.style.leading * f)
                     ln[i] = Paragraph(c.text, st)
+    # palavra do cabeçalho também nunca se parte no meio: a letra daquele título diminui até a palavra caber
+    for i, c in enumerate(dados[0] if dados else []):
+        if isinstance(c, Paragraph) and i < len(larg) and c.minWidth() + folga > larg[i]:
+            f = (larg[i] - folga) / c.minWidth()
+            dados[0][i] = Paragraph(c.text, ParagraphStyle(c.style.name + "_n", parent=c.style, fontSize=c.style.fontSize * f,
+                                                           leading=c.style.leading * f))
     return larg
 
 def _br(v: float, casas: int = 1) -> str:
@@ -197,7 +203,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
     from reportlab.lib import colors
     from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
-    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.platypus import (BaseDocTemplate, Frame, Image, KeepTogether, NextPageTemplate, PageBreak,
@@ -248,11 +254,15 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         "th": est("th", fontName="Helvetica-Bold", fontSize=10, leading=12, textColor=colors.white),
         "thr": est("thr", fontName="Helvetica-Bold", fontSize=10, leading=12, textColor=colors.white, alignment=2),
         "small": est("small", fontSize=10, leading=12, textColor=CINZA),
-        # tabelas largas em paisagem (muitas colunas de valores)
+        # tabelas largas, sempre em retrato (muitas colunas de valores)
         "t8": est("t8", fontSize=8, leading=10),
         "tr8": est("tr8", fontSize=8, leading=10, alignment=2),
         "th8": est("th8", fontName="Helvetica-Bold", fontSize=7, leading=9, textColor=colors.white),
         "thr8": est("thr8", fontName="Helvetica-Bold", fontSize=7, leading=9, textColor=colors.white, alignment=2),
+        "t7": est("t7", fontSize=7, leading=9),
+        "tr7": est("tr7", fontSize=7, leading=9, alignment=2),
+        "th7": est("th7", fontName="Helvetica-Bold", fontSize=6.5, leading=8, textColor=colors.white),
+        "thr7": est("thr7", fontName="Helvetica-Bold", fontSize=6.5, leading=8, textColor=colors.white, alignment=2),
     }
     esc = lambda s: str(s if s is not None else "").replace("&", "&amp;").replace("<", "&lt;")  # noqa: E731
     Pa = lambda t, s="t": Paragraph(t, S[s])  # noqa: E731
@@ -341,13 +351,9 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     doc = Doc(buf, pagesize=A4, leftMargin=3 * cm, rightMargin=2 * cm, topMargin=3 * cm, bottomMargin=2 * cm,
               title=f"{titulo.capitalize()} - {obra}", author="Custo Plano Consultoria")
     fr = lambda: Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")  # noqa: E731
-    # página em paisagem para a tabela larga de custo por etapa, com as mesmas margens
-    PW, PH = landscape(A4)
-    WL = PW - 5 * cm
+    # todas as páginas em retrato (Bismark, 25/10/2026): tabelas largas usam letra menor ou se dividem em duas
     doc.addPageTemplates([PageTemplate(id="pre", frames=[fr()]),
-                          PageTemplate(id="texto", frames=[fr()], onPage=pg_texto),
-                          PageTemplate(id="paisagem", frames=[Frame(3 * cm, 2 * cm, WL, PH - 5 * cm, id="fp")],
-                                       onPage=pg_texto, pagesize=(PW, PH))])
+                          PageTemplate(id="texto", frames=[fr()], onPage=pg_texto)])
     W = doc.width
     H = []
 
@@ -727,29 +733,28 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                    direita=(1,)))
 
     def sec_custo_etapas(nome_secao=None):
-        """Custo por etapa em reais inteiros, numa página em paisagem para os valores caberem numa linha."""
+        """Custo por etapa em reais inteiros, em retrato com letra de 8 pt para os valores caberem numa linha."""
         vc = lambda v: "0" if abs(v) < 0.5 else ("-" if v < 0 else "+") + rs(abs(v))  # noqa: E731
         linhas = []
         for e in custos["etapas"]:
             cv = e["va"] - e["cr"]
             linhas.append([e["codigo"], Pa(esc(e["nome"])), rs(e["orcado"]), rs(e["vp"]), rs(e["va"]), "-" if sem_real else rs(e["cr"]),
-                           "-" if sem_real else Pa(f"<font color='{cor_desv(cv, -0.5)}'>{vc(cv)}</font>", "tr"),
+                           "-" if sem_real else Pa(f"<font color='{cor_desv(cv, -0.5)}'>{vc(cv)}</font>", "tr8"),
                            "-" if e["idc"] is None else _br(e["idc"], 2)])
         cvt = T["va"] - T["cr"]
-        linhas.append(["", Pa("<b>Total</b>"), rs(T["bac"]), rs(T["vp"]), rs(T["va"]), "-" if sem_real else rs(T["cr"]),
-                       "-" if sem_real else Pa(f"<b>{vc(cvt)}</b>", "tr"), "-" if idc is None else _br(idc, 2)])
-        H.extend([NextPageTemplate("paisagem"), PageBreak()])
+        linhas.append(["", Pa("<b>Total</b>", "t8"), rs(T["bac"]), rs(T["vp"]), rs(T["va"]), "-" if sem_real else rs(T["cr"]),
+                       "-" if sem_real else Pa(f"<b>{vc(cvt)}</b>", "tr8"), "-" if idc is None else _br(idc, 2)])
         if nome_secao:
             secao(nome_secao)
         txt(f"A {prox()} mostra o custo por etapa, em reais. A coluna VC (VA − CR) é a variação de custo: "
             "negativa quando o gasto supera o orçado do que foi executado.")
         add(tabela("Custo por etapa (R$)", ["Cód.", "Etapa", "Orçado", "VP", "VA", "CR", "VC (VA − CR)", "IDC"], linhas,
-                   [1.4 * cm, WL - 18.1 * cm, 3 * cm, 3 * cm, 3 * cm, 3 * cm, 3.2 * cm, 1.5 * cm],
-                   direita=(2, 3, 4, 5, 6, 7), total=True))
-        H.extend([NextPageTemplate("texto"), PageBreak()])
+                   [1.2 * cm, W - 1.2 * cm - 6 * 1.75 * cm - 1.1 * cm, *[1.75 * cm] * 6, 1.1 * cm],
+                   direita=(2, 3, 4, 5, 6, 7), total=True, corpo="8"))
 
     def sec_custo_controle(nome_secao=None):
-        """Orçado x Realizado por serviço (planilha de controle da Engenharia), em paisagem e em reais inteiros."""
+        """Orçado x Realizado por serviço (planilha de controle da Engenharia), em retrato e em reais inteiros: as colunas
+        (a) a (f) numa tabela e (g) a (k) na seguinte, com o código e o serviço repetidos."""
         C = custos.get("controle")
         if not C:
             return
@@ -764,7 +769,6 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                     Pa(f"<font color='{cor_desv(-(x['indice'] or 0), -1.0)}'>{ix(x['indice'])}</font>", "tr8")]
         linhas = [linha(x, x["codigo"], Pa(esc(x["servico"]), "t8")) for x in C["linhas"]]
         linhas.append(linha(C["total"], "", Pa("<b>Total da obra</b>", "t8")))
-        H.extend([NextPageTemplate("paisagem"), PageBreak()])
         if nome_secao:
             secao(nome_secao)
         T_ = C["total"]
@@ -780,10 +784,17 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             ("Orçamento|inicial", "a"), ("Orçamento|atualizado", "b"), ("Valor|contratado", "c"), ("Valor|incorrido", "d"),
             ("Saldo de|contrato", "e"), ("Saldo de|pedido", "f"), ("Incorrido|+ saldos", "g"), ("A contratar|(premissa)", "h"),
             ("Estimativa|no término", "i"), ("Desvio|previsto", "j"), ("Índice|de custo", "k"))]
-        add(tabela("Orçado x Realizado (R$)", cab,
-                   linhas, [1.0 * cm, WL - 1.0 * cm - 11 * n - 0.1 * cm, *[n] * 11], direita=tuple(range(2, 13)), total=True,
-                   fonte=f"Custo Plano Consultoria, planilha {C.get('arquivo') or 'Orçado x Realizado'}", corpo="8"))
-        H.extend([NextPageTemplate("texto"), PageBreak()])
+        fonte = f"Custo Plano Consultoria, planilha {C.get('arquivo') or 'Orçado x Realizado'}"
+        partes = ((range(2, 8), "Orçado x Realizado: orçamento, contratado e incorrido (R$)"),
+                  (range(8, 13), "Orçado x Realizado: comprometido e estimativa no término (R$)"))
+        for k_, (cs, tit) in enumerate(partes):
+            sel = [0, 1, *cs]
+            if k_:
+                txt(f"A {prox()} continua a anterior, com o comprometido, o saldo a contratar, a estimativa no término, "
+                    "o desvio e o índice de custo de cada serviço.")
+            add(tabela(tit, [cab[c] for c in sel], [[ln[c] for c in sel] for ln in linhas],
+                       [1.0 * cm, W - 1.0 * cm - len(cs) * n, *[n] * len(cs)], direita=tuple(range(2, len(sel))),
+                       total=True, fonte=fonte, corpo="8"))
 
     def sec_custo_tipos():
         tipos = custos.get("tipos") or []
@@ -809,13 +820,13 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                 n_ = len(cab) - 1
                 txt(f"A {prox()} apresenta o realizado mês a mês por unidade de custo, em reais: o que foi pago, pela data "
                     "da baixa no ERP.")
-                H.extend([NextPageTemplate("paisagem"), PageBreak()])
+                n_uc = len(ucs) + 1  # UCs e o realizado no mês; o acumulado tem coluna mais larga
                 add(tabela("Realizado mês a mês por unidade de custo (R$)", cab,
                            [[f"{MESES[int(s_['mes'][5:7]) - 1]}/{s_['mes'][:4]}", *[mes(u["meses"].get(s_["mes"])) for u in ucs],
                              mes(s_["realizado"]), mes(s_["realizado_acum"])] for s_ in serie]
                            + [["Total", *[mes(u["total"]) for u in ucs], mes(sum(s_["realizado"] for s_ in serie)), ""]],
-                           [2.2 * cm] + [(WL - 2.2 * cm) / n_] * n_, direita=tuple(range(1, n_ + 1)), total=True, corpo="8"))
-                H.extend([NextPageTemplate("texto"), PageBreak()])
+                           [1.5 * cm] + [(W - 3.25 * cm) / n_uc] * n_uc + [1.75 * cm], direita=tuple(range(1, n_ + 1)),
+                           total=True, corpo="7"))
                 return
             txt(f"A {prox()} apresenta o realizado mês a mês, em reais: o que foi pago, pela data da baixa no ERP.")
             add(tabela("Realizado mês a mês (R$)", ["Mês", "Realizado no mês", "Realizado acumulado"],
