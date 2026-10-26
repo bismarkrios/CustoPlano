@@ -379,7 +379,7 @@ def pagina_privacidade():
     return r
 
 
-ARTIGOS = ("obra-atrasada-ou-so-parece", "ppc-planejamento-semanal", "curva-s-como-ler")
+ARTIGOS = ("obra-atrasada-ou-so-parece", "ppc-planejamento-semanal", "curva-s-como-ler", "controle-de-custo-de-obra", "planejamento-de-obras-ms-project")
 
 
 def _pagina_estatica(arquivo: str) -> Response:

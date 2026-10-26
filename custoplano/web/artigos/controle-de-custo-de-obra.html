@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Controle de custo de obra: orçado x realizado · Custo Plano</title>
+<meta name="description" content="Como fazer o controle de custo de obra com o orçado x realizado do ERP: orçamento, contratado, incorrido, comprometido e estimativa no término.">
+<meta name="theme-color" content="#282B59">
+<link rel="canonical" href="https://custoplano.com.br/artigos/controle-de-custo-de-obra">
+<link rel="icon" href="/web/icon.svg" type="image/svg+xml">
+<meta property="og:title" content="Controle de custo de obra: orçado, contratado e realizado">
+<meta property="og:description" content="Como fazer o controle de custo de obra com o orçado x realizado do ERP: orçamento, contratado, incorrido, comprometido e estimativa no término.">
+<meta property="og:image" content="https://custoplano.com.br/web/telas/painel.jpg">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Controle de custo de obra: orçado, contratado e realizado", "description": "Como fazer o controle de custo de obra com o orçado x realizado do ERP: orçamento, contratado, incorrido, comprometido e estimativa no término.", "datePublished": "2026-10-26", "author": {"@type": "Organization", "name": "Custo Plano Consultoria", "url": "https://custoplano.com.br/"}, "publisher": {"@type": "Organization", "name": "Custo Plano Consultoria", "url": "https://custoplano.com.br/"}, "mainEntityOfPage": "https://custoplano.com.br/artigos/controle-de-custo-de-obra", "inLanguage": "pt-BR"}</script>
+<style>
+:root{--ground:#F2F5F7;--surface:#FFFFFF;--ink:#282B59;--text:#2B2E40;--muted:#5C6275;--line:#D6DEE6;--blue:#3D6A99;--soft:#E3EAE9;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root{--ground:#14162B;--surface:#1C1F3D;--ink:#E3E8F4;--text:#D6DAE6;--muted:#A0A7BE;--line:#353A63;--blue:#8FB3DC;--soft:#25284F;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font:17px/1.7 var(--sans);padding-inline:16px;padding-block:40px 64px}
+main{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+a{color:var(--blue);text-underline-offset:3px}
+h1,h2,h3{font-family:var(--serif);color:var(--ink);line-height:1.2;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,5vw,42px)}
+h2{font-size:24px;margin-top:8px}
+h3{font-size:20px}
+p,ul,ol{margin:0}
+ul,ol{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.meta{color:var(--muted);font-size:15px}
+.voltar{font-weight:600;text-decoration:none}
+.box{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.cta{background:var(--ink);color:#fff;border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.cta h2{color:#fff;margin:0}
+.cta p{color:#D6DAE6}
+.cta .bts{display:flex;flex-wrap:wrap;gap:10px}
+.cta a{display:inline-flex;align-items:center;min-height:46px;padding:0 18px;border-radius:4px;font-weight:700;text-decoration:none;background:#fff;color:#282B59}
+.cta a.zap{background:#1FAF55;color:#fff}
+@media (prefers-color-scheme:dark){.cta{background:#25284F}}
+.lista{list-style:none;padding:0;gap:14px}
+.lista li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.lista a{text-decoration:none;color:var(--ink)}
+.lista a:hover h2{text-decoration:underline}
+.lista h2{margin:0;font-size:22px}
+.lista p{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <a class="voltar" href="/artigos">← Artigos da Custo Plano</a>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <h1>Controle de custo de obra: orçado, contratado e realizado</h1>
+    <p class="meta">Custo Plano Consultoria · 26 de outubro de 2026</p>
+  </header>
+  <p>O controle de custo de obra costuma parar em uma pergunta só: quanto já foi pago? Esse número é importante, mas sozinho ele não diz se a obra vai fechar dentro do orçamento. Para isso é preciso olhar, lado a lado, o que foi orçado, o que já foi contratado e o que ainda falta comprar.</p>
+
+  <h2>As perguntas que o controle precisa responder</h2>
+  <ul>
+    <li><b>Orçado:</b> quanto cada etapa podia custar, pelo orçamento aprovado da obra.</li>
+    <li><b>Contratado:</b> quanto já está fechado em contratos e pedidos com fornecedores e empreiteiros.</li>
+    <li><b>Realizado (incorrido):</b> quanto já foi pago ou já é devido pelo que foi executado ou entregue.</li>
+    <li><b>Comprometido:</b> o que está contratado e ainda não foi pago. É dinheiro que vai sair do caixa.</li>
+    <li><b>A contratar:</b> o que ainda falta fechar para terminar cada etapa.</li>
+    <li><b>Estimativa no término:</b> contratado mais o que falta contratar. É a melhor resposta para “quanto essa obra vai custar”.</li>
+  </ul>
+
+  <h2>Use o relatório que o ERP já tem</h2>
+  <p>A maioria das construtoras já lança orçamento, pedidos e pagamentos no ERP. O relatório de orçado x realizado desse sistema traz quase tudo o que o controle precisa, organizado por unidade de custo, etapa, item e credor. O trabalho do controle é ler esse arquivo toda semana, com o mesmo critério, e transformar as colunas em decisão.</p>
+  <div class="box"><b>Dica</b><p>Compare a estimativa no término com o orçado por etapa, e não só pelo total da obra. Uma etapa estourada pode ficar escondida atrás de outra que ainda nem começou a gastar.</p></div>
+
+  <h2>Mês a mês</h2>
+  <p>Além da foto do momento, acompanhe o realizado mês a mês e o acumulado por unidade de custo. A curva de desembolso mostra se o caixa está saindo no ritmo esperado e ajuda o financeiro a se programar para os próximos meses.</p>
+
+  <h2>Cuidados</h2>
+  <ul>
+    <li><b>Mesma base sempre:</b> se cada mês o controle sai de uma planilha diferente, os números não se comparam.</li>
+    <li><b>A pagar não é previsão:</b> o que já é devido entra no realizado; previsões de compra ficam fora até virarem pedido.</li>
+    <li><b>Não misture prazo e custo no mesmo número:</b> o custo vem do financeiro e do ERP; o avanço físico vem da medição da obra. Os dois se leem juntos, mas cada um tem a sua fonte.</li>
+  </ul>
+
+  <h2>Em resumo</h2>
+  <p>Um bom controle de custo de obra mostra, por etapa, quanto já foi gasto, quanto já está comprometido e quanto a obra vai custar no fim. Com isso, a diretoria decide antes de o estouro aparecer no caixa.</p>
+  <aside class="cta">
+    <h2>Quer ver isso numa obra?</h2>
+    <p>Abra a obra de demonstração do sistema da Custo Plano, com dados fictícios, ou fale com a gente sobre o seu empreendimento.</p>
+    <div class="bts"><a href="/#demo">Abrir a obra de demonstração</a><a class="zap" href="https://wa.me/5511988236792" target="_blank" rel="noopener">Falar no WhatsApp</a></div>
+  </aside>
+  <p class="meta"><a href="/artigos">← Todos os artigos</a> · <a href="/">custoplano.com.br</a></p>
+</main>
+</body>
+</html>

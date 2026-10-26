@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Planejamento de obras no MS Project: 7 cuidados · Custo Plano</title>
+<meta name="description" content="Planejamento de obras no MS Project: os cuidados que fazem o cronograma servir para controlar a obra, da EAP à linha de base e à data de status.">
+<meta name="theme-color" content="#282B59">
+<link rel="canonical" href="https://custoplano.com.br/artigos/planejamento-de-obras-ms-project">
+<link rel="icon" href="/web/icon.svg" type="image/svg+xml">
+<meta property="og:title" content="Planejamento de obras no MS Project: 7 cuidados com o cronograma">
+<meta property="og:description" content="Planejamento de obras no MS Project: os cuidados que fazem o cronograma servir para controlar a obra, da EAP à linha de base e à data de status.">
+<meta property="og:image" content="https://custoplano.com.br/web/telas/painel.jpg">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Planejamento de obras no MS Project: 7 cuidados com o cronograma", "description": "Planejamento de obras no MS Project: os cuidados que fazem o cronograma servir para controlar a obra, da EAP à linha de base e à data de status.", "datePublished": "2026-10-26", "author": {"@type": "Organization", "name": "Custo Plano Consultoria", "url": "https://custoplano.com.br/"}, "publisher": {"@type": "Organization", "name": "Custo Plano Consultoria", "url": "https://custoplano.com.br/"}, "mainEntityOfPage": "https://custoplano.com.br/artigos/planejamento-de-obras-ms-project", "inLanguage": "pt-BR"}</script>
+<style>
+:root{--ground:#F2F5F7;--surface:#FFFFFF;--ink:#282B59;--text:#2B2E40;--muted:#5C6275;--line:#D6DEE6;--blue:#3D6A99;--soft:#E3EAE9;
+  --serif:"Source Serif 4",Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root{--ground:#14162B;--surface:#1C1F3D;--ink:#E3E8F4;--text:#D6DAE6;--muted:#A0A7BE;--line:#353A63;--blue:#8FB3DC;--soft:#25284F;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font:17px/1.7 var(--sans);padding-inline:16px;padding-block:40px 64px}
+main{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+a{color:var(--blue);text-underline-offset:3px}
+h1,h2,h3{font-family:var(--serif);color:var(--ink);line-height:1.2;margin:0;text-wrap:balance}
+h1{font-size:clamp(30px,5vw,42px)}
+h2{font-size:24px;margin-top:8px}
+h3{font-size:20px}
+p,ul,ol{margin:0}
+ul,ol{padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.meta{color:var(--muted);font-size:15px}
+.voltar{font-weight:600;text-decoration:none}
+.box{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:6px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.cta{background:var(--ink);color:#fff;border-radius:8px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.cta h2{color:#fff;margin:0}
+.cta p{color:#D6DAE6}
+.cta .bts{display:flex;flex-wrap:wrap;gap:10px}
+.cta a{display:inline-flex;align-items:center;min-height:46px;padding:0 18px;border-radius:4px;font-weight:700;text-decoration:none;background:#fff;color:#282B59}
+.cta a.zap{background:#1FAF55;color:#fff}
+@media (prefers-color-scheme:dark){.cta{background:#25284F}}
+.lista{list-style:none;padding:0;gap:14px}
+.lista li{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.lista a{text-decoration:none;color:var(--ink)}
+.lista a:hover h2{text-decoration:underline}
+.lista h2{margin:0;font-size:22px}
+.lista p{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <a class="voltar" href="/artigos">← Artigos da Custo Plano</a>
+  <header style="display:flex;flex-direction:column;gap:10px">
+    <h1>Planejamento de obras no MS Project: 7 cuidados com o cronograma</h1>
+    <p class="meta">Custo Plano Consultoria · 26 de outubro de 2026</p>
+  </header>
+  <p>O MS Project é a ferramenta mais usada no planejamento de obras no Brasil. O problema raramente é o programa: é o cronograma que foi montado para a reunião de aprovação e depois ninguém consegue usar para controlar a obra. Estes são os cuidados que fazem diferença.</p>
+
+  <h2>1. Uma EAP que a obra reconhece</h2>
+  <p>Organize as tarefas do jeito que a obra trabalha: por torre, pavimento e serviço. Se o engenheiro não encontra a tarefa que está executando, ele não vai medir o avanço dela.</p>
+
+  <h2>2. Tarefas que dá para medir</h2>
+  <p>Tarefas muito longas escondem atraso. Prefira tarefas que caibam em poucas semanas e que tenham um critério claro de quanto está pronto.</p>
+
+  <h2>3. Vínculos de verdade</h2>
+  <p>Cada tarefa precisa de predecessora e sucessora. Datas digitadas à mão travam o cronograma: quando algo atrasa, nada mais se move e o caminho crítico deixa de existir.</p>
+
+  <h2>4. Pesos que refletem o serviço</h2>
+  <p>O avanço geral da obra é uma média ponderada das tarefas. Defina o peso por um critério só (custo, horas ou quantidade) para a curva S não enganar.</p>
+
+  <h2>5. Linha de base salva e preservada</h2>
+  <p>Sem linha de base não há o que comparar. E refazer a linha de base a cada atraso apaga justamente a informação que a diretoria precisa ver.</p>
+
+  <h2>6. Data de status toda semana</h2>
+  <p>Atualize o avanço sempre com uma data de status definida, no mesmo dia da semana. É o que permite comparar uma semana com a outra.</p>
+
+  <h2>7. Do cronograma para a semana</h2>
+  <p>O cronograma mostra o plano da obra inteira; a equipe trabalha com o plano da semana. Ligar os dois com o planejamento de curto prazo e o PPC é o que faz o cronograma sair do papel.</p>
+  <div class="box"><b>Dica</b><p>Antes de cobrar o cronograma da equipe, confira se ele passa nos sete pontos acima. Um cronograma sem vínculos ou sem linha de base vai mostrar números, mas não vai mostrar o problema.</p></div>
+
+  <h2>Em resumo</h2>
+  <p>O planejamento de obras no MS Project funciona quando o cronograma é montado para ser atualizado toda semana, e não só para ser aprovado. Com uma estrutura simples e disciplina na data de status, ele vira o painel de controle da obra.</p>
+  <aside class="cta">
+    <h2>Quer ver isso numa obra?</h2>
+    <p>Abra a obra de demonstração do sistema da Custo Plano, com dados fictícios, ou fale com a gente sobre o seu empreendimento.</p>
+    <div class="bts"><a href="/#demo">Abrir a obra de demonstração</a><a class="zap" href="https://wa.me/5511988236792" target="_blank" rel="noopener">Falar no WhatsApp</a></div>
+  </aside>
+  <p class="meta"><a href="/artigos">← Todos os artigos</a> · <a href="/">custoplano.com.br</a></p>
+</main>
+</body>
+</html>
