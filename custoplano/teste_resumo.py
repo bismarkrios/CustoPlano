@@ -55,6 +55,14 @@ if x:
     checar(q["ncs_abertas_por_servico"] == {"Sem serviço": 1, "Pintura": 1} and q["ncs_sem_responsavel"] == 1, f"NCs abertas erradas: {q}")
     checar(q["ncs_fechadas_30d"] == 1 and q["dias_medio_fechamento"] == 4, f"fechamento errado: {q}")
 
+# data de status em dia, mas a última medição fechada é antiga: a medição está parada
+o3 = banco.criar_obra("Status em dia")
+banco.salvar_cronograma(o3, "obra.xml", "<Project/>", "dur", "2026-10-19", {})
+with banco.conectar() as con:
+    con.execute("INSERT INTO medicoes_fechadas (usuario_id, arquivo, data_status, fechado_em, avanco_real, avanco_prev, peso, xml, atual, anterior) "
+                "VALUES (?, 'obra.xml', '2026-06-30', '2026-06-30', 63.7, 94.4, 'dur', '<Project/>', '{}', '{}')", (o3,))
+z = next(x for x in resumo.resumo_obras(hoje) if x["obra"] == "Status em dia")
+checar(z["medicao_atrasada_dias"] == 111, f"medição parada desde 30/06 não foi apontada: {z}")
 o2 = banco.criar_obra("Obra vazia")
 y = next(x for x in resumo.resumo_obras(hoje) if x["obra"] == "Obra vazia")
 checar(y["cronograma"] == "não importado" and y["ppc"] is None and y["ncs_abertas"] == 0, f"obra vazia errada: {y}")

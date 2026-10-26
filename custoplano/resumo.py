@@ -77,7 +77,8 @@ def _alertas(r: dict) -> list[str]:
     """O que pede ação da equipe nesta obra, em frases curtas (só números, sem dado pessoal)."""
     a = []
     if r.get("medicao_atrasada_dias"):
-        a.append(f"medição física parada há {r['medicao_atrasada_dias']} dias (data de status {r['data_status']})")
+        a.append(f"medição física parada há {r['medicao_atrasada_dias']} dias (data de status {r['data_status']}"
+                 + (f", última medição fechada em {r['ultima_medicao']['data']})" if r.get("ultima_medicao") else ")"))
     if isinstance(r.get("fvs_atrasadas"), int) and r["fvs_atrasadas"]:
         a.append(f"{r['fvs_atrasadas']} FVS do cronograma com a inspeção vencida")
     if r.get("ncs_vencidas"):
@@ -109,6 +110,10 @@ def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_ob
             if m:
                 r["ultima_medicao"] = {"data": m["data_status"][:10], "real": round(m["avanco_real"], 1),
                                        "previsto": round(m["avanco_prev"], 1)}
+                # a data de status pode andar sem medição nova: o atraso conta da última medição fechada
+                parada = (hoje - dt.date.fromisoformat(m["data_status"][:10])).days
+                if parada > DIAS_MEDICAO and parada > (r.get("medicao_atrasada_dias") or 0):
+                    r["medicao_atrasada_dias"] = parada
             cp = con.execute("SELECT dados FROM curto_prazo WHERE usuario_id=?", (o["id"],)).fetchone()
             r["ppc"] = _ppc(json.loads(cp["dados"]) if cp else {}, hoje)
             ncs = con.execute("SELECT status, prazo, gravidade FROM ncs WHERE usuario_id=? AND status != 'fechada'",
