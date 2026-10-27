@@ -457,6 +457,12 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 @media (max-width:520px){.pn-et-row{grid-template-columns:minmax(0,1fr) 52px;row-gap:4px}.pn-et-bar{grid-column:1/-1;grid-row:2}.pn-et-s{grid-column:1/-1}}
 .cp-nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .cp-sem{font-size:15px;color:var(--ink)}
+@media (max-width:640px){.cp-sem{flex:1;min-width:0;text-align:center}.cp-nav .kpi-s{flex-basis:100%;margin-left:0!important}
+  .cp-tbl{min-width:0!important}.cp-tbl thead{display:none}.cp-tbl,.cp-tbl tbody,.cp-tbl tr,.cp-tbl td{display:block;width:auto!important}
+  .cp-tbl tr{padding:14px 16px;border-bottom:1px solid var(--line)}.cp-tbl td{border:0!important;padding:3px 0!important}
+  .cp-tbl td[data-rot]{font-size:13px;color:var(--muted)}.cp-tbl td[data-rot]::before{content:attr(data-rot) ": ";font-weight:600;font-family:var(--sans,inherit)}.cp-tbl td.mono{font-family:inherit}
+  .cp-tbl td:last-child>span:only-child{display:none}
+  .cp-tbl td.cp-exec{padding-top:10px!important}.cp-tbl .seg{display:flex}.cp-tbl .seg button{flex:1;min-height:44px}.cp-tbl select{width:100%;min-height:44px}}
 .split{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;align-items:start}
 .kpi-t{font-size:13px;color:var(--muted)}
 .kpi-v{font-family:var(--display);font-size:30px;font-weight:700;letter-spacing:-.01em;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -478,6 +484,7 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 /* número nunca quebra em duas linhas (Bismark, 25/10/2026) */
 .kpi-v,.kpi-s b,.cu-sum b,td.mono,td.num,th.num,.cu-ctl td{white-space:nowrap}
 .scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll-x[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .curve text{font-family:var(--body);font-size:12px;fill:var(--muted)}
 /* LB */
 .legend-row{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
@@ -2681,7 +2688,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     }
     var CTp = CU && CU.controle && CU.controle.total;
     if (CTp && temServ('custos')) {  // custos da planilha Orçado x Realizado
-      var brc = function (v) { return 'R$ ' + rs0(v); };
+      var brc = function (v) { return 'R$\u00a0' + rs0(v); };
       html += '<div class="grid4">' +
         kpi('Orçamento atualizado', brc(CTp.oatu), 'inicial: ' + brc(CTp.oin), null, 'nav:cus') +
         kpi('Contratado', brc(CTp.contratado), CTp.oatu ? fmt1(CTp.contratado / CTp.oatu * 100) + '% do orçamento' : '', null, 'nav:cus') +
@@ -2689,7 +2696,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         kpi('Estimativa no término', brc(CTp.estimativa), Math.abs(CTp.desvio) < 0.5 ? 'igual ao orçamento' : (CTp.desvio < 0 ? brc(-CTp.desvio) + ' acima do orçamento' : brc(CTp.desvio) + ' abaixo do orçamento'), CTp.desvio < -0.5 ? 'var(--bad)' : null, 'nav:cus') +
         '</div>';
     } else if (CU && CU.totais && CU.totais.bac != null && temServ('custos')) {
-      var T = CU.totais, br = function (v) { return 'R$ ' + Math.round(v || 0).toLocaleString('pt-BR'); };
+      var T = CU.totais, br = function (v) { return 'R$\u00a0' + Math.round(v || 0).toLocaleString('pt-BR'); };
       html += '<div class="grid4">' +
         kpi('Orçado', br(T.bac), 'custo total do cronograma', null, 'nav:cus') +
         kpi('Realizado', CU.sem_realizado ? 'Sem lançamentos' : br(T.cr), CU.sem_realizado ? 'nenhum custo real lançado' : 'custo real lançado', CU.sem_realizado ? 'var(--muted)' : null, 'nav:cus') +
@@ -2772,8 +2779,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         Object.keys(CAUSAS).map(function (k) { return '<option value="' + k + '"' + (e.causa === k ? ' selected' : '') + '>' + CAUSAS[k] + '</option>'; }).join('') + '</select>' : '<span style="color:var(--muted)">—</span>';
       return '<tr><td><span style="display:flex;align-items:center;gap:10px;font-weight:500"><i class="sw" style="background:' + corDe[serv] + '"></i><span>' + esc(serv) +
           (falta.length ? ' <span class="chip c-warn" title="Aguarda: ' + esc(falta.map(nomeT).join(', ')) + '">aguarda ' + falta.length + '</span>' : '') + '<span class="cp-local">' + esc(local) + '</span></span></span></td>' +
-        '<td>' + esc(FN[t.uid] || '—') + '</td><td class="mono" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
-        '<td><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
+        '<td data-rot="Responsável">' + esc(FN[t.uid] || '—') + '</td><td class="mono" data-rot="Término" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
+        '<td class="cp-exec"><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
     }).join('');
     var tot = lista.length, ppc = tot ? Math.round(ok / tot * 100) : 0;
     // histórico: semanas anteriores que tiveram apontamento
@@ -2794,7 +2801,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<span class="kpi-s" style="margin-left:auto">Semana pela data de status (' + fdate(P.statusDate) + ')</span></div>';
     return nav + (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '<div class="split"><section class="card" style="padding:0;overflow:hidden">' +
-        (rows ? '<div class="scroll-x"><table class="tbl" style="min-width:740px"><thead><tr><th scope="col">Pacote</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col">Execução</th><th scope="col" style="width:176px">Causa</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+        (rows ? '<div class="scroll-x"><table class="tbl cp-tbl" style="min-width:740px"><thead><tr><th scope="col">Pacote</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col">Execução</th><th scope="col" style="width:176px">Causa</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
           : '<p class="kpi-s" style="padding:18px">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>' +
       '<aside style="display:flex;flex-direction:column;gap:14px">' +
         '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? ppc + '%' : '—') + '</span>' +
@@ -3283,10 +3290,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var pc = function (v) { return CT.oatu ? fmt1(v / CT.oatu * 100) + '% do orçamento atualizado' : ''; };
       var bar = function (v) { return '<div class="bar" style="margin-top:8px"><i style="width:' + Math.min(100, CT.oatu ? v / CT.oatu * 100 : 0) + '%;background:var(--accent)"></i></div>'; };
       return '<div class="grid4">' +
-        '<div class="card"><div class="kpi-t">Orçamento atualizado (b)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.oatu) + '</div><div class="kpi-s">inicial (a): R$ ' + rs0(CT.oin) + '</div></div>' +
-        '<div class="card"><div class="kpi-t">Contratado (c)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.contratado) + '</div><div class="kpi-s">' + pc(CT.contratado) + '</div>' + bar(CT.contratado) + '</div>' +
-        '<div class="card"><div class="kpi-t">Incorrido (d)</div><div class="kpi-v" style="font-size:22px">R$ ' + rs0(CT.incorrido) + '</div><div class="kpi-s">' + pc(CT.incorrido) + '</div>' + bar(CT.incorrido) + '</div>' +
-        '<div class="card"><div class="kpi-t">Estimativa no término (i)</div><div class="kpi-v" style="font-size:22px;color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'inherit') + '">R$ ' + rs0(CT.estimativa) + '</div><div class="kpi-s">desvio (j): <b style="color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (Math.abs(CT.desvio) < 0.5 ? '0' : (CT.desvio < 0 ? '−' : '+') + rs0(Math.abs(CT.desvio))) + '</b> · índice (k): ' + (CT.indice == null ? '–' : CT.indice.toFixed(3).replace('.', ',')) + '</div></div>' +
+        '<div class="card"><div class="kpi-t">Orçamento atualizado (b)</div><div class="kpi-v" style="font-size:22px">R$\u00a0' + rs0(CT.oatu) + '</div><div class="kpi-s">inicial (a): R$\u00a0' + rs0(CT.oin) + '</div></div>' +
+        '<div class="card"><div class="kpi-t">Contratado (c)</div><div class="kpi-v" style="font-size:22px">R$\u00a0' + rs0(CT.contratado) + '</div><div class="kpi-s">' + pc(CT.contratado) + '</div>' + bar(CT.contratado) + '</div>' +
+        '<div class="card"><div class="kpi-t">Incorrido (d)</div><div class="kpi-v" style="font-size:22px">R$\u00a0' + rs0(CT.incorrido) + '</div><div class="kpi-s">' + pc(CT.incorrido) + '</div>' + bar(CT.incorrido) + '</div>' +
+        '<div class="card"><div class="kpi-t">Estimativa no término (i)</div><div class="kpi-v" style="font-size:22px;color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'inherit') + '">R$\u00a0' + rs0(CT.estimativa) + '</div><div class="kpi-s">desvio (j): <b style="color:' + (CT.desvio < -0.5 ? 'var(--bad)' : 'var(--good)') + '">' + (Math.abs(CT.desvio) < 0.5 ? '0' : (CT.desvio < 0 ? '−' : '+') + rs0(Math.abs(CT.desvio))) + '</b> · índice (k): ' + (CT.indice == null ? '–' : CT.indice.toFixed(3).replace('.', ',')) + '</div></div>' +
         '</div>';
   }
   function rs0(v) { return !v ? '–' : (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
@@ -3304,8 +3311,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var T = C.total;
     rows += '<tr class="cu-et"><th scope="row" class="pa-row cu-sticky">Total da obra</th>' + CTL_COLS.slice(0, -1).map(function (c) { return cel(T, c[0]); }).join('') + idx(T.indice) + '</tr>';
     var est = T.estimativa, d = T.desvio;
-    var resumo = '<p style="font-size:14px">A obra deve terminar em <b>R$ ' + rs0(est) + '</b>, ' + (Math.abs(d) < 0.5 ? 'igual ao orçamento atualizado.' : (d < 0 ? '<b style="color:var(--bad)">R$ ' + rs0(-d) + ' acima</b>' : '<b style="color:var(--good)">R$ ' + rs0(d) + ' abaixo</b>') + ' do orçamento atualizado (R$ ' + rs0(T.oatu) + ').') +
-      (T.a_contratar ? ' Dessa estimativa, R$ ' + rs0(T.a_contratar) + ' ainda são premissa (saldo a contratar).' : '') + '</p>';
+    var resumo = '<p style="font-size:14px">A obra deve terminar em <b>R$\u00a0' + rs0(est) + '</b>, ' + (Math.abs(d) < 0.5 ? 'igual ao orçamento atualizado.' : (d < 0 ? '<b style="color:var(--bad)">R$\u00a0' + rs0(-d) + ' acima</b>' : '<b style="color:var(--good)">R$\u00a0' + rs0(d) + ' abaixo</b>') + ' do orçamento atualizado (R$\u00a0' + rs0(T.oatu) + ').') +
+      (T.a_contratar ? ' Dessa estimativa, R$\u00a0' + rs0(T.a_contratar) + ' ainda são premissa (saldo a contratar).' : '') + '</p>';
     return '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">Orçado x Realizado</b><span style="font-size:12.5px;color:var(--muted)">' + esc(C.arquivo || '') + (C.atualizado_em ? ' · importada em ' + isoBr(C.atualizado_em.slice(0, 10)) : '') + '</span></span>' +
       (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outra planilha</label><button type="button" class="linkbtn" data-a="cuctlrm" style="font-size:13px">Remover</button>') + '</div>' + resumo +
       (C.reimportar && !ehDemo() ? '<div class="notebox"><b>Importe de novo o arquivo do ERP</b> para ver as abas Orçamento e Financeiro (realizado mês a mês) e todos os níveis até o credor. A planilha desta obra foi importada antes dessas abas existirem.</div>' : '') +
@@ -4104,7 +4111,18 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   // com servidor, a demonstração usa as mesmas telas do cliente (a conta demo recebe uma obra de exemplo no login)
   function contaReal() { return API && !!user; }
   function ehDemo() { return user === 'demo@custoplano.com.br'; }
+  // Tabela larga que rola para o lado precisa receber o foco do teclado e ter nome (WCAG 2.1.1 e 4.1.2)
+  function marcarRolagem() {
+    Array.prototype.forEach.call(document.querySelectorAll('#app .scroll-x'), function (el) {
+      if (el.scrollWidth > el.clientWidth + 1) {
+        var sec = el.closest('section'), h = sec && sec.querySelector('h2');
+        el.tabIndex = 0; el.setAttribute('role', 'region');
+        el.setAttribute('aria-label', (h ? h.textContent : 'Tabela') + ', role para o lado para ver todas as colunas');
+      } else if (el.getAttribute('role') === 'region') { el.removeAttribute('tabindex'); el.removeAttribute('role'); el.removeAttribute('aria-label'); }
+    });
+  }
   function render() {
+    requestAnimationFrame(marcarRolagem);
     var REAL = contaReal();
     document.querySelector('#app .app').classList.toggle('real', REAL);
     if (REAL) {
