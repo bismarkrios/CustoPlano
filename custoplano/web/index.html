@@ -182,6 +182,7 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .ind td:first-child{font-family:var(--mono);font-weight:600;white-space:nowrap}
 .ind td:last-child{font-family:var(--mono);font-size:13.5px;color:var(--muted)}
 .ind-wrap{overflow-x:auto}
+@media (max-width:640px){.ind thead{display:none}.ind,.ind tbody,.ind tr,.ind td{display:block}.ind tr{padding:12px 0;border-bottom:1px solid var(--line)}.ind td{border:0;padding:2px 0}.ind td:first-child{display:inline;margin-right:8px}.ind td:nth-child(2){display:inline;color:var(--muted);font-size:14px}}
 @media (max-width:520px){.ind{font-size:14.5px}.ind td:last-child{font-size:12.5px}}
 
 /* Qualidade */
@@ -280,7 +281,7 @@ form .btn{grid-column:1/-1;justify-self:start}
 footer.site{border-top:1px solid var(--line);padding-block:28px;font-size:14px;color:var(--muted)}
 footer.site .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 footer.site .rodape{display:flex;gap:8px 20px;flex-wrap:wrap}
-footer.site a{color:var(--ink)}
+footer.site a{color:var(--ink);display:inline-block;padding-block:6px}
 footer.site .copy{flex-basis:100%;font-size:13px}
 
 /* Telas do sistema */
@@ -930,7 +931,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 :focus-visible{outline-color:var(--blue)}
 .login-side .brand svg rect,.side .brand svg rect{fill:var(--hl)}
 .top .brand svg rect:last-child{fill:var(--blue)}
-.wa-float{position:fixed;right:20px;bottom:20px;z-index:50;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border-radius:26px;background:#1FAF55;color:#fff;font:600 15px var(--body,system-ui);text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.wa-float{position:fixed;right:20px;bottom:20px;z-index:50;display:inline-flex;align-items:center;gap:8px;height:52px;padding:0 18px 0 14px;border-radius:26px;background:#15803D;color:#fff;font:600 15px var(--body,system-ui);text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .wa-float:hover{background:#18994A}
 .wa-float:focus-visible{outline:3px solid #0B3D1E;outline-offset:3px}
 @media (max-width:520px){.wa-float{width:56px;height:56px;padding:0;justify-content:center;right:14px;bottom:14px}.wa-float span{display:none}}
@@ -1038,7 +1039,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       </header>
       <ol class="pilares">
         <li><span class="n">01</span><h3>Prazo</h3><p>Cronograma no MS Project, linha de balanço, planejamento semanal com PPC e gestão de restrições para o plano acontecer na obra.</p></li>
-        <li><span class="n">02</span><h3>Custo</h3><p>Metas de custo a partir do orçamento da obra, custo previsto × realizado, curva de desembolso e valor agregado.</p></li>
+        <li><span class="n">02</span><h3>Custo</h3><p>Orçado × realizado a partir do relatório do seu ERP, curva de desembolso e estimativa de quanto a obra vai custar no término.</p></li>
         <li><span class="n">03</span><h3>Qualidade</h3><p>Processos do PBQP-H e da ISO 9001, fichas de verificação pelo celular e cada não conformidade acompanhada até o fechamento.</p></li>
       </ol>
     </div>
@@ -1067,7 +1068,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
             <li><b>Planejamento de curto prazo:</b> reuniões de alinhamento com a equipe e gestão do PPC.</li>
             <li><b>Gestão de restrições:</b> mapeamento, prazos e remoção ativa de gargalos operacionais.</li>
             <li><b>Acompanhamento de desempenho:</b> consolidação do avanço físico medido pela sua equipe e monitoramento da curva S.</li>
-            <li><b>Controle físico-financeiro:</b> custo previsto × realizado e análise de valor agregado (IDP e IDC).</li>
+            <li><b>Controle de custos:</b> orçado × realizado por etapa a partir do seu ERP, realizado mês a mês e estimativa no término.</li>
             <li><b>Governança:</b> relatório gerencial mensal completo para apoiar a tomada de decisão.</li>
           </ul>
         </li>
@@ -1164,10 +1165,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <p>Após o diagnóstico e o alinhamento do plano de longo prazo, a nossa rotina com a sua equipe segue um fluxo bem definido.</p>
       </header>
       <ol class="semana">
-        <li><b>Segunda-feira</b><div><h3>Alinhamento de curto prazo</h3><p>Reunião com o engenheiro e os encarregados. Fechamos o PPC (Percentual de Planos Concluídos) da semana anterior, analisamos as causas de não cumprimento dos pacotes e definimos as metas da semana.</p></div></li>
+        <li><b>Segunda-feira</b><div><h3>Alinhamento de curto prazo</h3><p>Reunião com o engenheiro e os encarregados. Fechamos o PPC (Percentual de Pacotes Concluídos) da semana anterior, analisamos as causas de não cumprimento dos pacotes e definimos as metas da semana.</p></div></li>
         <li><b>Terça a quinta-feira</b><div><h3>Gestão ativa de restrições</h3><p>Mapeamento e remoção de gargalos: suprimentos, projetos, liberação de frentes e mão de obra. Cada restrição tem responsável e prazo definidos para não impactar o avanço da produção.</p></div></li>
         <li><b>Sexta-feira</b><div><h3>Avanço e qualidade no canteiro</h3><p>A sua equipe registra pelo celular a medição física, pavimento por pavimento, e as FVS dos serviços concluídos. Nós consolidamos os dados e acompanhamos cada não conformidade (RNC) até o fechamento, com responsável e prazo de correção.</p></div></li>
-        <li><b>Fechamento do mês</b><div><h3>Visão estratégica para a diretoria</h3><p>Emissão do relatório gerencial: avanço físico real contra a linha de base, indicadores de desempenho (IDP e IDC) e painel de não conformidades em aberto.</p></div></li>
+        <li><b>Fechamento do mês</b><div><h3>Visão estratégica para a diretoria</h3><p>Emissão do relatório gerencial: avanço físico real contra a linha de base, orçado × realizado com a estimativa no término e painel de não conformidades em aberto.</p></div></li>
       </ol>
     </div>
   </section>
@@ -1184,7 +1185,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           <tbody>
             <tr><td>PPC</td><td>Prazo</td><td>Se o planejamento da semana é confiável</td><td>pacotes concluídos ÷ planejados</td></tr>
             <tr><td>IDP</td><td>Prazo</td><td>Se a obra está no prazo</td><td>avanço real ÷ avanço previsto</td></tr>
-            <tr><td>IDC</td><td>Custo</td><td>Se o que foi feito custou o que devia</td><td>valor agregado ÷ custo real</td></tr>
+            <tr><td>IC</td><td>Custo</td><td>Se a obra vai terminar dentro do orçamento</td><td>estimativa no término ÷ orçamento atualizado</td></tr>
             <tr><td>IRNC</td><td>Qualidade</td><td>Quanto está sendo reprovado, por serviço e equipe</td><td>itens reprovados ÷ inspecionados</td></tr>
           </tbody>
         </table>
