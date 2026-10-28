@@ -702,6 +702,24 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .adm-link{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-radius:8px;background:var(--blue-soft)}
 .adm-link input{flex:1 1 260px;min-height:40px;font-family:var(--mono);font-size:12.5px}
 .adm-acoes{display:flex;flex-wrap:wrap;gap:6px}
+.ar-tbl{min-width:1000px}
+.ar-tbl input{width:100%;min-width:0;min-height:38px;padding:4px 8px;font-size:14px}
+.ar-tbl input.num{text-align:right;font-variant-numeric:tabular-nums;min-width:104px}
+#admAreas .btn:disabled{opacity:.5;cursor:not-allowed}
+.ar-tbl td:first-child{min-width:170px}
+.ar-tbl td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.ar-st{font-size:13px;min-width:120px;color:var(--good)}
+.ar-erro td{background:var(--bad-bg)}
+.ar-erro .ar-st,.ar-erro input{color:var(--bad);font-weight:600}
+.ar-erro input{border-color:var(--bad)}
+.ar-soma td,.ar-imp td{font-weight:600}
+.ar-conf{font-weight:600;color:var(--good)!important}
+.ar-ruim{color:var(--bad)!important;font-weight:600}
+.ar-res{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.ar-res>div{background:var(--soft);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.ar-res span{font-size:13px;color:var(--muted)}
+.ar-res b{font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ar-res .ar-v{color:var(--accent)}
 .hub-ic{width:50px;height:50px;border-radius:10px;display:grid;place-items:center;background:var(--panel);color:var(--hl)}
 .nav-grp{display:flex;flex-direction:column;gap:2px}
 @media (max-width:860px){.nav-grp{flex-direction:row}}
@@ -4525,6 +4543,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     zap: '<path d="M4 20l1.4-4A8 8 0 1 1 8 18.6L4 20z"></path><path d="M9.5 9.5c0 2.5 2.5 5 5 5"></path>',
     remover: '<circle cx="10" cy="8" r="4"></circle><path d="M3 20c.9-3.8 3.6-6 7-6s6.1 2.2 7 6"></path><path d="M17 4l4 4M21 4l-4 4"></path>',
     liberar: '<path d="M12 5v14M5 12h14"></path>',
+    regua: '<rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M8 7h8"></path><path d="M8 12h2M14 12h2M8 16h2M14 16h2"></path>',
     baixar: '<path d="M12 4v11"></path><path d="M7 10l5 5 5-5"></path><path d="M5 20h14"></path>'
   };
   function aico(n, t) {
@@ -4591,8 +4610,154 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       (d.copias.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópias no servidor</th><th class="num">Tamanho</th></tr></thead><tbody>' +
         d.copias.map(function (c) { return '<tr><td class="mono">' + esc(c.nome) + '</td><td class="num">' + mb(c.bytes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p>Nenhuma cópia ainda; a primeira sai em até uma hora depois de o servidor ligar.</p>') +
       '</section>';
+    h += '<section class="adm-card" id="admAreas"></section>';
     document.getElementById('admBody').innerHTML = h;
+    renderAreas();
   }
+  // ---------------- calculadora de R$/m² (quadro de áreas lido da prancha; nada é usado antes da conferência)
+  var AR = { leitura: null, q: null, projeto: '', venda: null, custo: null, conf: false, msg: '', lendo: false };
+  var AR_COLS = [['computavel', 'Computável'], ['nao_computavel', 'Não computável'], ['total', 'Total'], ['privativa', 'Privativa'], ['unidades', 'Unidades']];
+  var AR_TOT = { computavel: 'total_computavel', nao_computavel: 'total_nao_computavel', total: 'total_geral', privativa: 'privativa_total', unidades: 'unidades_total' };
+  function arNum(s) {
+    s = String(s == null ? '' : s).replace(/[R$\s m²]/g, '');
+    if (!s) return null;
+    if (s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    var n = parseFloat(s);
+    return isFinite(n) ? n : null;
+  }
+  function arFmt(v, casas) { return v == null ? '' : v.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }); }
+  function arReais(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
+  function arSoma(k) { return Math.round(AR.q.pavimentos.reduce(function (s, p) { return s + (p[k] || 0); }, 0) * 100) / 100; }
+  function arValidar() {
+    var q = AR.q, linhas = q.pavimentos.map(function (p) {
+      if (p.total == null || (p.computavel == null && p.nao_computavel == null)) return { ok: false, motivo: 'faltam valores' };
+      var d = Math.round(((p.computavel || 0) + (p.nao_computavel || 0) - p.total) * 100) / 100;
+      return { ok: Math.abs(d) <= 0.02, motivo: Math.abs(d) <= 0.02 ? '' : 'não fecha por ' + (d > 0 ? '+' : '') + arFmt(d, 2) + ' m²' };
+    });
+    var totais = {};
+    ['computavel', 'nao_computavel', 'total'].forEach(function (k) {
+      var imp = q[AR_TOT[k]], s = arSoma(k);
+      totais[k] = { soma: s, ok: imp == null || Math.abs(s - imp) <= 0.05 };
+    });
+    var ok = q.pavimentos.length > 0 && linhas.every(function (l) { return l.ok; }) && totais.computavel.ok && totais.nao_computavel.ok && totais.total.ok;
+    return { linhas: linhas, totais: totais, ok: ok };
+  }
+  function arPrivativa() { var q = AR.q; return q.privativa_total || arSoma('privativa') || null; }
+  function renderAreas() {
+    var el = document.getElementById('admAreas'); if (!el) return;
+    if (AR.leitura === null) { AR.leitura = undefined; api('/api/admin/areas').then(function (r) { AR.leitura = r.leitura; renderAreas(); }, function () {}); }
+    var h = '<h2>' + aico('regua', 20) + 'Calculadora de R$/m²</h2><p>Envie a prancha do projeto com o quadro de áreas (PDF ou imagem) e as áreas vêm sozinhas. Confira a tabela: a linha que não fecha fica em vermelho e você corrige à mão. O R$/m² só aparece depois que você confirma a tabela.</p>' +
+      '<div class="adm-form"><div class="field"><label for="ar-arq">Prancha do projeto</label><input type="file" id="ar-arq" accept="application/pdf,image/png,image/jpeg,image/webp"></div>' +
+      '<button class="btn btn-primary" type="button" data-adm="ar-ler"' + (AR.lendo || AR.leitura === false ? ' disabled' : '') + '>' + (AR.lendo ? 'Lendo a prancha…' : 'Ler quadro de áreas') + '</button>' +
+      '<button class="btn btn-ghost" type="button" data-adm="ar-mao">Preencher à mão</button></div>';
+    if (AR.leitura === false) h += '<p class="note">A leitura automática está desligada: falta a chave da Anthropic no servidor. Por enquanto, preencha o quadro à mão.</p>';
+    if (AR.msg) h += '<p class="note" role="status">' + esc(AR.msg) + '</p>';
+    if (AR.q) {
+      var q = AR.q;
+      h += '<div class="adm-form"><div class="field"><label for="ar-proj">Projeto</label><input id="ar-proj" data-ar="projeto" maxlength="120" value="' + esc(AR.projeto) + '" placeholder="Ex.: Edifício Exemplo – estudo de massa"></div></div>' +
+        '<div class="adm-scroll"><table class="tbl adm-tbl ar-tbl"><thead><tr><th>Pavimento</th>' + AR_COLS.map(function (c) { return '<th class="num">' + c[1] + (c[0] === 'unidades' ? '' : ' (m²)') + '</th>'; }).join('') + '<th>Confere</th><th></th></tr></thead><tbody>' +
+        q.pavimentos.map(function (p, i) {
+          return '<tr id="arL-' + i + '"><td><input data-ar="l:' + i + ':nome" value="' + esc(p.nome || '') + '" aria-label="Pavimento da linha ' + (i + 1) + '"></td>' +
+            AR_COLS.map(function (c) { return '<td><input class="num" inputmode="decimal" data-ar="l:' + i + ':' + c[0] + '" value="' + arFmt(p[c[0]], c[0] === 'unidades' ? 0 : 2) + '" aria-label="' + c[1] + ' da linha ' + (i + 1) + '"></td>'; }).join('') +
+            '<td class="ar-st" id="arS-' + i + '"></td><td><button class="btn btn-ghost btn-sm" type="button" data-adm="ar-menos:' + i + '" aria-label="Tirar a linha ' + (i + 1) + '">×</button></td></tr>';
+        }).join('') +
+        '<tr class="ar-soma"><td>Soma das linhas</td>' + AR_COLS.map(function (c) { return '<td class="num" id="arSo-' + c[0] + '"></td>'; }).join('') + '<td></td><td></td></tr>' +
+        '<tr class="ar-imp"><td>Total impresso no quadro</td>' + AR_COLS.map(function (c) { return '<td><input class="num" inputmode="decimal" data-ar="t:' + AR_TOT[c[0]] + '" value="' + arFmt(q[AR_TOT[c[0]]], c[0] === 'unidades' ? 0 : 2) + '" aria-label="' + c[1] + ' total impresso"></td>'; }).join('') + '<td class="ar-st" id="arS-t"></td><td></td></tr>' +
+        '</tbody></table></div>' +
+        '<div class="adm-acoes"><button class="btn btn-ghost btn-sm" type="button" data-adm="ar-mais">' + aico('liberar') + 'Linha</button></div>' +
+        '<div class="adm-form">' + [['terreno', 'Terreno (m²)', 2], ['ca', 'CA impresso', 2], ['to', 'TO impressa', 2]].map(function (c) {
+          return '<div class="field" style="flex:1 1 140px"><label for="ar-' + c[0] + '">' + c[1] + '</label><input id="ar-' + c[0] + '" class="num" inputmode="decimal" data-ar="t:' + c[0] + '" value="' + arFmt(q[c[0]], c[2]) + '"></div>';
+        }).join('') + '</div>' +
+        (q.observacoes ? '<p><b>Da leitura:</b> ' + esc(q.observacoes) + '</p>' : '') +
+        '<p class="ar-conf" id="arConf" role="status"></p>' +
+        '<div class="adm-acoes"><button class="btn btn-primary" type="button" id="arBtnConf" data-adm="ar-conf"></button></div>' +
+        '<div class="adm-form"><div class="field"><label for="ar-venda">Valor de venda total (R$)</label><input id="ar-venda" inputmode="decimal" data-ar="v:venda" value="' + (AR.venda ? Math.round(AR.venda).toLocaleString('pt-BR') : '') + '"></div>' +
+        '<div class="field"><label for="ar-custo">Custo de obra total (R$)</label><input id="ar-custo" inputmode="decimal" data-ar="v:custo" value="' + (AR.custo ? Math.round(AR.custo).toLocaleString('pt-BR') : '') + '"></div></div>' +
+        '<div id="arRes" aria-live="polite"></div>';
+    }
+    el.innerHTML = h;
+    if (AR.q) atualizarAreas();
+  }
+  function atualizarAreas() {
+    var v = arValidar(), q = AR.q;
+    if (!v.ok) AR.conf = false;
+    v.linhas.forEach(function (l, i) {
+      var tr = document.getElementById('arL-' + i); if (!tr) return;
+      tr.classList.toggle('ar-erro', !l.ok);
+      document.getElementById('arS-' + i).textContent = l.ok ? '✓' : l.motivo;
+    });
+    AR_COLS.forEach(function (c) { var s = arSoma(c[0]); document.getElementById('arSo-' + c[0]).textContent = !s && (c[0] === 'privativa' || c[0] === 'unidades') ? '' : arFmt(s, c[0] === 'unidades' ? 0 : 2); });
+    var totOk = v.totais.computavel.ok && v.totais.nao_computavel.ok && v.totais.total.ok;
+    var tt = document.querySelector('.ar-imp'); tt.classList.toggle('ar-erro', !totOk);
+    document.getElementById('arS-t').textContent = totOk ? '✓' : 'a soma não bate';
+    var ruins = v.linhas.filter(function (l) { return !l.ok; }).length, msg;
+    if (!q.pavimentos.length) msg = 'Inclua as linhas do quadro.';
+    else if (ruins) msg = ruins + (ruins > 1 ? ' linhas não fecham' : ' linha não fecha') + ' (computável + não computável = total). Corrija em vermelho antes de confirmar.';
+    else if (!totOk) msg = 'As linhas fecham, mas a soma não bate com o total impresso. Confira o total ou a linha que falta.';
+    else msg = 'Todas as linhas fecham e a soma bate com o total impresso.';
+    if (q.terreno && q.ca && v.ok) {
+      var ca = v.totais.computavel.soma / q.terreno;
+      msg += Math.abs(ca - q.ca) <= 0.01 ? ' O CA confere (' + arFmt(ca, 2) + ').' : ' Atenção: computável ÷ terreno dá CA ' + arFmt(ca, 2) + ', diferente do impresso (' + arFmt(q.ca, 2) + ').';
+    }
+    var conf = document.getElementById('arConf'); conf.textContent = msg; conf.classList.toggle('ar-ruim', !v.ok);
+    var b = document.getElementById('arBtnConf');
+    b.disabled = !v.ok; b.textContent = AR.conf ? 'Tabela confirmada ✓' : 'Confirmar a tabela';
+    var r = document.getElementById('arRes');
+    if (!AR.conf) { r.innerHTML = '<p>Confirme a tabela para ver o R$/m².</p>'; return; }
+    var constr = q.total_geral || v.totais.total.soma, priv = arPrivativa();
+    var h = '<div class="ar-res"><div><span>Área construída</span><b>' + arFmt(constr, 2) + ' m²</b></div><div><span>Área privativa</span><b>' + (priv ? arFmt(priv, 2) + ' m²' : 'não consta') + '</b></div>';
+    [['venda', 'Venda'], ['custo', 'Custo de obra']].forEach(function (c) {
+      var val = AR[c[0]]; if (!val) return;
+      h += '<div><span>' + c[1] + ' por m² construído</span><b class="ar-v">' + arReais(val / constr) + '</b></div>' +
+        '<div><span>' + c[1] + ' por m² privativo</span><b class="ar-v">' + (priv ? arReais(val / priv) : '—') + '</b></div>';
+    });
+    h += '</div>';
+    if (!AR.venda && !AR.custo) h += '<p>Informe o valor de venda e/ou o custo de obra.</p>';
+    if (!priv) h += '<p class="ar-ruim">A área privativa não consta no projeto, então o R$/m² privativo não é calculado (não estimamos).</p>';
+    h += '<div class="adm-acoes"><button class="btn btn-primary" type="button" data-adm="ar-excel">' + aico('baixar') + 'Baixar Excel</button></div>';
+    r.innerHTML = h;
+  }
+  function arVazio() { return { pavimentos: [], total_computavel: null, total_nao_computavel: null, total_geral: null, privativa_total: null, unidades_total: null, terreno: null, ca: null, to: null, observacoes: '' }; }
+  function cliqueAreas(a) {
+    if (a[0] === 'ar-mao') { if (!AR.q) { AR.q = arVazio(); AR.q.pavimentos.push({ nome: '', computavel: null, nao_computavel: null, total: null, privativa: null, unidades: null }); } AR.msg = ''; renderAreas(); return; }
+    if (a[0] === 'ar-ler') {
+      var f = document.getElementById('ar-arq').files[0];
+      if (!f) { AR.msg = 'Escolha a prancha em PDF ou imagem.'; renderAreas(); return; }
+      var fd = new FormData(); fd.append('arquivo', f);
+      AR.lendo = true; AR.msg = 'Lendo o quadro de áreas. Leva até um minuto.'; renderAreas();
+      api('/api/admin/areas/ler', fd).then(function (r) {
+        AR.q = r.quadro; AR.conf = false; AR.projeto = AR.projeto || f.name.replace(/\.[^.]+$/, '');
+        AR.msg = 'Quadro lido. Confira cada linha com a prancha antes de confirmar.';
+      }, function (err) { AR.msg = err.message; }).then(function () { AR.lendo = false; renderAreas(); });
+      return;
+    }
+    if (a[0] === 'ar-mais') { AR.q.pavimentos.push({ nome: '', computavel: null, nao_computavel: null, total: null, privativa: null, unidades: null }); AR.conf = false; renderAreas(); return; }
+    if (a[0] === 'ar-menos') { AR.q.pavimentos.splice(+a[1], 1); AR.conf = false; renderAreas(); return; }
+    if (a[0] === 'ar-conf') { AR.conf = arValidar().ok; atualizarAreas(); return; }
+    if (a[0] === 'ar-excel') {
+      fetch('/api/admin/areas/excel', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quadro: AR.q, venda: AR.venda, custo: AR.custo, projeto: AR.projeto }) }).then(function (r) {
+        if (!r.ok) return r.json().then(function (j) { throw new Error(j.erro || 'Erro ' + r.status); });
+        var m = /filename="?([^";]+)/.exec(r.headers.get('Content-Disposition') || '');
+        return r.blob().then(function (b) {
+          var u = URL.createObjectURL(b), l = document.createElement('a'); l.href = u; l.download = m ? m[1] : 'quadro-de-areas.xlsx';
+          document.body.appendChild(l); l.click(); l.remove(); setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+        });
+      }).catch(function (e) { alert('Não foi possível gerar o Excel: ' + e.message); });
+    }
+  }
+  document.getElementById('adm').addEventListener('input', function (e) {
+    var k = e.target.getAttribute('data-ar'); if (!k || !AR.q) return;
+    var a = k.split(':'), val = e.target.value;
+    if (a[0] === 'projeto') { AR.projeto = val; return; }
+    if (a[0] === 'v') { AR[a[1]] = arNum(val); atualizarAreas(); return; }
+    var n = arNum(val);
+    if (a[0] === 'l') { var p = AR.q.pavimentos[+a[1]]; p[a[2]] = a[2] === 'nome' ? val : (a[2] === 'unidades' && n != null ? Math.round(n) : n); }
+    if (a[0] === 't') AR.q[a[1]] = a[1] === 'unidades_total' && n != null ? Math.round(n) : n;
+    if (a[2] !== 'nome') AR.conf = false;
+    atualizarAreas();
+  });
   function zapFmt(n) { var m = /^55(\d\d)(\d{4,5})(\d{4})$/.exec(n || ''); return m ? '(' + m[1] + ') ' + m[2] + '-' + m[3] : '+' + n; }
   function admMsg(t) { var m = document.getElementById('admMsg'); if (m) { m.textContent = t; m.hidden = !t; } }
   document.getElementById('adm').addEventListener('submit', function (e) {
@@ -4615,6 +4780,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   document.getElementById('adm').addEventListener('click', function (e) {
     var b = e.target.closest('[data-adm]'); if (!b) return;
     var a = b.getAttribute('data-adm').split(':'), id = +a[1];
+    if (a[0].indexOf('ar-') === 0) { cliqueAreas(a); return; }
     var obra = ADM && ADM.obras.filter(function (o) { return o.id === id; })[0];
     if (a[0] === 'copiar') { var t = document.getElementById('admLinkTxt'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () { b.textContent = 'Copiado'; }, function () { document.execCommand('copy'); b.textContent = 'Copiado'; }); return; }
     if (a[0] === 'abrir') { trocarObra(id, function () { location.hash = 'sistema'; }); return; }

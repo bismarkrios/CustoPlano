@@ -30,6 +30,7 @@ import banco
 import correio
 from cronograma import ErroCronograma, Projeto, enxugar_xml, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
+import areas
 import custos as cst
 import demo
 import qualidade as ql
@@ -730,6 +731,47 @@ def admin_baixar_copia():
     r = send_from_directory(banco.pasta_copias(), os.path.basename(caminho), as_attachment=True, mimetype="application/gzip")
     r.headers["Cache-Control"] = "no-store"
     return r
+
+
+@app.get("/api/admin/areas")
+@so_admin
+def admin_areas_estado():
+    return jsonify(leitura=areas.ligada())
+
+
+@app.post("/api/admin/areas/ler")
+@so_admin
+def admin_areas_ler():
+    """Lê o quadro de áreas da prancha (PDF ou imagem). Volta sem conferência: quem confere é a pessoa."""
+    f = request.files.get("arquivo")
+    if not f:
+        return erro("Escolha a prancha em PDF ou imagem.")
+    try:
+        q = areas.ler_quadro(f.read(), (f.mimetype or "").lower())
+    except areas.ErroLeitura as e:
+        return erro(str(e), e.codigo)
+    return jsonify(quadro=q, conferencia=areas.validar(q))
+
+
+def _valor(v):
+    return float(v) if v not in (None, "") and float(v) > 0 else None
+
+
+@app.post("/api/admin/areas/excel")
+@so_admin
+def admin_areas_excel():
+    d = request.get_json(silent=True) or {}
+    q = d.get("quadro") or {}
+    if not isinstance(q, dict) or not isinstance(q.get("pavimentos"), list) or not q["pavimentos"] or len(q["pavimentos"]) > 200:
+        return erro("Preencha o quadro de áreas.")
+    if not areas.validar(q)["ok"]:
+        return erro("Corrija as linhas em vermelho antes de exportar.")
+    u = banco.usuario(session["uid"])
+    projeto = str(d.get("projeto") or "").strip()[:120]
+    xlsx = areas.excel(q, _valor(d.get("venda")), _valor(d.get("custo")), projeto, u["nome"] or u["email"])
+    nome = nome_base(projeto or "quadro-de-areas") + "-areas.xlsx"
+    return Response(xlsx, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f'attachment; filename="{nome}"', "Cache-Control": "no-store"})
 
 
 # ----------------------------------------------------------------------- saúde
