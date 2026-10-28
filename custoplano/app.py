@@ -388,8 +388,8 @@ def _pagina_estatica(arquivo: str) -> Response:
     r = send_from_directory(PASTA_WEB, arquivo, mimetype="text/html")
     r.headers["Cache-Control"] = "no-cache"
     r.headers["Content-Security-Policy"] = (
-        "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
-        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
+        "default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'")
     return r
 
 
