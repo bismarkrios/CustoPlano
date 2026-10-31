@@ -614,6 +614,16 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .sup-tbl .btn-sm{padding:0 10px;font-size:13px;min-height:34px}
 /* Project */
 .prj-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.prj-dt{display:flex;align-items:center;gap:10px;position:relative;font-size:13px;color:var(--muted)}
+.pmenu summary{min-height:36px;font-weight:600;color:var(--ink)}
+.pmenu-l{left:0;right:auto}
+.pmenu-l button,.pmenu-l label{display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:40px;padding:0 8px;border:0;border-radius:6px;background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer;white-space:nowrap}
+.pmenu-l button:hover,.pmenu-l label:hover{background:var(--soft)}
+.pmenu-l small{color:var(--muted);font-size:12px}
+.pmenu-l .perigo{color:var(--bad)}
+#pcrono .pmenu-l{left:auto;right:0}
+.prj-arv{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--muted)}
+@media (max-width:640px){.prj-acoes .pcols-menu{left:0;right:auto}}
 .prj{min-width:1500px;font-size:13px;font-variant-numeric:tabular-nums}
 .prj-row{display:grid;grid-template-columns:44px 260px 56px 66px 70px 80px 50px minmax(0,1fr);align-items:center;border-top:1px solid var(--line);min-height:30px}
 .prj-row>span{padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2409,20 +2419,24 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<section class="card" style="display:flex;flex-direction:column;gap:12px">' +
         '<div class="prj-bar">' +
           '<span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(P.title) + '</b><span style="font-size:12.5px;color:var(--muted)">' + esc(P.fileName) + ' · ' + P.tasks.length + ' tarefas</span></span>' +
-          '<label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '" style="width:auto;min-height:36px;padding:4px 8px">' +
-          colMenu +
+          '<div class="prj-dt"><span id="pSdRot">Medição do dia</span><button type="button" class="med-dtb" data-psd aria-labelledby="pSdRot pSdTxt"><span id="pSdTxt">' + fdata(P.statusDate) + '</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button>' +
+            '<input id="pSd" class="med-dtin" type="date" tabindex="-1" aria-hidden="true" value="' + isoDay(P.statusDate) + '"></div>' +
         '</div>' +
-        '<div class="prj-bar">' +
+        '<div class="prj-bar prj-acoes">' +
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-a="pexport">Exportar para o MS Project (.xml)</button>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-a="pcsv">Boletim de medição (.csv)</button>' +
-          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button>' : '') +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pclose" title="A medição atual passa a ser a medição anterior">Fechar medição</button>' +
+          '<details class="pcols pmenu" id="pbaixar"><summary>Baixar arquivos <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary><div class="pcols-menu pmenu-l">' +
+            '<button type="button" data-a="pexport">Cronograma para o MS Project <small>.xml</small></button>' +
+            (API ? '<button type="button" data-a="pxlsx">Boletim de medição em Excel <small>.xlsx</small></button>' : '') +
+            '<button type="button" data-a="pcsv">Boletim de medição <small>.csv</small></button>' +
+          '</div></details>' +
+          '<details class="pcols pmenu" id="pcrono"><summary>Cronograma <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary><div class="pcols-menu pmenu-l">' +
+            '<label for="prjFile">' + (API ? 'Importar outro cronograma' : 'Importar outro .xml') + '</label>' +
+            (contaReal() && !ehDemo() ? '<button type="button" data-a="preset" class="perigo">Remover o cronograma da obra</button>' : '<button type="button" data-a="preset">Voltar ao exemplo</button>') +
+          '</div></details>' +
           '<span style="flex:1"></span>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-a="pexp">Expandir tudo</button>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-a="pcol">Recolher tudo</button>' +
-          '<label for="prjFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (API ? 'Importar outro cronograma' : 'Importar outro .xml') + '</label>' +
-          '<button type="button" class="linkbtn" data-a="preset" style="font-size:13px">Voltar ao exemplo</button>' +
+          '<span class="prj-arv"><button type="button" class="linkbtn" data-a="pexp">Expandir tudo</button><span aria-hidden="true">·</span><button type="button" class="linkbtn" data-a="pcol">Recolher tudo</button></span>' +
+          colMenu +
         '</div>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
         ((API && S.hist && S.hist.length) ? '<details><summary style="cursor:pointer;font-weight:600;font-size:14px">Medições fechadas (' + S.hist.length + ')</summary><div class="scroll-x"><table class="tbl" style="margin-top:8px;min-width:640px"><thead><tr><th>Data de status</th><th>Fechada em</th><th>Real</th><th>Previsto</th><th>Arquivos</th></tr></thead><tbody>' +
@@ -4380,7 +4394,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           return;
         }
         P.base = Object.assign({}, P.meas); S.prjMsg = 'Medição fechada: os percentuais atuais passam a ser a medição anterior.'; persist(); break;
-      case 'preset': P = null; kvSet('pend', null); S.sync = ''; if (API) api('/api/remover', {}).catch(function () {}); else kvSet('prj', null); S.prjMsg = ''; break;
+      case 'preset':
+        if (contaReal() && !ehDemo() && !confirm('Remover o cronograma desta obra? As medições ligadas a ele deixam de aparecer.')) return;
+        P = null; kvSet('pend', null); S.sync = ''; if (API) api('/api/remover', {}).catch(function () {}); else kvSet('prj', null); S.prjMsg = ''; break;
       case 'pexport':
         if (API && precisaRede()) return;
         if (API) { persist(true).then(function () { location.href = '/api/exportar/xml'; }); S.prjMsg = 'Arquivo exportado. No MS Project: Arquivo → Abrir → escolha o .xml e salve como .mpp.'; break; }
@@ -4421,6 +4437,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   });
   app.addEventListener('toggle', function (e) { if (e.target.id === 'pcols') S.pcolsOpen = e.target.open; }, true);
   document.addEventListener('click', function (e) { var d = document.getElementById('pcols'); if (d && d.open && !d.contains(e.target)) { d.open = false; S.pcolsOpen = false; } });
+  document.addEventListener('click', function (e) { ['pbaixar', 'pcrono'].forEach(function (id) { var m = document.getElementById(id); if (m && m.open && !m.contains(e.target)) m.open = false; }); });
   app.addEventListener('change', function (e) {
     if (e.target.hasAttribute && e.target.hasAttribute('data-pcol')) {
       var kc = e.target.getAttribute('data-pcol');

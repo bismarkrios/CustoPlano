@@ -94,22 +94,36 @@ def curva_prevista(p: Projeto, criterio: str | None, fim_real: dt.datetime) -> l
     return pontos
 
 
+def blocos_plano(dados: dict) -> list:
+    """Uma escadinha por torre; sem torres, a escadinha única da obra (nome vazio)."""
+    tw = [t for t in dados.get("torres") or [] if t.get("atual")]
+    return [(t.get("nome") or "", t["atual"]) for t in tw] if tw else [("", dados["atual"])]
+
+
 def resumo_plano(dados: dict) -> dict:
     db = dt.date.fromisoformat(dados["data_base"]) if dados.get("data_base") else None
     tot = ok = late = prev = prev_ok = 0
-    for pav in dados["atual"]["pavimentos"]:
-        for i, s in enumerate(pav["datas"]):
-            if not s:
-                continue
-            d = dt.date.fromisoformat(s)
-            feito = bool(pav["ok"] and pav["ok"][i])
-            tot += 1
-            ok += feito
-            if db and d <= db:
-                prev += 1
-                prev_ok += feito
-                late += not feito
-    return {"tot": tot, "ok": ok, "late": late, "prev": prev, "prev_ok": prev_ok, "db": db}
+    linhas = []  # por torre e pavimento, para o relatório
+    for torre, atual in blocos_plano(dados):
+        for pav in atual["pavimentos"]:
+            lp = {"torre": torre, "pav": pav["rotulo"], "tot": 0, "ok": 0, "prev": 0, "late": 0}
+            for i, s in enumerate(pav["datas"]):
+                if not s:
+                    continue
+                d = dt.date.fromisoformat(s)
+                feito = bool(pav["ok"] and pav["ok"][i])
+                lp["tot"] += 1
+                lp["ok"] += feito
+                if db and d <= db:
+                    lp["prev"] += 1
+                    prev_ok += feito
+                    lp["late"] += not feito
+            tot += lp["tot"]
+            ok += lp["ok"]
+            prev += lp["prev"]
+            late += lp["late"]
+            linhas.append(lp)
+    return {"tot": tot, "ok": ok, "late": late, "prev": prev, "prev_ok": prev_ok, "db": db, "pavs": linhas}
 
 
 # Relatório de cada tela do sistema: título, subtítulo e gerência interna que escreve e revisa o texto
@@ -436,7 +450,9 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         fc = frase_causas()
         frases.append(f"Nas últimas semanas, {fc[0].lower()}{fc[1:]}.")
     if rp and tipo == "plano":
-        frases.append(f"Foram executados {rp['ok']} de {rp['tot']} pacotes de serviço por pavimento, e "
+        ntw = len({x["torre"] for x in rp["pavs"] if x["torre"]})
+        frases.append(f"Foram executados {rp['ok']} de {rp['tot']} pacotes de serviço por pavimento"
+                      + (f", somadas as {ntw} torres" if ntw > 1 else "") + ", e "
                       f"{_plural(rp['late'], 'pacote está atrasado', 'pacotes estão atrasados')}.")
     if tipo in ("consolidado", "custos") and VC and CT:
         dv = CT["desvio"]
@@ -671,13 +687,28 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         tm = plano.get("termino") or {}
         txt("O plano de ataque da obra acompanha os pacotes de serviço por pavimento. "
             f"A {prox()} resume a execução e a aderência até a data base do plano.")
-        linhas = [["Pacotes executados", f"{round(rp['ok'] / rp['tot'] * 100) if rp['tot'] else 0}%", f"{rp['ok']} de {rp['tot']} (serviço × pavimento)"],
-                  ["Aderência até a data base", f"{round(rp['prev_ok'] / rp['prev'] * 100) if rp['prev'] else 0}%",
+        pc = lambda a, b: f"{_br(a / b * 100 if b else 0, 2)}%"
+        torres = []
+        for x in rp["pavs"]:
+            if x["torre"] and x["torre"] not in torres:
+                torres.append(x["torre"])
+        linhas = [["Pacotes executados", pc(rp['ok'], rp['tot']), f"{rp['ok']} de {rp['tot']} (serviço × pavimento)"
+                   + (f", {len(torres)} torres" if len(torres) > 1 else "")],
+                  ["Aderência até a data base", pc(rp['prev_ok'], rp['prev']),
                    f"{rp['prev_ok']} de {rp['prev']} até {_d(rp['db'])}"],
                   ["Pacotes atrasados", destaque(str(rp["late"]), rp["late"]), "data prevista vencida, sem execução confirmada"]]
         if tm:
             linhas.append(["Término da obra", _d(tm.get("atual") or tm.get("lb")), f"linha de base {_d(tm.get('lb'))} ({_dias(tm.get('var'))})"])
         add(tabela("Plano de ataque", ["Indicador", "Valor", "Observação"], linhas, [5.2 * cm, 2.8 * cm, W - 8 * cm], direita=(1,)))
+        if torres:
+            txt(f"A {prox()} mostra o andamento de cada torre.")
+            lt = []
+            for tn in torres:
+                xs = [x for x in rp["pavs"] if x["torre"] == tn]
+                t_, o_, p_, l_ = (sum(x[k] for x in xs) for k in ("tot", "ok", "prev", "late"))
+                lt.append([tn, f"{o_} de {t_}", pc(o_, t_), f"{p_}", destaque(str(l_), l_)])
+            add(tabela("Plano de ataque por torre", ["Torre", "Executados", "% executado", "Previstos até a data base", "Atrasados"], lt,
+                       [W - 13.4 * cm, 2.8 * cm, 2.8 * cm, 4.6 * cm, 3.2 * cm], direita=(1, 2, 3, 4)))
         if completo:
             secao("Marcos do plano de ataque")
         if plano.get("marcos"):
@@ -691,26 +722,37 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             txt("O plano de ataque importado não tem marcos.")
         if not completo:
             return
+        secao("Andamento por torre e pavimento" if torres else "Andamento por pavimento")
+        txt(f"A {prox()} mostra, pavimento a pavimento" + (", em cada torre" if torres else "")
+            + ", quantos pacotes de serviço foram executados e quantos estão atrasados.")
+        lp = [([x["torre"]] if torres else []) + [x["pav"], f"{x['ok']} de {x['tot']}", pc(x["ok"], x["tot"]), destaque(str(x["late"]), x["late"])]
+              for x in rp["pavs"]]
+        add(tabela("Pacotes por " + ("torre e " if torres else "") + "pavimento",
+                   (["Torre"] if torres else []) + ["Pavimento", "Executados", "% executado", "Atrasados"], lp,
+                   ([W - 13.2 * cm, 3.4 * cm] if torres else [W - 9.8 * cm]) + [3.2 * cm, 3.4 * cm, 3.2 * cm],
+                   direita=(2, 3, 4) if torres else (1, 2, 3)))
         secao("Pacotes atrasados")
         at = []
-        servs = (plano.get("atual") or {}).get("servicos") or []
         db = rp["db"]
-        for pav in (plano.get("atual") or {}).get("pavimentos") or []:
-            for j, s_ in enumerate(pav["datas"]):
-                if not s_ or not db:
-                    continue
-                d_ = dt.date.fromisoformat(s_)
-                if d_ <= db and not (pav["ok"] and pav["ok"][j]):
-                    at.append((servs[j]["nome"] if j < len(servs) else f"Serviço {j + 1}", pav["rotulo"], d_, (db - d_).days))
+        for tn, atual in blocos_plano(plano):
+            servs = atual.get("servicos") or []
+            for pav in atual.get("pavimentos") or []:
+                for j, s_ in enumerate(pav["datas"]):
+                    if not s_ or not db:
+                        continue
+                    d_ = dt.date.fromisoformat(s_)
+                    if d_ <= db and not (pav["ok"] and pav["ok"][j]):
+                        at.append((servs[j]["nome"] if j < len(servs) else f"Serviço {j + 1}", tn, pav["rotulo"], d_, (db - d_).days))
         if not at:
             txt("Não há pacotes atrasados até a data base do plano.")
             return
-        at.sort(key=lambda x: -x[3])
+        at.sort(key=lambda x: -x[4])
         txt(f"A {prox()} lista os pacotes com data prevista vencida e sem execução confirmada, do maior para o "
-            "menor atraso.")
-        add(tabela("Pacotes atrasados do plano de ataque", ["Serviço", "Pavimento", "Data prevista", "Dias de atraso"],
-                   [[a[0], a[1], _d(a[2]), destaque(str(a[3]), True)] for a in at[:60]],
-                   [W - 10 * cm, 3.4 * cm, 3.2 * cm, 3.4 * cm], direita=(3,)))
+            "menor atraso" + (", com a torre e o pavimento de cada um" if torres else "") + ".")
+        add(tabela("Pacotes atrasados do plano de ataque", ["Serviço"] + (["Torre"] if torres else []) + ["Pavimento", "Data prevista", "Dias de atraso"],
+                   [[a[0]] + ([a[1]] if torres else []) + [a[2], _d(a[3]), destaque(str(a[4]), True)] for a in at[:60]],
+                   [W - (13.2 if torres else 10) * cm] + ([3.2 * cm] if torres else []) + [3.4 * cm, 3.2 * cm, 3.4 * cm],
+                   direita=(4,) if torres else (3,)))
 
     def sec_custo_totais():
         txt("O custo é acompanhado pela análise de valor agregado. O valor planejado (VP) é o custo orçado do "
