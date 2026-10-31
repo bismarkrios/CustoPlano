@@ -958,6 +958,26 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 }
 /* celular: campos com 16px (o iPhone não dá zoom), menu com dica de rolagem, alvos de toque de 44px */
 @media (max-width:860px){#app input:not([type=checkbox]):not([type=radio]):not([type=range]),#app select,#app textarea{font-size:16px}.side{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 36px),transparent);scroll-padding-inline:12px 40px}.side.fim{-webkit-mask-image:none;mask-image:none}.pn-curve text{font-size:18px}.pn-curve .pn-v{font-size:19px}.pn-curve .pn-vp{font-size:18px}.tabs button{min-height:44px}}
+/* celular: barra fixa embaixo com as telas principais; "Mais" abre o menu completo numa folha que sobe */
+.bnav,.side-fundo{display:none}
+@media (max-width:860px){
+  .bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;gap:2px;background:var(--panel);padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -6px 18px rgba(0,0,0,.14)}
+  .bnav button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:54px;min-width:0;padding:4px 2px;border:0;border-radius:10px;background:transparent;color:var(--panel-muted);font:inherit;font-size:11.5px;font-weight:500;line-height:1.15;cursor:pointer}
+  .bnav button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bnav button[aria-current="page"]{color:var(--panel-ink);background:color-mix(in srgb,var(--panel-ink) 12%,transparent)}
+  .bnav .count{position:absolute;top:3px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+  #app .app-main{padding-bottom:84px}
+  #app .side{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:50;height:auto;max-height:80dvh;overflow-y:auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:4px;padding:18px 14px calc(18px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;-webkit-mask-image:none;mask-image:none}
+  #app .side.aberto{transform:none;visibility:visible;transition:transform .22s ease}
+  #app .side .brand{padding:0 8px 12px}
+  #app .side .brand span{display:flex!important}
+  #app .side .nav-grp:not([hidden]){flex-direction:column}
+  #app .side-label{display:block}
+  #app .side-foot{display:flex}
+  #app .side .nav-btn{width:100%}
+  .side-fundo:not([hidden]){display:block;position:fixed;inset:0;z-index:45;background:rgba(0,10,30,.4)}
+}
+.nativo .bnav{display:none!important}
 @media (max-width:480px){.grid4{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-tag{display:none}.facts{grid-template-columns:1fr}}
 
 /* App (lojas ou ícone na tela de início): só a medição e o relatório em PDF, sem links do site */
@@ -1483,7 +1503,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
 <div id="app" hidden>
   <div class="app">
-    <nav class="side" aria-label="Módulos do sistema">
+    <nav class="side" id="side" aria-label="Módulos do sistema">
       <a class="brand" href="#inicio" aria-label="Custo Plano, voltar ao site">
         <svg width="28" height="28" viewBox="0 0 30 30" aria-hidden="true"><rect x="2" y="18" width="6" height="10" fill="#AFC3D9"></rect><rect x="12" y="10" width="6" height="18" fill="#AFC3D9"></rect><rect x="22" y="2" width="6" height="26" fill="var(--accent)"></rect></svg>
         <span style="display:flex;flex-direction:column;line-height:1.1"><b>Custo Plano</b><small id="sideSub">Planejamento</small></span>
@@ -1514,6 +1534,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <a class="linkbtn so-site" href="#inicio" style="text-decoration:none">← Voltar ao site</a>
       </div>
     </nav>
+    <div class="side-fundo" id="sideFundo" data-a="navfecha" hidden></div>
+    <nav class="bnav" id="bnav" aria-label="Telas principais"></nav>
     <div class="app-main">
       <header class="app-top">
         <span class="obra-nome" id="obraNome"></span>
@@ -3448,6 +3470,33 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
   // No celular o menu de telas rola de lado: mostra a tela atual e some com o esmaecido no fim.
   function navFim() { var sd = document.querySelector('.side'); if (sd) sd.classList.toggle('fim', sd.scrollLeft + sd.clientWidth >= sd.scrollWidth - 4); }
+  // celular: as telas mais usadas na barra de baixo (até 4) e o resto em "Mais"
+  var BNAV_PRIO = ['painel', 'med', 'pa', 'cp', 'prj', 'sup', 'cus', 'res', 'cron', 'lb', 'qp', 'qi', 'qn', 'qc', 'qm', 'qmod'];
+  var BNAV_NOME = { cp: 'PPC', pa: 'Plano', qp: 'Painel', qi: 'FVS', qn: 'RNC', qc: 'FVS crono.', qm: 'Matriz', qmod: 'Modelos', lb: 'Balanço', cron: 'Cronograma' };
+  function montarBnav() {
+    var bn = document.getElementById('bnav'); if (!bn) return;
+    var vis = [].filter.call(document.querySelectorAll('#side .nav-grp:not([hidden]) .nav-btn'), function (b) { return b.style.display !== 'none'; });
+    var tela = function (b) { return b.getAttribute('data-a').replace('nav:', ''); };
+    vis.sort(function (a, b) { return BNAV_PRIO.indexOf(tela(a)) - BNAV_PRIO.indexOf(tela(b)); });
+    var cabe = vis.length <= 5 ? vis : vis.slice(0, 4), naBarra = false;
+    var h = cabe.map(function (b) {
+      var t = tela(b), c = b.querySelector('.count'), n = c && c.textContent !== '0' && c.style.display !== 'none' ? c.textContent : '';
+      if (t === S.screen) naBarra = true;
+      var nome = BNAV_NOME[t] || b.textContent.replace(n, '').trim();
+      return '<button type="button" data-a="nav:' + t + '"' + (t === S.screen ? ' aria-current="page"' : '') + ' aria-label="' + esc(b.textContent.replace(/\d+$/, '').trim()) + '">' + b.querySelector('svg').outerHTML + '<span>' + esc(nome) + '</span>' + (n ? '<i class="count" aria-hidden="true">' + n + '</i>' : '') + '</button>';
+    }).join('');
+    if (vis.length > 5) h += '<button type="button" data-a="navmais" aria-controls="side" aria-expanded="' + document.getElementById('side').classList.contains('aberto') + '"' + (naBarra ? '' : ' aria-current="page"') + '><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg><span>Mais</span></button>';
+    bn.innerHTML = h;
+    bn.style.gridTemplateColumns = 'repeat(' + (cabe.length + (vis.length > 5 ? 1 : 0)) + ',minmax(0,1fr))';
+  }
+  function menuCel(abrir) {
+    var sd = document.getElementById('side'), f = document.getElementById('sideFundo'); if (!sd) return;
+    sd.classList.toggle('aberto', abrir); f.hidden = !abrir;
+    var m = document.querySelector('#bnav [data-a="navmais"]'); if (m) m.setAttribute('aria-expanded', abrir);
+    if (abrir) { var b = sd.querySelector('.nav-btn[aria-current="page"]') || sd.querySelector('.nav-btn'); if (b) b.focus(); }
+    else if (m && sd.contains(document.activeElement)) m.focus();
+  }
+  document.addEventListener('keydown', function (e) { var sd = document.getElementById('side'); if (e.key === 'Escape' && sd && sd.classList.contains('aberto')) menuCel(false); });
   function navVisivel() {
     var sd = document.querySelector('.side'), b = sd && sd.querySelector('.nav-btn[aria-current="page"]');
     if (sd && !sd.dataset.ok) { sd.dataset.ok = 1; sd.addEventListener('scroll', navFim, { passive: true }); }
@@ -4233,6 +4282,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (tela === S.screen) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
     navVisivel();
+    montarBnav();
     var nm = (CONTA && CONTA.nome && !ehDemo() && !/custo plano/i.test(CONTA.nome)) ? CONTA.nome : '';
     var ini = (nm ? nm.split(/\s+/) : (user || 'CL').replace(/@.*/, '').split(/[._-]/)).filter(Boolean).map(function (p) { return p[0]; }).join('').slice(0, 2).toUpperCase() || 'CL';
     var av = document.getElementById('avatar'); av.textContent = ini; av.title = nm || user || '';
@@ -4328,7 +4378,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (qClick(a, el)) return;
     var M = model();
     switch (a[0]) {
-      case 'nav': S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
+      case 'navmais': menuCel(!document.getElementById('side').classList.contains('aberto')); return;
+      case 'navfecha': menuCel(false); return;
+      case 'nav': menuCel(false); S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
