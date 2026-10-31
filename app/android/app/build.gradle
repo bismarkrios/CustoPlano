@@ -7,8 +7,8 @@ android {
         applicationId "br.com.custoplano.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode (System.getenv("CP_VERSION_CODE") ?: "1").toInteger()
+        versionName "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +16,21 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Assinatura para a loja: a chave vem dos segredos do GitHub (nunca fica no repositório)
+    signingConfigs {
+        loja {
+            def ks = System.getenv("CP_KEYSTORE_FILE")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("CP_KEYSTORE_SENHA")
+                keyAlias System.getenv("CP_KEY_ALIAS")
+                keyPassword System.getenv("CP_KEY_SENHA")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv("CP_KEYSTORE_FILE")) signingConfig signingConfigs.loja
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
