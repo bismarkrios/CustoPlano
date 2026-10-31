@@ -296,7 +296,17 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .telas-tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
 .telas-tabs button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .tela{margin:0;display:flex;flex-direction:column;gap:12px}
-.tela-img{border:1px solid var(--line);background:var(--surface);box-shadow:6px 6px 0 color-mix(in srgb,var(--ink) 12%,transparent);overflow:hidden}
+.tela-img{position:relative;border:10px solid #2B2F3A;border-bottom-width:12px;border-radius:14px;background:#2B2F3A;box-shadow:0 18px 40px color-mix(in srgb,#002455 16%,transparent);overflow:hidden;margin-bottom:14px}
+.tela-img img{border-radius:4px}
+.tela-cel{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px 40px;align-items:center}
+.cel{border:10px solid #2B2F3A;border-radius:38px;background:#2B2F3A;box-shadow:0 18px 40px color-mix(in srgb,#002455 16%,transparent);overflow:hidden;max-height:560px}
+.cel img{display:block;width:100%;height:auto;border-radius:28px}
+@media (max-width:720px){.tela-cel{grid-template-columns:1fr}.cel{max-width:280px;margin:0 auto}}
+.semana-foto{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,240px);gap:24px clamp(24px,4vw,48px);align-items:start}
+.foto{margin:0;display:flex;flex-direction:column;gap:6px}
+.foto img{display:block;width:100%;height:auto;border-radius:12px;aspect-ratio:2/3;object-fit:cover}
+.foto figcaption{font-size:12.5px;color:var(--panel-muted)}
+@media (max-width:860px){.semana-foto{grid-template-columns:1fr}.foto{order:-1}.foto img{aspect-ratio:16/9;object-position:50% 30%}}
 .tela-img img{display:block;width:100%;height:auto}
 .tela figcaption{color:var(--muted);font-size:16px;max-width:64ch}
 .telas-cta{display:flex;gap:12px 20px;align-items:center;flex-wrap:wrap}
@@ -1189,18 +1199,23 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           <button type="button" role="tab" id="tt-painel" aria-controls="tp-painel" aria-selected="true">Painel e curva S</button>
           <button type="button" role="tab" id="tt-pa" aria-controls="tp-pa" aria-selected="false" tabindex="-1">Escadinha por torre</button>
           <button type="button" role="tab" id="tt-sup" aria-controls="tp-sup" aria-selected="false" tabindex="-1">Suprimentos</button>
+          <button type="button" role="tab" id="tt-med" aria-controls="tp-med" aria-selected="false" tabindex="-1">Medição no celular</button>
         </div>
         <figure class="tela" role="tabpanel" id="tp-painel" aria-labelledby="tt-painel">
-          <div class="tela-img"><img src="/web/telas/painel.jpg?v=2" width="1280" height="760" alt="Painel da obra com data de status, avanço real contra o previsto, término previsto, PPC, tarefas atrasadas e curva S" loading="lazy"></div>
+          <div class="tela-img"><img src="/web/telas/painel.jpg?v=3" width="1440" height="855" alt="Painel da obra com data de status, avanço real contra o previsto, término previsto, PPC, tarefas atrasadas e curva S" loading="lazy"></div>
           <figcaption>Avanço real contra o previsto, término previsto e atraso, PPC, tarefas atrasadas, curva S e os pacotes da semana, tudo puxado do cronograma do MS Project.</figcaption>
         </figure>
         <figure class="tela" role="tabpanel" id="tp-pa" aria-labelledby="tt-pa" hidden>
-          <div class="tela-img"><img src="/web/telas/pa.jpg?v=2" width="1280" height="760" alt="Escadinha por torre: serviços por pavimento com as datas, executados, em andamento e atrasados" loading="lazy"></div>
+          <div class="tela-img"><img src="/web/telas/pa.jpg?v=3" width="1440" height="855" alt="Escadinha por torre: serviços por pavimento com as datas, executados, em andamento e atrasados" loading="lazy"></div>
           <figcaption>A escadinha sai do próprio cronograma: um quadro por torre, do térreo à cobertura, com o que foi executado, o que atrasou e o desvio contra a linha de base. Dá para imprimir e levar para a reunião.</figcaption>
         </figure>
         <figure class="tela" role="tabpanel" id="tp-sup" aria-labelledby="tt-sup" hidden>
-          <div class="tela-img"><img src="/web/telas/sup.jpg?v=2" width="1280" height="760" alt="Suprimentos: lista de materiais com data na obra, prazo do fornecedor, data limite de compra e situação" loading="lazy"></div>
+          <div class="tela-img"><img src="/web/telas/sup.jpg?v=3" width="1440" height="855" alt="Suprimentos: lista de materiais com data na obra, prazo do fornecedor, data limite de compra e situação" loading="lazy"></div>
           <figcaption>Cada pacote do cronograma vira uma compra com data limite: a data em que o serviço começa menos o prazo do fornecedor. O fornecedor também volta para o MS Project numa coluna própria.</figcaption>
+        </figure>
+        <figure class="tela" role="tabpanel" id="tp-med" aria-labelledby="tt-med" hidden>
+          <div class="tela-cel"><div class="cel"><img src="/web/telas/med.jpg?v=3" width="390" height="844" alt="Medição no celular: a obra está em 41,85%, contra 44,83% previstos, com a lista de tarefas a medir por torre e pavimento" loading="lazy"></div>
+          <figcaption>Na sexta-feira, a equipe mede pelo celular, tarefa por tarefa. Sem sinal no canteiro, a medição fica guardada no aparelho e é enviada quando a conexão volta. O resumo diz em uma frase se a obra está à frente ou atrás do previsto.</figcaption></div>
         </figure>
         <div class="telas-cta">
           <a class="btn btn-primary" href="#demo">Abrir a obra de demonstração</a>
@@ -1216,12 +1231,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <h2>Uma semana de obra com a Custo Plano</h2>
         <p>Após o diagnóstico e o alinhamento do plano de longo prazo, a nossa rotina com a sua equipe segue um fluxo bem definido.</p>
       </header>
+      <div class="semana-foto">
       <ol class="semana">
         <li><b>Segunda-feira</b><div><h3>Alinhamento de curto prazo</h3><p>Reunião online com o engenheiro e os encarregados, de cerca de 30 minutos, pelo sistema. Fechamos o PPC (Percentual de Pacotes Concluídos) da semana anterior, analisamos as causas de não cumprimento dos pacotes e definimos as metas da semana.</p></div></li>
         <li><b>Terça a quinta-feira</b><div><h3>Gestão ativa de restrições</h3><p>Mapeamento e remoção de gargalos: suprimentos, projetos, liberação de frentes e mão de obra. Cada restrição tem responsável e prazo definidos para não impactar o avanço da produção.</p></div></li>
         <li><b>Sexta-feira</b><div><h3>Avanço e qualidade no canteiro</h3><p>A sua equipe registra pelo celular a medição física, pavimento por pavimento, e as FVS dos serviços concluídos. Nós consolidamos os dados e acompanhamos cada não conformidade (RNC) até o fechamento, com responsável e prazo de correção.</p></div></li>
         <li><b>Fechamento do mês</b><div><h3>Visão estratégica para a diretoria</h3><p>Emissão do relatório gerencial: avanço físico real contra a linha de base, orçado × realizado com a estimativa no término e painel de não conformidades em aberto.</p></div></li>
       </ol>
+      <figure class="foto"><img src="/web/fotos/predio.jpg?v=1" width="900" height="1350" alt="Imagem ilustrativa: estrutura de concreto de um prédio em construção" loading="lazy"><figcaption>Imagem ilustrativa</figcaption></figure>
+      </div>
     </div>
   </section>
 
@@ -1364,7 +1382,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <div class="lg-pilares" aria-label="O que acompanhamos"><span>Prazo</span><span>Custo</span><span>Qualidade</span></div>
       </div>
       <figure class="lg-tela">
-        <img src="/web/telas/painel.jpg?v=2" width="1280" height="760" alt="Painel de uma obra no sistema da Custo Plano, com avanço, PPC e curva S">
+        <img src="/web/telas/painel.jpg?v=3" width="1440" height="855" alt="Painel de uma obra no sistema da Custo Plano, com avanço, PPC e curva S">
         <figcaption><i aria-hidden="true"></i>Atualizado pela equipe toda semana</figcaption>
       </figure>
     </aside>
