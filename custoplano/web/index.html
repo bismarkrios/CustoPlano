@@ -45,7 +45,7 @@
 <!--CP_API-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@500;600&display=swap">
 <style>
 :root{
   --ground:#F3F6F6; --surface:#FFFFFF; --ink:#282B59; --muted:#5E6485; --line:#D3DCDC;
@@ -116,7 +116,16 @@ p{margin:0}
 /* Abertura */
 .hero{padding-block:clamp(36px,6vw,80px) clamp(40px,6vw,72px)}
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:clamp(32px,5vw,72px);align-items:start}
-.hero h1{font-size:clamp(32px,3.6vw,48px)}
+.hero h1{font-size:clamp(36px,4.2vw,56px);font-weight:400;line-height:1.08}
+.hero h1 b{font-weight:700}
+.compromissos{border-block:1px solid var(--line);background:var(--surface)}
+.compromissos ul{list-style:none;margin:0 auto;padding-block:28px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.compromissos li{display:flex;flex-direction:column;gap:4px;padding-left:16px;border-left:2px solid var(--line)}
+.compromissos b{font-family:var(--serif);font-weight:600;font-size:clamp(24px,2.4vw,32px);color:var(--ink);line-height:1.1;white-space:nowrap}
+.compromissos span{font-size:15px;color:var(--muted);line-height:1.4}
+@media (max-width:860px){.compromissos ul{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px}}
+@media (max-width:400px){.compromissos b{font-size:21px}.compromissos li{padding-left:12px}}
+@media (max-width:340px){.compromissos ul{grid-template-columns:1fr}}
 .hero .lede{font-size:clamp(17px,1.45vw,19px);color:var(--muted);margin-top:22px}
 .hero .ctas{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:30px}
 .hero .ctas a.txt{font-weight:600;color:var(--ink);text-underline-offset:4px}
@@ -213,10 +222,6 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 @media (max-width:860px){.atende{grid-template-columns:minmax(0,1fr)}.pilares.segs{grid-template-columns:minmax(0,1fr)}}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-.hero-pts{list-style:none;margin:20px 0 26px;padding:0;display:grid;gap:10px;max-width:60ch}
-.hero-pts li{position:relative;padding-left:20px;font-size:15.5px;line-height:1.5;color:var(--muted)}
-.hero-pts li::before{content:"";position:absolute;left:0;top:.6em;width:8px;height:8px;background:var(--gold)}
-.hero-pts b{color:var(--ink);font-weight:600}
 .q-duo{display:grid;grid-template-columns:1fr;gap:28px;align-items:start}
 .q-dest{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:2px solid var(--ink)}
 .q-dest li{padding:16px 0 16px 16px;border-bottom:1px solid var(--line);border-left:3px solid var(--blue)}
@@ -993,14 +998,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     <div class="wrap">
       <div>
         <p class="eyebrow" style="margin-bottom:14px">Planejamento e controle integrados ao seu MS Project</p>
-        <h1>Sua obra no prazo, no custo e com qualidade, controlada toda semana a partir do seu MS Project.</h1>
-        <p class="lede">Preservamos a sua rotina: o seu planejamento continua no MS Project. Unimos a tecnologia de campo à consultoria presencial para garantir que o plano aconteça na prática.</p>
-        <ul class="hero-pts">
-          <li><b>Integração com o MS Project:</b> leitura e atualização do seu arquivo .mpp, sem refazer o cronograma.</li>
-          <li><b>Rotina semanal de gestão:</b> reunião presencial com a sua equipe, acompanhamento do avanço físico e remoção ativa de restrições.</li>
-          <li><b>Funciona sem internet:</b> aplicativo no celular para FVS, medições e não conformidades (RNC).</li>
-          <li><b>Para construtoras e incorporadoras:</b> obras novas ou em andamento que precisam voltar aos trilhos.</li>
-        </ul>
+        <h1>Sua obra no <b>prazo</b>, no <b>custo</b> e com <b>qualidade</b>.</h1>
+        <p class="lede">Controle semanal a partir do seu MS Project, sem refazer o cronograma. Consultoria no canteiro e sistema incluído, para construtoras e incorporadoras com obras novas ou em andamento.</p>
         <div class="ctas">
           <a class="btn btn-primary" href="#contato">Pedir um diagnóstico da obra</a>
           <a class="txt" href="#demo">Ver o sistema funcionando</a>
@@ -1050,6 +1049,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         </div>
       </figure>
     </div>
+  </section>
+
+  <section class="compromissos" aria-label="Como trabalhamos">
+    <ul class="wrap">
+      <li><b>Toda semana</b><span>reunião de planejamento com a sua equipe</span></li>
+      <li><b>2 visitas</b><span>por obra, todo mês, no canteiro</span></li>
+      <li><b>Sem internet</b><span>medição e FVS no celular, na obra</span></li>
+      <li><b>Seu .mpp</b><span>o cronograma continua no MS Project</span></li>
+    </ul>
   </section>
 
   <section class="block" id="pilares">
@@ -1186,7 +1194,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <p>Após o diagnóstico e o alinhamento do plano de longo prazo, a nossa rotina com a sua equipe segue um fluxo bem definido.</p>
       </header>
       <ol class="semana">
-        <li><b>Segunda-feira</b><div><h3>Alinhamento de curto prazo</h3><p>Reunião com o engenheiro e os encarregados. Fechamos o PPC (Percentual de Pacotes Concluídos) da semana anterior, analisamos as causas de não cumprimento dos pacotes e definimos as metas da semana.</p></div></li>
+        <li><b>Segunda-feira</b><div><h3>Alinhamento de curto prazo</h3><p>Reunião online com o engenheiro e os encarregados, de cerca de 30 minutos, pelo sistema. Fechamos o PPC (Percentual de Pacotes Concluídos) da semana anterior, analisamos as causas de não cumprimento dos pacotes e definimos as metas da semana.</p></div></li>
         <li><b>Terça a quinta-feira</b><div><h3>Gestão ativa de restrições</h3><p>Mapeamento e remoção de gargalos: suprimentos, projetos, liberação de frentes e mão de obra. Cada restrição tem responsável e prazo definidos para não impactar o avanço da produção.</p></div></li>
         <li><b>Sexta-feira</b><div><h3>Avanço e qualidade no canteiro</h3><p>A sua equipe registra pelo celular a medição física, pavimento por pavimento, e as FVS dos serviços concluídos. Nós consolidamos os dados e acompanhamos cada não conformidade (RNC) até o fechamento, com responsável e prazo de correção.</p></div></li>
         <li><b>Fechamento do mês</b><div><h3>Visão estratégica para a diretoria</h3><p>Emissão do relatório gerencial: avanço físico real contra a linha de base, orçado × realizado com a estimativa no término e painel de não conformidades em aberto.</p></div></li>
@@ -1221,7 +1229,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       </header>
       <div class="quality">
         <div class="txt" style="display:grid;gap:22px">
-          <p class="q-lead">Estruturamos os procedimentos executivos e as fichas de verificação de serviço e de material (FVS e FVM) para cada serviço e acompanhamos presencialmente a tratativa de cada não conformidade até o fechamento definitivo.</p>
+          <p class="q-lead">Estruturamos os procedimentos executivos e as fichas de verificação de serviço e de material (FVS e FVM) para cada serviço e acompanhamos a tratativa de cada não conformidade até o fechamento definitivo, nas visitas à obra e pelo sistema.</p>
           <ul class="q-normas" aria-label="Normas atendidas"><li>PBQP-H (SiAC)</li><li>ISO 9001</li><li>Implantação e manutenção</li></ul>
         </div>
         <div class="q-duo">
@@ -1267,6 +1275,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       </header>
       <div class="faq">
         <details><summary>Preciso trocar o MS Project pelo sistema de vocês?</summary><p>Não. O seu cronograma continua no MS Project. O nosso sistema importa diretamente o arquivo .mpp (ou .xml) e devolve o arquivo atualizado com as medições e o avanço realizado no canteiro.</p></details>
+        <details><summary>O MS Project vai acabar?</summary><p>Não. Quem saiu do ar em 30/09/2026 foi o Project Online, a versão na nuvem. O Project para computador, que gera o arquivo .mpp, continua à venda e com suporte da Microsoft. É com ele que trabalhamos.</p></details>
         <details><summary>E se a minha obra ainda não tiver cronograma no MS Project?</summary><p>Montamos o cronograma junto com a sua engenharia, no MS Project e com linha de base, antes de começar o controle semanal. A montagem é um serviço à parte e entra separada na proposta.</p></details>
         <details><summary>A minha obra já começou. Ainda dá tempo de contratar?</summary><p>Sim, é o nosso cenário mais comum. Fazemos um diagnóstico inicial, reestruturamos a linha de base se necessário e implantamos imediatamente a rotina semanal de prazo, custo e qualidade.</p></details>
         <details><summary>O aplicativo funciona no canteiro sem internet?</summary><p>Funciona. Medições físicas, fichas de verificação (FVS) e não conformidades (RNC) ficam gravadas no celular e são sincronizadas automaticamente assim que ele volta a ter conexão.</p></details>
