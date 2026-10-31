@@ -2416,7 +2416,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           '<button type="button" class="btn ' + (P.edit ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pmode" aria-pressed="' + P.edit + '">' + (P.edit ? 'Concluir medição' : 'Medir avanço') + '</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexport">Exportar para o MS Project (.xml)</button>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pcsv">Boletim de medição (.csv)</button>' +
-          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button>' + (temServ('planejamento') ? '<button type="button" class="btn btn-primary btn-sm" data-a="prel:prazo">Relatório de prazo (PDF)</button>' : '') : '') +
+          (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="pxlsx">Boletim em Excel (.xlsx)</button>' : '') +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pclose" title="A medição atual passa a ser a medição anterior">Fechar medição</button>' +
           '<span style="flex:1"></span>' +
           '<button type="button" class="btn btn-ghost btn-sm" data-a="pexp">Expandir tudo</button>' +
@@ -2643,7 +2643,6 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<div><span class="kpi-t">Última medição fechada</span><b>' + (ult ? fdate(ult.t) + ' · ' + fmt1(ult.r) + '%' : 'nenhuma ainda') + '</b></div>' +
       '<div><span class="kpi-t">Avanço desde a última medição</span><b style="color:' + (ult ? cor(real - ult.r >= 0) : 'inherit') + '">' + (ult ? sinal(real - ult.r) + ' p.p.' : '—') + '</b></div>' +
       '<div><span class="kpi-t">Término previsto</span><b>' + fdate(fim) + (varFim != null ? ' <span style="color:' + cor(varFim <= 0) + ';font-weight:600">· ' + prazoTxt(varFim) + '</span>' : '') + '</b></div>' +
-      (API ? '<button type="button" class="btn btn-primary btn-sm" data-a="prel:consolidado">Relatório consolidado (PDF)</button>' : '') +
       '</section>';
 
     // indicadores
@@ -2911,7 +2910,6 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<label class="kpi-t" for="paHl">Destacar</label><select id="paHl" style="width:auto;max-width:220px;min-height:36px;padding:4px 8px">' + opts + '</select>' +
       (baseD ? '<button type="button" class="btn ' + (S.pa.cmp ? 'btn-primary' : 'btn-ghost') + ' btn-sm" data-a="pacmp" aria-pressed="' + S.pa.cmp + '" title="' + esc(baseD.base.rotulo || 'Linha de base') + '">Comparar com a linha de base</button>' : '') +
       '<button type="button" class="btn btn-ghost btn-sm" data-a="paimp">Imprimir escadinha</button>' +
-      (API ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel:plano">Relatório do plano de ataque (PDF)</button>' : '') +
       (D.origem === 'project' || contaReal() ? '' : '<label for="paFile" class="btn btn-ghost btn-sm" style="cursor:pointer">' + (PA ? 'Importar outra planilha' : 'Importar planilha (.xlsx)') + '</label>' +
       (PA ? '<button type="button" class="linkbtn" data-a="pareset" style="font-size:13px">Voltar ao exemplo</button>' : '')) +
       '</div>' + (S.pa.msg ? '<p class="note" role="status" style="margin:0">' + esc(S.pa.msg) + '</p>' : '');
@@ -3020,11 +3018,17 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var a = document.createElement('a'); a.href = d.url; a.download = d.nome; document.body.appendChild(a); a.click(); a.remove();
   }
   // cada tela tem o seu relatório; o consolidado (prazo, custo e qualidade) fica no Painel
-  var REL_TELA = { cron: ['prazo', 'Relatório de prazo'], lb: ['plano', 'Relatório do plano de ataque'],
+  var REL_TELA = { painel: ['consolidado', 'Relatório consolidado'], prj: ['prazo', 'Relatório de prazo'], med: ['medicao', 'Relatório de medição'],
+    pa: ['plano', 'Relatório do plano de ataque'], cron: ['prazo', 'Relatório de prazo'], lb: ['plano', 'Relatório do plano de ataque'],
     cp: ['curto', 'Relatório de curto prazo'], res: ['curto', 'Relatório de curto prazo'], cus: ['custos', 'Relatório de custos'],
     sup: ['suprimentos', 'Relatório de suprimentos'], qp: ['qualidade', 'Relatório de qualidade'], qi: ['inspecoes', 'Relatório de inspeções'],
     qc: ['inspecoes', 'Relatório de inspeções'], qm: ['inspecoes', 'Relatório de inspeções'], qn: ['ncs', 'Relatório de não conformidades'],
     qmod: ['modelos', 'Relatório dos modelos de FVS'] };
+  // o mesmo mapa do servidor (relatorio.SERVICO_DO_TIPO): só mostra o relatório dos serviços contratados
+  var REL_SERV = { prazo: ['planejamento'], medicao: ['planejamento', 'custos'], plano: ['planejamento'], curto: ['planejamento'],
+    custos: ['custos'], suprimentos: ['custos'], qualidade: ['qualidade'], inspecoes: ['qualidade'], ncs: ['qualidade'], modelos: ['qualidade'],
+    consolidado: ['planejamento', 'custos', 'qualidade'] };
+  function relOk(tipo) { return (REL_SERV[tipo] || []).some(temServ); }
   function baixarRelatorio(tipo) {
     if (NATIVO) { relatorioApp(); return; }
     if (precisaRede()) return;
@@ -3116,7 +3120,6 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '</section>' +
       '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>Concluído</span><span>Atalhos</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
-      (API && !NATIVO ? '<button type="button" class="btn btn-ghost" data-a="prel:medicao" style="align-self:flex-start">Relatório de medição (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
   }
 
@@ -4224,6 +4227,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
     var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     var rel = API && !NATIVO && REL_TELA[S.screen];
+    if (rel && !relOk(rel[0])) rel = null;
     body.innerHTML = '<div class="app-head"><div class="app-head-row"><div><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' +
       (rel ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel:' + rel[0] + '">' + rel[1] + ' (PDF)</button>' : '') + '</div></div>' + v;
     if (S.screen !== telaAntes) { telaAntes = S.screen; body.classList.remove('entra'); void body.offsetWidth; body.classList.add('entra'); clearTimeout(entraT); entraT = setTimeout(function () { body.classList.remove('entra'); }, 900); contarKpis(); }
