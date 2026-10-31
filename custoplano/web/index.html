@@ -965,15 +965,30 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   .bnav button[aria-current="page"]{color:var(--panel-ink);background:color-mix(in srgb,var(--panel-ink) 12%,transparent)}
   .bnav .count{position:absolute;top:3px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
   #app .app-main{padding-bottom:84px}
-  #app .side{position:fixed;left:0;right:0;top:auto;bottom:0;z-index:50;height:auto;max-height:80dvh;overflow-y:auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:4px;padding:18px 14px calc(18px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;-webkit-mask-image:none;mask-image:none}
-  #app .side.aberto{transform:none;visibility:visible;transition:transform .22s ease}
-  #app .side .brand{padding:0 8px 12px}
+  /* "Mais": tela limpa por cima do conteúdo, com a barra de baixo sempre visível */
+  .bnav{z-index:60}
+  .bnav button[aria-expanded="true"]{color:var(--panel-ink);background:color-mix(in srgb,var(--panel-ink) 12%,transparent)}
+  .bnav:has([aria-expanded="true"]) button[aria-current="page"]:not([aria-expanded]){color:var(--panel-muted);background:transparent}
+  #app .side{position:fixed;left:0;right:0;top:0;bottom:calc(66px + env(safe-area-inset-bottom));z-index:50;height:auto;max-height:none;overflow-y:auto;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:10px;padding:18px 16px 24px;background:var(--ground);color:var(--ink);border-radius:0;opacity:0;transform:translateY(10px);visibility:hidden;transition:opacity .18s ease,transform .18s ease,visibility 0s linear .18s;-webkit-mask-image:none;mask-image:none}
+  #app .side.aberto{opacity:1;transform:none;visibility:visible;transition:opacity .18s ease,transform .18s ease}
+  #app .side .brand{padding:0 4px 8px;color:var(--ink)}
+  #app .side .brand small{color:var(--muted)}
+  #app .side .brand svg rect{fill:var(--ink)}
   #app .side .brand span{display:flex!important}
-  #app .side .nav-grp:not([hidden]){flex-direction:column}
-  #app .side-label{display:block}
-  #app .side-foot{display:flex}
-  #app .side .nav-btn{width:100%}
-  .side-fundo:not([hidden]){display:block;position:fixed;inset:0;z-index:45;background:rgba(0,10,30,.4)}
+  #app .side .nav-grp:not([hidden]){flex-direction:column;gap:10px}
+  #app .side-label{display:block;color:var(--muted);padding:4px 4px 0}
+  #app .side .nav-btn{width:100%;min-height:60px;padding:0 16px;gap:14px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;font-size:16px;font-weight:600}
+  #app .side .nav-btn svg{width:22px;height:22px;flex:none}
+  #app .side .nav-btn::after{content:"";flex:none;width:9px;height:9px;margin-left:auto;border-top:2px solid var(--muted);border-right:2px solid var(--muted);transform:rotate(45deg)}
+  #app .side .nav-btn[aria-current="page"]{border-color:var(--ink);background:var(--surface)}
+  #app .side .nav-btn.na-barra{display:none}
+  #app .side .nav-btn .count{margin-left:auto}
+  #app .side .nav-btn:has(.count:not([style*="none"]))::after{margin-left:12px}
+  #app .side-foot b{color:var(--ink)}
+  #app .side-foot .linkbtn{font-size:15px}
+  #app .side-foot{display:flex;padding:8px 4px 0}
+  #app .side-foot a{color:var(--ink)}
+  .side-fundo:not([hidden]){display:none}
 }
 .nativo .bnav{display:none!important}
 @media (max-width:480px){.grid4{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(2,minmax(0,1fr))}.demo-tag{display:none}.facts{grid-template-columns:1fr}}
@@ -3441,6 +3456,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var tela = function (b) { return b.getAttribute('data-a').replace('nav:', ''); };
     vis.sort(function (a, b) { return BNAV_PRIO.indexOf(tela(a)) - BNAV_PRIO.indexOf(tela(b)); });
     var cabe = vis.length <= 5 ? vis : vis.slice(0, 4), naBarra = false;
+    vis.forEach(function (b) { b.classList.toggle('na-barra', cabe.indexOf(b) >= 0); });
     var h = cabe.map(function (b) {
       var t = tela(b), c = b.querySelector('.count'), n = c && c.textContent !== '0' && c.style.display !== 'none' ? c.textContent : '';
       if (t === S.screen) naBarra = true;
