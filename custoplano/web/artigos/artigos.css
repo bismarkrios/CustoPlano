@@ -6,7 +6,7 @@
   --display:'Archivo','Arial Narrow',system-ui,sans-serif;
   --body:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
   --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --mono:'Public Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
 }
 @media (prefers-color-scheme:dark){:root{
   color-scheme:dark;--ground:#14152E;--surface:#1D1F44;--ink:#E3EAE9;--text:#D3D8E6;--muted:#A3A9C6;--line:#33366A;
