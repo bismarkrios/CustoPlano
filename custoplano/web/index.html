@@ -798,7 +798,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .med-real{font-size:22px;line-height:1.25;color:var(--ink)}.med-real b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .med-ctx{font-size:15px;color:var(--muted);margin-top:4px!important}.med-ctx b{color:var(--ink);font-weight:600;white-space:nowrap}
 .med-ctx .ruim{color:var(--bad);font-weight:600;white-space:nowrap}.med-ctx .bom{color:var(--good);font-weight:600;white-space:nowrap}
-.med-sd{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}.med-sd input{min-height:40px;padding:2px 10px;width:auto}
+.med-sd{grid-column:2;grid-row:1;position:relative;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.med-dtb{display:inline-flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit;font-size:16px;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer}
+.med-dtb:hover{border-color:var(--ink)}
+.med-dtin{position:absolute;left:0;bottom:0;width:100%;height:44px;opacity:0;pointer-events:none}
 .med-tot{grid-column:1/-1;position:relative;height:10px;border-radius:5px;background:var(--cell);margin:14px 0 18px}
 .med-tot i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--blue)}
 .med-tot b{position:absolute;top:-5px;width:2px;height:20px;background:var(--ink);margin-left:-1px}
@@ -837,7 +840,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .med-pc{font-family:var(--mono);font-size:16px;color:var(--muted)}
 /* medição em linhas */
 .ml-list{padding:0;overflow:hidden}
-.ml-head,.ml-row{display:grid;grid-template-columns:minmax(180px,2.4fr) 68px 68px 72px minmax(70px,1fr) 168px minmax(170px,210px);gap:12px;align-items:center;padding:8px 14px}
+.ml-head,.ml-row{display:grid;grid-template-columns:minmax(180px,2.4fr) 70px 70px 84px minmax(70px,1fr) 168px minmax(170px,210px);gap:12px;align-items:center;padding:8px 14px}
 .ml-head{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
 .ml-row{border-bottom:1px solid var(--line);border-left:4px solid transparent}
 .ml-row.changed{border-left-color:var(--blue);background:color-mix(in srgb,var(--blue) 5%,var(--surface))}
@@ -2094,6 +2097,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function statusHoje() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 17); }
   function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
   function numv(v) { return v === '' || v == null ? NaN : parseFloat(String(v).replace('%', '').replace(',', '.')); }
+  function fmt2(v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
+  function fdata(ms) { if (ms == null) return '—'; var d = new Date(ms); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + d.getUTCFullYear(); }
   function fmt1(v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); }
 
   function parseProject(text, fileName) {
@@ -3079,9 +3084,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var q5 = [0, 25, 50, 75, 100].map(function (v) { return '<button type="button" data-a="mset:' + t.uid + ':' + v + '" aria-pressed="' + (a === v) + '">' + v + '%</button>'; }).join('');
       itens += '<div class="ml-row' + (a !== ant ? ' changed' : '') + '">' +
         '<div class="ml-nome"><b>' + esc(nome) + '</b><span class="mono">' + esc(t.wbs) + (atras ? ' · <em>abaixo do previsto</em>' : '') + '</span></div>' +
-        '<div class="ml-num mono" data-l="Previsto">' + fmt1(pp) + '%</div>' +
-        '<div class="ml-num mono" data-l="Anterior">' + ant + '%</div>' +
-        '<div class="ml-dt mono" data-l="Término">' + fdate(t.finish) + '</div>' +
+        '<div class="ml-num mono" data-l="Previsto">' + fmt2(pp) + '%</div>' +
+        '<div class="ml-num mono" data-l="Anterior">' + fmt2(P.base[t.uid] || 0) + '%</div>' +
+        '<div class="ml-dt mono" data-l="Término">' + fdata(t.finish) + '</div>' +
         '<div class="ml-bar med-bar" aria-hidden="true"><i style="width:' + a + '%"></i><b style="left:' + Math.min(100, pp) + '%"></b></div>' +
         '<div class="ml-ctl"><button type="button" class="ml-step" data-a="mstep:' + t.uid + ':-10" aria-label="Menos 10%">−10</button>' +
         '<input class="ml-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + a + '" aria-label="% concluído: ' + esc(t.name) + '"><span class="med-pc">%</span>' +
@@ -3091,10 +3096,11 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' <span class="med-n">' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '</span></button>'; };
     return '<section class="card med-head">' +
         '<div class="med-res">' +
-          '<div class="med-frase"><p class="med-real">A obra está em <b>' + fmt1(real) + '%</b></p>' +
-          '<p class="med-ctx">O previsto para ' + fdate(P.statusDate) + ' era <b>' + fmt1(prev) + '%</b>. ' + medDesvio(real - prev) + '</p></div>' +
-          '<div class="med-tot" role="img" aria-label="Real ' + fmt1(real) + '% contra previsto ' + fmt1(prev) + '%"><i style="width:' + Math.min(100, real) + '%"></i><b style="left:' + Math.min(100, prev) + '%"><span>previsto</span></b></div>' +
-          '<div class="med-sd"><label for="pSd">Medição do dia</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
+          '<div class="med-frase"><p class="med-real">A obra está em <b>' + fmt2(real) + '%</b></p>' +
+          '<p class="med-ctx">O previsto para ' + fdata(P.statusDate) + ' era <b>' + fmt2(prev) + '%</b>. ' + medDesvio(real - prev) + '</p></div>' +
+          '<div class="med-tot" role="img" aria-label="Real ' + fmt2(real) + '% contra previsto ' + fmt2(prev) + '%"><i style="width:' + Math.min(100, real) + '%"></i><b style="left:' + Math.min(100, prev) + '%"><span>previsto</span></b></div>' +
+          '<div class="med-sd"><span id="pSdRot">Medição do dia</span><button type="button" class="med-dtb" data-psd aria-labelledby="pSdRot pSdTxt"><span id="pSdTxt">' + fdata(P.statusDate) + '</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button>' +
+          '<input id="pSd" class="med-dtin" type="date" tabindex="-1" aria-hidden="true" value="' + isoDay(P.statusDate) + '"></div>' +
         '</div>' +
         '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
         '<input id="medQ" type="search" placeholder="Buscar tarefa ou EAP" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
@@ -3426,7 +3432,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   // Desvio da medição em palavras: "x pontos abaixo do previsto" ou "em dia".
   function medDesvio(d) {
     if (Math.abs(d) < 0.05) return '<span class="bom">A obra está em dia.</span>';
-    var t = fmt1(Math.abs(d)) + (Math.abs(d) === 1 ? ' ponto' : ' pontos');
+    var t = fmt2(Math.abs(d)) + ' pontos';
     return d < 0 ? 'Está <span class="ruim">' + t + ' abaixo</span> do previsto.' : 'Está <span class="bom">' + t + ' acima</span> do previsto.';
   }
 
@@ -4402,6 +4408,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     render();
     var again = body.querySelector('[data-a="' + keep + '"]');
     if (again) again.focus({ preventScroll: true });
+  });
+  // Medição: o botão com a data em dia/mês/ano abre o calendário do aparelho, sem redesenhar a tela.
+  app.addEventListener('click', function (e) {
+    if (!e.target.closest || !e.target.closest('[data-psd]')) return;
+    var i = document.getElementById('pSd'); if (!i) return;
+    try { i.showPicker(); } catch (x) { i.style.pointerEvents = 'auto'; i.focus(); i.click(); }
   });
   app.addEventListener('toggle', function (e) { if (e.target.id === 'pcols') S.pcolsOpen = e.target.open; }, true);
   document.addEventListener('click', function (e) { var d = document.getElementById('pcols'); if (d && d.open && !d.contains(e.target)) { d.open = false; S.pcolsOpen = false; } });
