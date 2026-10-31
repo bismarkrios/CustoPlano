@@ -25,7 +25,7 @@ def _ppc(semanas: dict, hoje: dt.date) -> dict | None:
             for a in ap:
                 if a.get("st") == "nok" and a.get("causa"):
                     causas[a["causa"]] = causas.get(a["causa"], 0) + 1
-            return {"semana": sem, "ppc": round(100 * ok / (ok + nok)), "ok": ok, "nok": nok, "causas": causas}
+            return {"semana": sem, "ppc": round(100 * ok / (ok + nok), 2), "ok": ok, "nok": nok, "causas": causas}
     return None
 
 
@@ -46,7 +46,7 @@ def _qualidade(con, uid: int, hoje: dt.date) -> dict:
     dias = [(dt.date.fromisoformat(n["fechada_em"][:10]) - dt.date.fromisoformat(n["criado_em"][:10])).days
             for n in ncs if n["status"] == "fechada" and n["fechada_em"] and n["fechada_em"][:10] >= desde]
     return {"inspecoes_30d": len(insp), "reinspecoes_30d": len(insp) - len(primeiras),
-            "aprovacao_1a_pct": round(100 * aprov / len(primeiras)) if primeiras else None,
+            "aprovacao_1a_pct": round(100 * aprov / len(primeiras), 2) if primeiras else None,
             "servicos_inspecionados": sorted({i["servico"] for i in insp}),
             "ncs_abertas_por_servico": por_servico, "ncs_sem_responsavel": sum(1 for n in abertas if not n["responsavel"]),
             "ncs_fechadas_30d": len(dias), "dias_medio_fechamento": round(sum(dias) / len(dias), 1) if dias else None}

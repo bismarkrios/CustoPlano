@@ -56,7 +56,7 @@ def _sem_quebra_numeros(dados, larg, direita, folga=8.5):
                                                            leading=c.style.leading * f))
     return larg
 
-def _br(v: float, casas: int = 1) -> str:
+def _br(v: float, casas: int = 2) -> str:
     return f"{v:.{casas}f}".replace(".", ",")
 
 
@@ -166,7 +166,7 @@ def _plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
 
-def _sn(v: float, casas: int = 1) -> str:
+def _sn(v: float, casas: int = 2) -> str:
     """Número com sinal: +1,2 ou -1,2; zero sai sem sinal (0,0)."""
     txt = _br(abs(v), casas)
     if txt.strip("0,") == "":
@@ -397,7 +397,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         ok = sum(1 for a in curto[s_].values() if a.get("st") == "ok")
         nok = sum(1 for a in curto[s_].values() if a.get("st") == "nok")
         if ok + nok:
-            ppc_sem.append((s_, ok, nok, round(100 * ok / (ok + nok))))
+            ppc_sem.append((s_, ok, nok, 100 * ok / (ok + nok)))
     causas: dict[str, int] = {}
     for s_ in semanas:
         for a in curto[s_].values():
@@ -445,7 +445,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         frases.append(f"O avanço físico real é de {_br(real)}%, contra {_br(prev)}% previstos na linha de base, "
                       f"um desvio de {_sn(desv)} pontos percentuais.")
     if ppc and VP and tipo in ("consolidado", "curto"):
-        frases.append(f"O PPC da semana de {_d(ppc['semana'])} foi de {ppc['ppc']}%.")
+        frases.append(f"O PPC da semana de {_d(ppc['semana'])} foi de {_br(ppc['ppc'], 2)}%.")
     if tipo == "curto" and causas:
         fc = frase_causas()
         frases.append(f"Nas últimas semanas, {fc[0].lower()}{fc[1:]}.")
@@ -474,7 +474,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
     if tipo in ("consolidado", "qualidade", "inspecoes", "ncs") and VQ and indicadores is not None:
         ap_ = qual.get("aprovacao_1a_pct")
         frases.append(f"Nos 30 dias anteriores à data de status, foram registradas {_plural(qual.get('inspecoes_30d', 0), 'inspeção', 'inspeções')}"
-                      + (f", com {ap_}% de aprovação na primeira inspeção," if ap_ is not None else "")
+                      + (f", com {_br(ap_, 2)}% de aprovação na primeira inspeção," if ap_ is not None else "")
                       + f" e há {_plural(ind.get('ncs_abertas', 0), 'não conformidade aberta', 'não conformidades abertas')}.")
     if tipo == "modelos":
         mods = QE.get("modelos") or []
@@ -552,7 +552,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
                   ["Desvio", Pa(f"<font color='{cor_desv(desv)}'><b>{_sn(desv)} p.p.</b></font>", "tr"),
                    "real menos previsto"]]
         if ppc and tipo != "medicao":
-            linhas.append(["PPC (planejamento semanal)", Pa(f"<font color='{cor_desv(ppc['ppc'], 80)}'><b>{ppc['ppc']}%</b></font>", "tr"),
+            linhas.append(["PPC (planejamento semanal)", Pa(f"<font color='{cor_desv(ppc['ppc'], 80)}'><b>{_br(ppc['ppc'], 2)}%</b></font>", "tr"),
                            f"semana de {_d(ppc['semana'])}: {ppc['ok']} de {ppc['ok'] + ppc['nok']} pacotes cumpridos (meta: 80%)"])
         txt(f"A {prox()} resume o avanço físico da obra na data de status. O avanço real está "
             f"{'acima do previsto' if desv > 0.05 else 'abaixo do previsto' if desv < -0.05 else 'em linha com o previsto'} "
@@ -801,7 +801,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         if not C:
             return
         dv = lambda v: "0" if abs(v) < 0.5 else ("-" if v < 0 else "+") + rs(abs(v))  # noqa: E731
-        ix = lambda v: "-" if v is None else _br(v, 3)  # noqa: E731
+        ix = lambda v: "-" if v is None else _br(v, 2)  # noqa: E731
         cols = ("oin", "oatu", "contratado", "incorrido", "saldo_contrato", "saldo_pedido", "comprometido", "a_contratar",
                 "estimativa")
 
@@ -891,7 +891,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         linhas = [["Inspeções realizadas", str(qual.get("inspecoes_30d", 0)),
                    (", ".join(servs[:6]) + ("..." if len(servs) > 6 else "")) if servs else "nenhum serviço inspecionado"],
                   ["Reinspeções", str(qual.get("reinspecoes_30d", 0)), ""],
-                  ["Aprovação na primeira inspeção", "-" if ap is None else f"{ap}%", ""],
+                  ["Aprovação na primeira inspeção", "-" if ap is None else f"{_br(ap, 2)}%", ""],
                   ["NCs abertas (na data de status)", destaque(str(ind.get("ncs_abertas", 0)), ind.get("ncs_abertas")),
                    f"{ind.get('ncs_altas', 0)} de gravidade alta, {qual.get('ncs_sem_responsavel', 0)} sem responsável"],
                   ["NCs com prazo vencido", destaque(str(ind.get("ncs_vencidas", 0)), ind.get("ncs_vencidas")), ""],
@@ -1011,7 +1011,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             txt("O percentual de pacotes concluídos (PPC) é a razão entre os pacotes cumpridos e os planejados para a "
                 f"semana. A meta é de 80%. A {prox()} mostra as últimas semanas com apontamento.")
             add(tabela("PPC por semana", ["Semana de", "Pacotes apontados", "Cumpridos", "Não cumpridos", "PPC"],
-                       [[_d(s_), str(ok + nok), str(ok), str(nok), destaque(f"{v}%", v < 80)] for s_, ok, nok, v in reversed(ppc_sem)],
+                       [[_d(s_), str(ok + nok), str(ok), str(nok), destaque(f"{_br(v, 2)}%", v < 80)] for s_, ok, nok, v in reversed(ppc_sem)],
                        [W - 12 * cm, 3.4 * cm, 2.8 * cm, 3.2 * cm, 2.6 * cm], direita=(1, 2, 3, 4)))
         else:
             txt("Ainda não há pacotes apontados no planejamento de curto prazo.")
@@ -1183,10 +1183,10 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
             itens.append("<b>Plano de ataque:</b> todos os pacotes previstos até a data base do plano foram executados")
     if VP and tipo in ("consolidado", "curto"):
         if ppc and ppc["ppc"] < 80:
-            itens.append(f"<b>Planejamento semanal:</b> PPC de {ppc['ppc']}%, abaixo da meta de 80%; analisar as causas "
+            itens.append(f"<b>Planejamento semanal:</b> PPC de {_br(ppc['ppc'], 2)}%, abaixo da meta de 80%; analisar as causas "
                          "registradas e definir ações para as que se repetem")
         elif ppc:
-            itens.append(f"<b>Planejamento semanal:</b> PPC de {ppc['ppc']}%, dentro da meta de 80%")
+            itens.append(f"<b>Planejamento semanal:</b> PPC de {_br(ppc['ppc'], 2)}%, dentro da meta de 80%")
         if tipo == "curto" and causas:
             mx = max(causas.values())
             top = [k for k, v in causas.items() if v == mx]
@@ -1245,7 +1245,7 @@ def gerar(p: Projeto | None, atual: dict, anterior: dict, data_status: dt.dateti
         else:
             ap_ = qual.get("aprovacao_1a_pct")
             itens.append(f"<b>Inspeções:</b> {_plural(n_insp, 'inspeção registrada', 'inspeções registradas')} nos 30 dias anteriores "
-                         "à data de status" + (f", com {ap_}% de aprovação na primeira inspeção" if ap_ is not None else "")
+                         "à data de status" + (f", com {_br(ap_, 2)}% de aprovação na primeira inspeção" if ap_ is not None else "")
                          + ("; reforçar o controle dos serviços com mais reprovações" if ap_ is not None and ap_ < 90 else ""))
     if VQ and tipo in ("consolidado", "qualidade", "inspecoes", "ncs"):
         venc = len(ncs_venc) if QE else ind.get("ncs_vencidas", 0)

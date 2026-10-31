@@ -540,11 +540,13 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .ppc-card .kpi-v{font-size:42px}
 .ppc-card .bar{background:var(--panel-line)}
 .cp-local{display:block;font-size:12.5px;font-weight:400;color:var(--muted);margin-top:2px;white-space:nowrap}
-.hist{display:flex;align-items:flex-end;gap:4px;height:140px}
+.hist{display:flex;align-items:flex-end;gap:4px;height:180px}
 .hist div{flex:1;min-width:0;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px;justify-content:flex-end;height:100%}
 .hist i{width:100%;border-radius:2px 2px 0 0;background:var(--line);display:block}
 .hist i.now{background:var(--accent)}
 .hist span{font-family:var(--mono);font-size:10px;color:var(--muted)}
+/* valor com 2 casas na vertical, para não encostar no da coluna ao lado */
+.hist span:first-child{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;line-height:1}
 .tabs{display:inline-flex;gap:4px;padding:4px;border-radius:6px;background:var(--cell);max-width:100%;overflow-x:auto;scrollbar-width:none}
 .tabs button{white-space:nowrap;flex-shrink:0}
 .sup-tbl td.mono{white-space:nowrap}.sup-tbl td .chip{white-space:nowrap}.sup-tbl td:first-child{min-width:170px}.sup-tbl .btn-sm{white-space:nowrap}.sup-tbl td:nth-child(2){white-space:nowrap}
@@ -1786,7 +1788,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   };
 
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function pct(v) { return (Math.round(v * 1000) / 10).toString().replace('.', ',') + '%'; }
+  function pct(v) { return fmt2(v * 100) + '%'; }
   function status(key, week) {
     if (S.st[key]) return S.st[key];
     if (SEED[key] && week <= CUR) return SEED[key];
@@ -1871,12 +1873,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       }
     }
     var hx = (CUR / WEEKS * W).toFixed(1);
-    var ppc = Math.round(M.okN / M.tasks.length * 100);
+    var ppc = M.okN / M.tasks.length * 100;
     return '' +
       '<div class="grid4">' +
         '<div class="card"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + pct(M.feito / total) + '</div><div class="kpi-s">previsto ' + pct(M.prev / total) + '</div>' +
           '<div class="bar" style="margin-top:8px"><i style="width:' + (M.prev / total * 100) + '%;background:var(--line)"></i><i style="width:' + (M.feito / total * 100) + '%;background:var(--accent)"></i></div></div>' +
-        '<div class="card"><div class="kpi-t">PPC · ' + semMes(CUR).replace(' · Semana ', ' · sem. ') + '</div><div class="kpi-v">' + ppc + '%</div><div class="kpi-s">' + M.okN + ' de ' + M.tasks.length + ' pacotes concluídos · meta 80%</div></div>' +
+        '<div class="card"><div class="kpi-t">PPC · ' + semMes(CUR).replace(' · Semana ', ' · sem. ') + '</div><div class="kpi-v">' + fmt2(ppc) + '%</div><div class="kpi-s">' + M.okN + ' de ' + M.tasks.length + ' pacotes concluídos · meta 80%</div></div>' +
         '<div class="card"><div class="kpi-t">Restrições abertas</div><div class="kpi-v">' + M.abertas + '</div><div class="kpi-s"><span class="due">' + M.semana + ' vencem nesta semana</span></div><button class="more" type="button" data-a="nav:res">Ver restrições →</button></div>' +
         '<div class="card"><div class="kpi-t">Pacotes atrasados</div><div class="kpi-v" style="color:var(--bad)">' + M.atr + '</div><div class="kpi-s">de ' + M.prev + ' previstos até hoje</div><button class="more" type="button" data-a="nav:lb">Abrir linha de balanço →</button></div>' +
       '</div>' +
@@ -1895,7 +1897,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '</section>' +
       '</div>' +
       '<section class="card"><div class="card-head"><h2>Avanço por serviço</h2></div><div class="svc-prog">' +
-        M.prog.map(function (p) { return '<div><span style="display:flex;align-items:center;gap:6px;font-weight:500"><i class="sw" style="background:' + p.s.cor + '"></i>' + p.s.nome + '</span><div class="bar" style="height:6px"><i style="width:' + p.d * 10 + '%;background:' + p.s.cor + '"></i></div><span class="mono" style="color:' + (p.a ? 'var(--bad)' : 'var(--muted)') + '">' + p.d * 10 + '% · ' + p.nota + '</span></div>'; }).join('') +
+        M.prog.map(function (p) { return '<div><span style="display:flex;align-items:center;gap:6px;font-weight:500"><i class="sw" style="background:' + p.s.cor + '"></i>' + p.s.nome + '</span><div class="bar" style="height:6px"><i style="width:' + p.d * 10 + '%;background:' + p.s.cor + '"></i></div><span class="mono" style="color:' + (p.a ? 'var(--bad)' : 'var(--muted)') + '">' + fmt2(p.d * 10) + '% · ' + p.nota + '</span></div>'; }).join('') +
       '</div></section>';
   }
 
@@ -1956,7 +1958,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     } else {
       side = '<div class="card-head"><h2>Progresso por serviço</h2></div><p style="font-size:13.5px;color:var(--muted);margin-bottom:12px">Selecione um pacote na grade para ver detalhes e atualizar o status.</p>' +
         '<div style="display:flex;flex-direction:column;gap:12px">' + M.prog.map(function (p) {
-          return '<div style="display:flex;flex-direction:column;gap:5px"><span style="display:flex;align-items:center;gap:8px;font-size:13.5px"><i class="sw" style="background:' + p.s.cor + '"></i><span style="flex:1;font-weight:500">' + p.s.nome + '</span><span class="mono">' + p.d * 10 + '%</span></span><div class="bar" style="height:6px"><i style="width:' + p.d * 10 + '%;background:' + p.s.cor + '"></i></div></div>';
+          return '<div style="display:flex;flex-direction:column;gap:5px"><span style="display:flex;align-items:center;gap:8px;font-size:13.5px"><i class="sw" style="background:' + p.s.cor + '"></i><span style="flex:1;font-weight:500">' + p.s.nome + '</span><span class="mono">' + fmt2(p.d * 10) + '%</span></span><div class="bar" style="height:6px"><i style="width:' + p.d * 10 + '%;background:' + p.s.cor + '"></i></div></div>';
         }).join('') + '</div>';
     }
     return '<div class="split"><section class="card" style="display:flex;flex-direction:column;gap:14px">' +
@@ -1968,7 +1970,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   }
 
   function vCP(M) {
-    var ppc = Math.round(M.okN / M.tasks.length * 100);
+    var ppc = M.okN / M.tasks.length * 100;
     var hist = HIST.slice(Math.max(0, CUR - 9), CUR - 1).map(function (v, i, arr) { return { v: v, w: CUR - arr.length + i }; });
     var cc = {};
     M.tasks.forEach(function (t) { if (t.st === 'atrasado') { var k = S.causes[t.key] || '—'; cc[k] = (cc[k] || 0) + 1; } });
@@ -1983,12 +1985,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     }).join('');
     return '<div class="split"><section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl" style="min-width:860px"><thead><tr><th scope="col">Pacote</th><th scope="col">Local</th><th scope="col">Responsável</th><th scope="col" style="width:240px">Execução</th><th scope="col" style="width:200px">Causa do não cumprimento</th></tr></thead><tbody>' + rows + '</tbody></table></div></section>' +
       '<aside style="display:flex;flex-direction:column;gap:14px">' +
-        '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + ppc + '%</span>' +
+        '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + fmt2(ppc) + '%</span>' +
           '<div class="bar"><i style="width:' + ppc + '%;background:var(--accent)"></i><i style="left:80%;width:2px;background:var(--panel-ink);border-radius:0"></i></div>' +
           '<span style="font-size:12.5px;color:var(--panel-muted)">' + M.okN + ' de ' + M.tasks.length + ' concluídos · meta 80% · ' + (M.tasks.length - M.okN - M.nokN) + ' sem apontamento</span></div>' +
         '<section class="card"><div class="card-head"><h2>Histórico do PPC</h2></div><div class="hist">' +
-          hist.map(function (h) { return '<div><span>' + h.v + '%</span><i style="height:' + h.v + '%"></i><span>S' + h.w + '</span></div>'; }).join('') +
-          '<div><span style="color:var(--ink);font-weight:600">' + ppc + '%</span><i class="now" style="height:' + Math.max(ppc, 2) + '%"></i><span style="color:var(--ink);font-weight:600">S' + CUR + '</span></div>' +
+          hist.map(function (h) { return '<div><span>' + fmt2(h.v) + '%</span><i style="height:' + h.v + '%"></i><span>S' + h.w + '</span></div>'; }).join('') +
+          '<div><span style="color:var(--ink);font-weight:600">' + fmt2(ppc) + '%</span><i class="now" style="height:' + Math.max(ppc, 2) + '%"></i><span style="color:var(--ink);font-weight:600">S' + CUR + '</span></div>' +
         '</div></section>' +
         '<section class="card"><div class="card-head"><h2>Causas de não cumprimento</h2></div>' +
           (keys.length ? keys.map(function (k) { return '<div style="display:grid;grid-template-columns:130px 1fr 18px;gap:10px;align-items:center;font-size:13px;padding:4px 0"><span>' + (k === '—' ? 'Sem causa informada' : CAUSAS[k]) + '</span><div class="bar"><i style="width:' + Math.round(cc[k] / maxC * 100) + '%;background:var(--bad)"></i></div><span class="mono" style="text-align:right">' + cc[k] + '</span></div>'; }).join('')
@@ -2071,7 +2073,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var name = r.sum
         ? '<button type="button" class="caret" data-a="tg:' + key + '" aria-expanded="' + !!S.open[key] + '" aria-label="' + (S.open[key] ? 'Recolher ' : 'Expandir ') + esc(r.nome) + '">' + caret + '</button>'
         : '<span style="width:22px;flex-shrink:0"></span>';
-      var pctTxt = r.late ? '<span class="pct" style="color:var(--bad)">' + r.pct + '%</span>' : '<span class="pct">' + r.pct + '%</span>';
+      var pctTxt = r.late ? '<span class="pct" style="color:var(--bad)">' + fmt2(r.pct) + '%</span>' : '<span class="pct">' + fmt2(r.pct) + '%</span>';
       return '<div class="prj-row' + (r.sum === 'top' ? ' sum top' : (r.sum ? ' sum' : '')) + (r.late && !r.sum ? ' late' : '') + '">' +
         '<span class="num">' + r.id + '</span>' +
         '<span><span class="prj-name" style="padding-left:' + (r.lvl * 16) + 'px">' + name + '<span style="overflow:hidden;text-overflow:ellipsis">' + (r.lvl ? '<span class="mono" style="color:var(--muted);margin-right:6px">' + r.wbs + '</span>' : '') + esc(r.nome) + '</span></span></span>' +
@@ -2103,13 +2105,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function hrs(d) { var m = /PT(\d+(?:\.\d+)?)H(\d+(?:\.\d+)?)M(\d+(?:\.\d+)?)S/.exec(d || ''); return m ? +m[1] + m[2] / 60 + m[3] / 3600 : 0; }
   function ptDur(h) { var H = Math.floor(h), Mi = Math.round((h - H) * 60); if (Mi === 60) { H++; Mi = 0; } return 'PT' + H + 'H' + Mi + 'M0S'; }
   function pdate(s) { var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s || ''); return m ? Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) : null; }
-  function fdate(ms) { if (ms == null) return '—'; var d = new Date(ms); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + String(d.getUTCFullYear()).slice(2); }
+  function fdate(ms) { return fdata(ms); }
   function statusHoje() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 17); }
   function isoDay(ms) { return new Date(ms).toISOString().slice(0, 10); }
   function numv(v) { return v === '' || v == null ? NaN : parseFloat(String(v).replace('%', '').replace(',', '.')); }
   function fmt2(v) { return (Math.round(v * 100) / 100).toFixed(2).replace('.', ','); }
   function fdata(ms) { if (ms == null) return '—'; var d = new Date(ms); return ('0' + d.getUTCDate()).slice(-2) + '/' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '/' + d.getUTCFullYear(); }
-  function fmt1(v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); }
+  function fmt1(v) { return fmt2(v); }
 
   function parseProject(text, fileName) {
     var doc = new DOMParser().parseFromString(text, 'application/xml');
@@ -2363,8 +2365,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var caret = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>';
     // coluna Fornecedor: aparece quando há fornecedor em Suprimentos; cada tarefa herda o da linha resumo mais próxima
     var FO = fornecedores();
-    var LARG = { dur: 64, bini: 90, bfim: 90, desv: 96, pred: 110, peso: 66 }, liga = function (k) { return S.pcols.indexOf(k) >= 0; };
-    var colsW = [44, 300, 160].concat(liga('dur') ? [LARG.dur] : [], [90, 90], ['bini', 'bfim', 'desv', 'pred', 'peso'].filter(liga).map(function (k) { return LARG[k]; }), [66]);
+    var LARG = { dur: 64, bini: 106, bfim: 106, desv: 96, pred: 110, peso: 76 }, liga = function (k) { return S.pcols.indexOf(k) >= 0; };
+    var colsW = [44, 300, 160].concat(liga('dur') ? [LARG.dur] : [], [106, 106], ['bini', 'bfim', 'desv', 'pred', 'peso'].filter(liga).map(function (k) { return LARG[k]; }), [76]);
     var pcolsCss = colsW.map(function (w) { return w + 'px'; }).join(' ') + ' minmax(0,1fr)', pcolsSoma = colsW.reduce(function (x, y) { return x + y; }, 0);
     var hOpc = function (lista) { return lista.filter(liga).map(function (k) { var r = { dur: 'Dur.', bini: 'Início LB', bfim: 'Término LB', desv: 'Desvio', pred: 'Predec.', peso: 'Peso' }[k]; return '<span' + (k === 'peso' || k === 'desv' ? ' style="text-align:right"' : '') + '>' + r + '</span>'; }).join(''); };
     var colMenu = '<details class="pcols" id="pcols"' + (S.pcolsOpen ? ' open' : '') + '><summary>Colunas' + (S.pcols.length ? ' · +' + S.pcols.length : '') + ' <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></summary><div class="pcols-menu">' +
@@ -2640,7 +2642,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     // PPC da última semana fechada: no meio da semana o PPC da semana corrente ainda não diz nada
     var perF = sd < per0.ate ? cpPer(per0.a - dia) : per0, pacF = cpSemana(perF.a, perF.b), pOk = 0;
     pacF.forEach(function (t) { if (cpEstado(perF.sem, t).st === 'ok') pOk++; });
-    var ppc = pacF.length ? Math.round(pOk / pacF.length * 100) : null;
+    var ppc = pacF.length ? pOk / pacF.length * 100 : null;
     var hist = ((API && S.hist) || []).map(function (h) { return { t: Date.parse(h.data_status + 'T17:00:00Z'), r: +h.avanco_real, p: +h.avanco_prev, ds: h.data_status }; })
       .filter(function (h) { return h.t < sd; }).sort(function (a, b) { return a.t - b.t; });
     var ult = hist.length ? hist[hist.length - 1] : null;
@@ -2663,7 +2665,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     html += '<div class="grid4">' +
       '<div class="card card-link" data-a="nav:med" tabindex="0" role="link" title="Abrir a medição"><div class="kpi-t">Avanço físico real</div><div class="kpi-v">' + fmt1(real) + '%</div><div class="kpi-s">previsto ' + fmt1(prev) + '% · <b style="color:' + cor(dv >= -0.05) + '">' + sinal(dv) + ' p.p.</b></div>' +
         '<div class="bar" style="margin-top:10px"><i style="width:' + Math.min(100, prev) + '%;background:var(--line)"></i><i style="width:' + Math.min(100, real) + '%;background:var(--accent)"></i></div></div>' +
-      '<div class="card card-link" data-a="nav:cp" tabindex="0" role="link" title="Abrir o curto prazo"><div class="kpi-t">PPC · ' + cpRot(perF).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : ppc + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pacF.length + ' pacotes concluídos · meta 80%</div></div>' +
+      '<div class="card card-link" data-a="nav:cp" tabindex="0" role="link" title="Abrir o curto prazo"><div class="kpi-t">PPC · ' + cpRot(perF).replace('Semana', 'semana') + '</div><div class="kpi-v"' + (ppc != null ? ' style="color:' + cor(ppc >= 80) + '"' : '') + '>' + (ppc == null ? '—' : fmt2(ppc) + '%') + '</div><div class="kpi-s">' + pOk + ' de ' + pacF.length + ' pacotes concluídos · meta 80%</div></div>' +
       '<div class="card' + (atras.length ? ' card-link" data-a="rolar:pnAtras" tabindex="0" role="link" title="Ver a lista de tarefas atrasadas' : '') + '"><div class="kpi-t">Tarefas atrasadas</div><div class="kpi-v" style="color:' + cor(!atras.length) + '">' + atras.length + '</div><div class="kpi-s">' + (atras.length ? 'de ' + fs.filter(function (t) { var f = fimLB(t); return f != null && f < sd; }).length + ' que deviam estar prontas' : 'tudo o que devia terminar está pronto') + '</div></div>' +
       '<div class="card card-link" data-a="nav:prj" tabindex="0" role="link" title="Abrir o cronograma"><div class="kpi-t">Prazo final</div><div class="kpi-v" style="color:' + (varFim == null ? 'inherit' : cor(varFim <= 0)) + '">' + (varFim == null ? fdate(fim) : varFim === 0 ? 'No prazo' : (varFim > 0 ? '+' : '−') + Math.abs(varFim) + (Math.abs(varFim) === 1 ? ' dia' : ' dias')) + '</div><div class="kpi-s">' + (fimB ? 'término ' + fdate(fim) + ' · linha de base ' + fdate(fimB) : 'sem linha de base salva no Project') + '</div></div>' +
       '</div>';
@@ -2839,7 +2841,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<td data-rot="Responsável">' + esc(FN[t.uid] || '—') + '</td><td class="mono" data-rot="Término" style="white-space:nowrap">' + (t.finish != null ? fdate(t.finish) : '—') + '</td>' +
         '<td class="cp-exec"><div class="seg"><button type="button" class="b-ok" data-a="cpok:' + t.uid + '" aria-pressed="' + (e.st === 'ok') + '">Concluída</button><button type="button" class="b-bad" data-a="cpnok:' + t.uid + '" aria-pressed="' + (e.st === 'nok') + '">Não concluída</button></div></td><td>' + sel + '</td></tr>';
     }).join('');
-    var tot = lista.length, ppc = tot ? Math.round(ok / tot * 100) : 0;
+    var tot = lista.length, ppc = tot ? ok / tot * 100 : 0;
     // histórico: semanas anteriores que tiveram apontamento
     var hist = [];
     var pk = per, ant = [];
@@ -2847,7 +2849,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     ant.forEach(function (q, j) {
       if (!CPD || !CPD[q.sem]) return;
       var lk = cpSemana(q.a, q.b); if (!lk.length) return;
-      hist.push({ v: Math.round(lk.filter(function (t) { return cpEstado(q.sem, t).st === 'ok'; }).length / lk.length * 100), r: fdate(q.a).slice(0, 5), w: S.cpw - (ant.length - j), n: lk.length });
+      hist.push({ v: lk.filter(function (t) { return cpEstado(q.sem, t).st === 'ok'; }).length / lk.length * 100, r: fdate(q.a).slice(0, 5), w: S.cpw - (ant.length - j), n: lk.length });
     });
     var keys = Object.keys(cc).sort(function (x, y) { return cc[y] - cc[x]; });
     var maxC = Math.max.apply(null, [1].concat(keys.map(function (x) { return cc[x]; })));
@@ -2861,13 +2863,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         (rows ? '<div class="scroll-x"><table class="tbl cp-tbl" style="min-width:740px"><thead><tr><th scope="col">Pacote</th><th scope="col">Responsável</th><th scope="col">Término</th><th scope="col">Execução</th><th scope="col" style="width:176px">Causa</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
           : '<p class="kpi-s" style="padding:18px">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>' +
       '<aside style="display:flex;flex-direction:column;gap:14px">' +
-        '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? ppc + '%' : '—') + '</span>' +
+        '<div class="ppc-card"><span style="font-size:13px;color:var(--panel-muted)">PPC: Percentual de Pacotes Concluídos</span><span class="kpi-v">' + (tot ? fmt2(ppc) + '%' : '—') + '</span>' +
           '<div class="bar"><i style="width:' + ppc + '%;background:var(--accent)"></i><i style="left:80%;width:2px;background:var(--panel-ink);border-radius:0"></i></div>' +
           '<span style="font-size:12.5px;color:var(--panel-muted)">' + ok + ' de ' + tot + ' concluídos · meta 80% · ' + (tot - ok - nok) + ' sem apontamento</span></div>' +
         '<section class="card"><div class="card-head"><h2>Histórico do PPC</h2></div>' +
           (hist.length ? '' : '<p class="kpi-s" style="margin:0 0 8px">As semanas apontadas aparecem aqui.</p>') + '<div class="hist">' +
-          hist.map(function (h) { return '<button type="button" class="hb" data-a="cpwa:' + h.w + '" title="PPC ' + h.v + '% · ' + h.n + ' pacotes. Toque para ver a semana de ' + h.r + '"><span>' + h.v + '%</span><i style="height:' + Math.max(h.v, 2) + '%"></i><span>' + h.r + '</span></button>'; }).join('') +
-          '<div><span style="color:var(--ink);font-weight:600">' + (tot ? ppc + '%' : '—') + '</span><i class="now" style="height:' + Math.max(ppc, 2) + '%"></i><span style="color:var(--ink);font-weight:600">' + fdate(a).slice(0, 5) + '</span></div>' +
+          hist.map(function (h) { return '<button type="button" class="hb" data-a="cpwa:' + h.w + '" title="PPC ' + fmt2(h.v) + '% · ' + h.n + ' pacotes. Toque para ver a semana de ' + h.r + '"><span>' + fmt2(h.v) + '%</span><i style="height:' + Math.max(h.v, 2) + '%"></i><span>' + h.r + '</span></button>'; }).join('') +
+          '<div><span style="color:var(--ink);font-weight:600">' + (tot ? fmt2(ppc) + '%' : '—') + '</span><i class="now" style="height:' + Math.max(ppc, 2) + '%"></i><span style="color:var(--ink);font-weight:600">' + fdate(a).slice(0, 5) + '</span></div>' +
         '</div></section>' +
         '<section class="card"><div class="card-head"><h2>Causas de não cumprimento</h2></div>' +
           (keys.length ? keys.map(function (x) { return '<div style="display:grid;grid-template-columns:130px 1fr 18px;gap:10px;align-items:center;font-size:13px;padding:4px 0"><span>' + (x === '—' ? 'Sem causa informada' : CAUSAS[x]) + '</span><div class="bar"><i style="width:' + Math.round(cc[x] / maxC * 100) + '%;background:var(--bad)"></i></div><span class="mono" style="text-align:right">' + cc[x] + '</span></div>'; }).join('')
@@ -2905,7 +2907,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     M.dvMed = M.dvN ? M.dvS / M.dvN : null;
     var baseD = (partes.filter(function (q) { return q.D.base; })[0] || {}).D;
     var nPav = Math.max.apply(null, partes.map(function (q) { return q.D.atual.pavimentos.length; }));
-    var pc = function (a, b) { return b ? Math.round(a / b * 100) + '%' : '—'; };
+    var pc = function (a, b) { return b ? fmt2(a / b * 100) + '%' : '—'; };
     var t = D.termino;
     var k4 = t && t.atual
       ? '<div class="card"><div class="kpi-t">Término da obra</div><div class="kpi-v" style="font-size:24px">' + fdate(dms(t.atual)) + '</div><div class="kpi-s">linha de base ' + fdate(dms(t.lb)) + ' · <b style="color:' + (t.var > 0 ? 'var(--bad)' : 'var(--good)') + '">' + sdias(t.var) + '</b></div></div>'
@@ -3147,7 +3149,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function brl2(v) { return v == null ? '—' : BRL2.format(v); }
   function mil(v) { return v ? Math.round(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) : ''; }
   function mesLab(m) { return MES[+m.slice(5, 7) - 1] + '/' + m.slice(2, 4); }
-  function isoBr(s) { return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(2, 4) : '—'; }
+  function isoBr(s) { return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '—'; }
   var TIPO_COR = { mat: 'var(--pa0)', mo: 'var(--pa2)', eq: 'var(--pa3)', sv: 'var(--pa1)', out: 'var(--pa5)' };
   var TIPO_NOME = { mat: 'Material', mo: 'Mão de obra', eq: 'Equipamento', sv: 'Serviço', out: 'Outros' };
   function recarregarDerivados() { if (API) { loadPlano(); loadCustos(); } }
@@ -3365,7 +3367,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<p style="color:var(--muted);font-size:14px">Importe a planilha Orçado x Realizado, no padrão Custo Plano ou exportada do ERP da construtora (Excel ou CSV). Por serviço, ela traz o orçamento inicial (a) e o atualizado (b), o contratado (c), o incorrido (d), os saldos de contrato (e) e de pedido (f) e o saldo a contratar (h). O sistema calcula o comprometido, a estimativa no término, o desvio e o índice, e confere o total com o orçamento e os custos lançados aqui.</p>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuCtlFile" class="btn btn-primary" style="cursor:pointer">Importar a planilha Orçado x Realizado</label></div></section>';
     var cel = function (x, k) { return '<td class="mono num' + (k === 'desvio' && x[k] < -0.5 ? ' ruim' : '') + (k === 'a_contratar' && x[k] ? ' prem' : '') + '">' + rs0(x[k]) + '</td>'; };
-    var idx = function (v) { return '<td class="mono num' + (v != null && v > 1 ? ' ruim' : '') + '">' + (v == null ? '–' : v.toFixed(3).replace('.', ',')) + '</td>'; };
+    var idx = function (v) { return '<td class="mono num' + (v != null && v > 1 ? ' ruim' : '') + '">' + (v == null ? '–' : fmt2(v)) + '</td>'; };
     var cab = '<tr><th class="cu-sticky">Serviço<br>&nbsp;<br>&nbsp;</th>' + CTL_COLS.map(function (c) { return '<th>' + c[1].split('|').map(esc).join('<br>') + '<br><span class="cl">(' + c[2] + ')</span></th>'; }).join('') + '</tr>';
     var rows = C.linhas.map(function (x) {
       return '<tr><th scope="row" class="pa-row cu-sticky">' + esc((x.codigo ? x.codigo + ' ' : '') + x.servico) + '</th>' + CTL_COLS.slice(0, -1).map(function (c) { return cel(x, c[0]); }).join('') + idx(x.indice) + '</tr>';
@@ -3545,7 +3547,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var ks = Object.keys(porServ).sort(function (a, b) { return porServ[b] - porServ[a]; }).slice(0, 7), mx = Math.max.apply(null, [1].concat(ks.map(function (k) { return porServ[k]; })));
     var kpis = '<div class="grid4">' +
       '<div class="card card-link" data-a="nav:qi" tabindex="0" role="link" title="Ver as inspeções"><div class="kpi-t">Inspeções (FVS)</div><div class="kpi-v">' + I.length + '</div><div class="kpi-s">' + I.filter(function (i) { return i.data.slice(0, 7) === mes; }).length + ' neste mês</div></div>' +
-      '<div class="card card-link" data-a="nav:qi" tabindex="0" role="link" title="Ver as inspeções"><div class="kpi-t">Aprovação na 1ª inspeção</div><div class="kpi-v">' + (primeiras.length ? Math.round(apr1 / primeiras.length * 100) + '%' : '—') + '</div><div class="kpi-s">' + apr1 + ' de ' + primeiras.length + ' inspeções</div></div>' +
+      '<div class="card card-link" data-a="nav:qi" tabindex="0" role="link" title="Ver as inspeções"><div class="kpi-t">Aprovação na 1ª inspeção</div><div class="kpi-v">' + (primeiras.length ? fmt2(apr1 / primeiras.length * 100) + '%' : '—') + '</div><div class="kpi-s">' + apr1 + ' de ' + primeiras.length + ' inspeções</div></div>' +
       '<div class="card card-link" data-a="nav:qn" tabindex="0" role="link" title="Ver as não conformidades"><div class="kpi-t">Não conformidades abertas</div><div class="kpi-v" style="color:' + (abertas.length ? 'var(--bad)' : 'var(--good)') + '">' + abertas.length + '</div><div class="kpi-s">' + (venc.length ? '<span class="due">' + venc.length + ' com prazo vencido</span>' : 'nenhuma com prazo vencido') + '</div></div>' +
       '<div class="card card-link" data-a="nav:qn" tabindex="0" role="link" title="Ver as não conformidades"><div class="kpi-t">Tempo médio para fechar NC</div><div class="kpi-v">' + (tmed == null ? '—' : tmed + (tmed === 1 ? ' dia' : ' dias')) + '</div><div class="kpi-s">' + fech.length + ' NCs fechadas</div></div></div>';
     var acao = '<section class="card q-cta"><span style="flex:1 1 240px"><b>Inspecionar um serviço</b><span class="kpi-s" style="display:block">Aplique a FVS no local, marque cada item e registre as fotos. Funciona sem internet.</span></span><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button></section>';
@@ -3798,7 +3800,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var pai = i.t.parent ? i.t.parent.name : '';
       return '<tr><td><span class="sup-nome"><b>' + esc(servDe(i.t)) + (i.L.label !== servDe(i.t) ? ' · ' + esc(i.L.label) : '') + '</b><span>' + esc(i.t.wbs) + ' · ' + esc(i.t.name) + (pai && pai !== servDe(i.t) ? ' · ' + esc(pai) : '') + '</span></span></td>' +
         '<td><select class="qc-fvs" style="width:210px" data-qc-fvs="' + i.uid + '" aria-label="FVS da tarefa ' + esc(i.t.name) + '">' + opts + '</select></td>' +
-        '<td class="mono">' + fdate(i.t.finish) + '<span class="kpi-s" style="display:block">' + Math.round(i.real) + '% feito</span></td>' +
+        '<td class="mono">' + fdate(i.t.finish) + '<span class="kpi-s" style="display:block">' + fmt2(i.real) + '% feito</span></td>' +
         '<td class="mono" style="font-weight:600">' + (i.m ? fdate(i.ate) : '—') + '</td>' +
         '<td><span class="chip ' + i.sit[1] + '">' + i.sit[0] + '</span></td>' +
         '<td><div class="sup-actions">' + acao + '</div></td></tr>';
