@@ -793,16 +793,24 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
 /* Medição pelo celular */
 .med-head{display:flex;flex-direction:column;gap:10px;padding:12px 14px}
-.med-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) minmax(170px,auto);border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.med-sum>div{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:8px 12px;border-left:1px solid var(--line);min-width:0}
-.med-sum>div:first-child{border-left:0}
-.med-sum b{font-size:20px;font-weight:600;line-height:1.15}
-.med-sum .med-sd input{min-height:34px;padding:2px 8px;width:100%}
+.med-res{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 24px;align-items:end;padding:4px 2px 2px}
+.med-frase p{margin:0}
+.med-real{font-size:22px;line-height:1.25;color:var(--ink)}.med-real b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.med-ctx{font-size:15px;color:var(--muted);margin-top:4px!important}.med-ctx b{color:var(--ink);font-weight:600;white-space:nowrap}
+.med-ctx .ruim{color:var(--bad);font-weight:600;white-space:nowrap}.med-ctx .bom{color:var(--good);font-weight:600;white-space:nowrap}
+.med-sd{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}.med-sd input{min-height:40px;padding:2px 10px;width:auto}
+.med-tot{grid-column:1/-1;position:relative;height:10px;border-radius:5px;background:var(--cell);margin:14px 0 18px}
+.med-tot i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--blue)}
+.med-tot b{position:absolute;top:-5px;width:2px;height:20px;background:var(--ink);margin-left:-1px}
+.med-tot b span{position:absolute;top:22px;left:50%;transform:translateX(-50%);font-size:11.5px;font-weight:500;color:var(--muted);white-space:nowrap}
+.med-n{display:inline-block;min-width:22px;padding:0 6px;margin-left:4px;border-radius:10px;background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+#app .ml-row .mono,#app .ml-in,#app .ml-quick button{font-family:var(--body);font-variant-numeric:tabular-nums}
+#app .ml-quick button{font-size:12.5px}
 .med-filt{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .med-filt .med-tabs{flex:1 1 320px;width:auto}
 .med-filt #medQ{flex:1 1 200px;width:auto;min-height:42px}
 .med-sel{flex:1 1 160px;min-height:42px;width:auto;padding:0 10px;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px}
-@media (max-width:560px){.med-sum{grid-template-columns:repeat(3,minmax(0,1fr))}.med-sum .med-sd{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);flex-direction:row;align-items:center;justify-content:space-between}.med-sum .med-sd input{width:auto}}
+@media (max-width:560px){.med-res{grid-template-columns:1fr}.med-sd{grid-column:auto;grid-row:auto;flex-direction:row;align-items:center;justify-content:space-between}.med-real{font-size:19px}.med-real b{font-size:26px}}
 .med-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .med-kpi div{display:flex;flex-direction:column}
 .med-kpi b{font-size:22px;font-weight:600}
@@ -830,12 +838,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 /* medição em linhas */
 .ml-list{padding:0;overflow:hidden}
 .ml-head,.ml-row{display:grid;grid-template-columns:minmax(180px,2.4fr) 68px 68px 72px minmax(70px,1fr) 168px minmax(170px,210px);gap:12px;align-items:center;padding:8px 14px}
-.ml-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
+.ml-head{font-size:12.5px;font-weight:600;color:var(--muted);background:var(--soft);border-bottom:1px solid var(--line)}
 .ml-row{border-bottom:1px solid var(--line);border-left:4px solid transparent}
 .ml-row.changed{border-left-color:var(--blue);background:color-mix(in srgb,var(--blue) 5%,var(--surface))}
 .ml-torre{font-size:15px;font-weight:800;color:var(--ink);padding:14px 14px 8px;background:var(--soft);border-bottom:1px solid var(--line);border-top:2px solid var(--ink)}
 .ml-torre:first-child,.ml-head+.ml-torre{border-top:0}
-.ml-grp{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:10px 14px 6px;background:var(--surface);border-bottom:1px solid var(--line)}
+.ml-grp{font-size:13px;font-weight:600;color:var(--muted);padding:10px 14px 6px;background:var(--surface);border-bottom:1px solid var(--line)}
 .ml-nome{display:flex;flex-direction:column;min-width:0}
 .ml-nome b{font-weight:600;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
 .ml-nome span{font-size:11px;color:var(--muted)}
@@ -852,12 +860,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   .ml-row{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px 8px;padding:8px 12px}
   .ml-nome,.ml-bar{grid-column:1/-1}
   .ml-num,.ml-dt{grid-column:span 2;font-size:12px;white-space:nowrap}
-  .ml-num::before,.ml-dt::before{content:attr(data-l) " ";color:var(--muted);font-size:10.5px}
+  .ml-num::before,.ml-dt::before{content:attr(data-l) " ";color:var(--muted);font-size:11.5px}
   .ml-ctl,.ml-quick{grid-column:span 3}
   .ml-ctl .ml-step{min-height:40px;min-width:0;flex:0 0 40px;font-size:13px}.ml-ctl .ml-in{flex:1;min-width:0;width:auto;min-height:40px}
-  .ml-quick{gap:3px}.ml-quick button{min-height:40px;font-size:10.5px}
+  .ml-quick{gap:3px}#app .ml-quick button{min-height:40px;font-size:11.5px}
 }
-@media (max-width:640px){.ml-ctl,.ml-quick{grid-column:1/-1}.ml-quick{gap:6px}.ml-quick button{min-height:44px;font-size:14px}.ml-ctl .ml-step{min-height:44px;flex-basis:44px}.ml-ctl .ml-in{min-height:44px}}
+@media (max-width:640px){.ml-ctl,.ml-quick{grid-column:1/-1}.ml-quick{gap:6px}#app .ml-quick button{min-height:44px;font-size:14px}.ml-ctl .ml-step{min-height:44px;flex-basis:44px}.ml-ctl .ml-in{min-height:44px}}
 .med-quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
 .med-quick button{min-height:42px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;touch-action:manipulation}
 .med-quick button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
@@ -2950,7 +2958,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     else if (semRede()) txt = 'Sem internet';
     t.textContent = txt; t.className = cls; t.hidden = !txt;
     var m = document.getElementById('medSync');
-    if (m) { m.textContent = txt || 'Tudo salvo no servidor.'; m.className = 'med-sync' + (S.sync === 'offline' || semRede() ? ' off' : ''); }
+    if (m) { m.textContent = txt || '✓ Tudo salvo no servidor.'; m.className = 'med-sync' + (S.sync === 'offline' || semRede() ? ' off' : ''); }
   }
   function flushPend() {
     if (!API) return Promise.resolve();
@@ -3080,13 +3088,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<button type="button" class="ml-step" data-a="mstep:' + t.uid + ':10" aria-label="Mais 10%">+10</button></div>' +
         '<div class="ml-quick" role="group" aria-label="Percentuais rápidos">' + q5 + '</div></div>';
     });
-    var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' · ' + n + '</button>'; };
+    var tab = function (id, t, n) { return '<button type="button" data-a="mf:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' <span class="med-n">' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.') + '</span></button>'; };
     return '<section class="card med-head">' +
-        '<div class="med-sum">' +
-          '<div><span class="kpi-t">Real</span><b class="mono">' + fmt1(real) + '%</b></div>' +
-          '<div><span class="kpi-t">Previsto</span><b class="mono">' + fmt1(prev) + '%</b></div>' +
-          '<div><span class="kpi-t">Desvio</span><b class="mono" style="color:' + (real - prev < -0.05 ? 'var(--bad)' : 'var(--good)') + '">' + (real - prev >= 0 ? '+' : '') + fmt1(real - prev) + '</b></div>' +
-          '<div class="med-sd"><label class="kpi-t" for="pSd">Data de status</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
+        '<div class="med-res">' +
+          '<div class="med-frase"><p class="med-real">A obra está em <b>' + fmt1(real) + '%</b></p>' +
+          '<p class="med-ctx">O previsto para ' + fdate(P.statusDate) + ' era <b>' + fmt1(prev) + '%</b>. ' + medDesvio(real - prev) + '</p></div>' +
+          '<div class="med-tot" role="img" aria-label="Real ' + fmt1(real) + '% contra previsto ' + fmt1(prev) + '%"><i style="width:' + Math.min(100, real) + '%"></i><b style="left:' + Math.min(100, prev) + '%"><span>previsto</span></b></div>' +
+          '<div class="med-sd"><label for="pSd">Medição do dia</label><input id="pSd" type="date" value="' + isoDay(P.statusDate) + '"></div>' +
         '</div>' +
         '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
         '<input id="medQ" type="search" placeholder="Buscar tarefa ou EAP" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
@@ -3100,7 +3108,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<p id="medSync" class="med-sync" role="status"></p>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
       '</section>' +
-      '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>% concluído</span><span>Rápido</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
+      '<section class="card ml-list">' + (itens ? '<div class="ml-head"><span>Tarefa</span><span>Previsto</span><span>Anterior</span><span>Término</span><span>Avanço</span><span>Concluído</span><span>Atalhos</span></div>' + itens : '<p class="kpi-s" style="padding:16px">Nenhuma tarefa neste filtro.</p>') + '</section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + lista.length + ' tarefas. Use a busca para achar as demais.</p>' : '') +
       (API && !NATIVO ? '<button type="button" class="btn btn-ghost" data-a="prel:medicao" style="align-self:flex-start">Relatório de medição (PDF)</button>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">“A medir” mostra as tarefas que já deveriam ter começado pela linha de base e ainda não chegaram a 100%. Sem internet, a medição fica guardada no aparelho e é enviada sozinha quando a conexão voltar.</p>';
@@ -3413,6 +3421,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (x < l + 12 || x + b.offsetWidth > l + sd.clientWidth - 40) sd.scrollLeft = Math.max(0, x - 48);
     }
     navFim();
+  }
+
+  // Desvio da medição em palavras: "x pontos abaixo do previsto" ou "em dia".
+  function medDesvio(d) {
+    if (Math.abs(d) < 0.05) return '<span class="bom">A obra está em dia.</span>';
+    var t = fmt1(Math.abs(d)) + (Math.abs(d) === 1 ? ' ponto' : ' pontos');
+    return d < 0 ? 'Está <span class="ruim">' + t + ' abaixo</span> do previsto.' : 'Está <span class="bom">' + t + ' acima</span> do previsto.';
   }
 
   /* ================= QUALIDADE: FVS, não conformidades, matriz, modelos ================= */
