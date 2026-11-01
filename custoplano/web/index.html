@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Consultoria em gerenciamento de obras em Guarulhos e São Paulo: planejamento no MS Project, controle de custo e qualidade, com sistema incluído.">
-<title>Gerenciamento de obras em Guarulhos e SP · Custo Plano</title>
+<meta name="description" content="Consultoria em gerenciamento de obras em todo o Brasil: planejamento a partir do seu cronograma, controle de custo e qualidade, com sistema incluído.">
+<title>Gerenciamento de obras em todo o Brasil · Custo Plano</title>
 <link rel="canonical" href="https://custoplano.com.br/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:site_name" content="Custo Plano Consultoria">
-<meta property="og:title" content="Gerenciamento de obras em Guarulhos e SP · Custo Plano">
-<meta property="og:description" content="Prazo, custo e qualidade da sua obra sob controle, com consultoria em gestão e sistema incluído. Para construtoras de Guarulhos, São Paulo e região.">
+<meta property="og:title" content="Gerenciamento de obras em todo o Brasil · Custo Plano">
+<meta property="og:description" content="Prazo, custo e qualidade da sua obra sob controle, com consultoria em gestão e sistema incluído. Para construtoras e incorporadoras de todo o Brasil.">
 <meta property="og:url" content="https://custoplano.com.br/">
 <meta property="og:image" content="https://custoplano.com.br/web/telas/painel.jpg">
 <script type="application/ld+json">
@@ -19,7 +19,7 @@
 "description":"Consultoria em gestão de obras com três pilares, prazo, custo e qualidade, para construtoras, com sistema incluído.",
 "telephone":"+55-11-98823-6792","email":"contato@custoplano.com.br",
 "slogan":"Sua obra no prazo, no custo e com qualidade, controlada toda semana a partir do seu cronograma.","founder":{"@type":"Person","name":"Bismark Santos Rios"},
-"areaServed":[{"@type":"City","name":"Guarulhos"},{"@type":"City","name":"São Paulo"},{"@type":"City","name":"São José dos Campos"},{"@type":"City","name":"Atibaia"},{"@type":"City","name":"Bragança Paulista"}],
+"areaServed":{"@type":"Country","name":"Brasil"},
 "address":{"@type":"PostalAddress","addressRegion":"SP","addressCountry":"BR"},
 "knowsAbout":["Planejamento de obras","Controle de custos de obras","Linha de balanço","MS Project","Gestão da qualidade","PBQP-H","ISO 9001"]}
 </script>
@@ -217,6 +217,8 @@ section.block{padding-block:clamp(48px,7vw,88px);border-top:1px solid var(--line
 .cidades ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .cidades li{font-size:14.5px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--blue-soft);color:var(--ink)}
 .cidades p{margin:0;color:var(--muted);font-size:15px}
+.cidades .cid-br{font-family:var(--display);font-size:26px;font-weight:700;color:var(--ink);line-height:1.15}
+.cidades .btn{align-self:flex-start}
 @media (max-width:860px){.atende{grid-template-columns:minmax(0,1fr)}.pilares.segs{grid-template-columns:minmax(0,1fr)}}
 .q-normas{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
 .q-normas li{font-size:13px;font-weight:600;padding:5px 10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
@@ -1144,7 +1146,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     <div class="wrap sec">
       <header>
         <h2>Para quem trabalhamos</h2>
-        <p>Construtoras e incorporadoras de Guarulhos, São Paulo e região que querem a obra sob controle sem montar um departamento de planejamento próprio.</p>
+        <p>Construtoras e incorporadoras de todo o Brasil que querem a obra sob controle sem montar um departamento de planejamento próprio.</p>
       </header>
       <div class="atende">
         <ol class="pilares segs">
@@ -1155,10 +1157,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         </ol>
         <div class="cidades">
           <h3>Onde atuamos</h3>
-          <ul>
-            <li>São Paulo</li><li>Guarulhos</li><li>São José dos Campos</li><li>Atibaia</li><li>Bragança Paulista</li>
-          </ul>
-          <p>E nas cidades vizinhas. Para obras em outras regiões, <a href="#contato">fale com a gente</a>.</p>
+          <p class="cid-br">Em todo o Brasil.</p>
+          <p>A reunião semanal de planejamento e o sistema são online. As visitas ao canteiro são combinadas na proposta de cada obra.</p>
+          <a class="btn btn-primary" href="#contato">Fale com a gente</a>
         </div>
       </div>
     </div>
