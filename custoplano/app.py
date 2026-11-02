@@ -393,6 +393,12 @@ def _pagina_estatica(arquivo: str) -> Response:
     return r
 
 
+@app.get("/convite")
+def pagina_convite():
+    """Convite para conhecer o sistema: o link dos convites de WhatsApp mostra a imagem na prévia (og:image)."""
+    return _pagina_estatica("convite.html")
+
+
 @app.get("/artigos")
 def artigos():
     """Lista de artigos sobre gestão de obras (ajuda o site a aparecer no Google)."""
