@@ -413,10 +413,29 @@ def robots():
     return Response(texto, mimetype="text/plain")
 
 
+# Data da última mudança real de cada página pública (git log do arquivo).
+# Avisa o Google o que reler. Atualize na mesma publicação que muda a página.
+ATUALIZADO_EM = {
+    "/": "2026-11-01",
+    "/manual": "2026-10-16",
+    "/privacidade": "2026-10-29",
+    "/artigos": "2026-10-31",
+    "/artigos/obra-atrasada-ou-so-parece": "2026-10-31",
+    "/artigos/ppc-planejamento-semanal": "2026-10-31",
+    "/artigos/curva-s-como-ler": "2026-10-31",
+    "/artigos/controle-de-custo-de-obra": "2026-10-31",
+    "/artigos/planejamento-de-obras-ms-project": "2026-10-31",
+}
+
+
 @app.get("/sitemap.xml")
 def sitemap():
     """Páginas públicas para o Google Search Console."""
-    urls = "".join(f"<url><loc>https://custoplano.com.br{p}</loc></url>" for p in ("/", "/manual", "/privacidade", "/artigos") + tuple("/artigos/" + n for n in ARTIGOS))
+    urls = "".join(
+        f"<url><loc>https://custoplano.com.br{p}</loc>"
+        + (f"<lastmod>{ATUALIZADO_EM[p]}</lastmod>" if p in ATUALIZADO_EM else "")
+        + "</url>"
+        for p in ("/", "/manual", "/privacidade", "/artigos") + tuple("/artigos/" + n for n in ARTIGOS))
     xml = ('<?xml version="1.0" encoding="UTF-8"?>'
            f'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>')
     return Response(xml, mimetype="application/xml")
