@@ -122,7 +122,13 @@ def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_ob
             r["ncs_vencidas"] = sum(1 for n in ncs if n["prazo"] and n["prazo"][:10] < hoje.isoformat())
             r["ncs_altas"] = sum(1 for n in ncs if n["gravidade"] == "alta")
             r["qualidade"] = _qualidade(con, o["id"], hoje)
-            if projeto_da_obra and c:
+            if (o["empresa"] or "").strip().lower() == "custo plano":
+                r["teste"] = True  # obra interna de teste: Engenharia, Qualidade e o resumo de segunda não a contam como cliente
+            sem_inspecao = not con.execute("SELECT 1 FROM inspecoes WHERE usuario_id=? LIMIT 1", (o["id"],)).fetchone()
+            if projeto_da_obra and c and sem_inspecao:
+                r["fvs_atrasadas"] = None  # sem nenhuma inspeção a obra ainda não usa FVS: contar todas como atrasadas engana
+                r["fvs_sem_inspecao"] = True
+            elif projeto_da_obra and c:
                 try:
                     r["fvs_atrasadas"] = qualidade.fvs_atrasadas(o["id"], projeto_da_obra(o["id"]), hoje)
                 except Exception as e:  # noqa: BLE001 - um cronograma com problema não tira a obra do resumo

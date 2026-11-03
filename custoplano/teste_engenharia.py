@@ -144,6 +144,18 @@ banco.salvar_cronograma(o, "torre.xml", cron_fvs, "dur", "2026-10-15", {})
 y = next(x for x in resumo.resumo_obras(hoje, None, app.projeto_da_obra) if x["obra"] == "Torre Teste")
 checar(not any("medição" in s for s in y["alertas"]), f"alerta de medição com 4 dias: {y['alertas']}")
 
+# 5. obra sem nenhuma inspeção não conta FVS atrasadas; obra da empresa Custo Plano sai marcada como teste
+o2 = banco.criar_obra("Obra Sem Inspecao", "Custo Plano")
+banco.salvar_cronograma(o2, "torre.xml", cron_fvs, "dur", "2026-10-05", {})
+with banco.conectar() as con:
+    con.execute("INSERT INTO fvs_modelos (usuario_id, codigo, servico, itens, criado_em) VALUES (?, 'FVS-01', "
+                "'Alvenaria de vedação', '[]', '2026-10-01')", (o2,))
+z = next(x for x in resumo.resumo_obras(hoje, None, app.projeto_da_obra) if x["obra"] == "Obra Sem Inspecao")
+checar(z["fvs_atrasadas"] is None and z.get("fvs_sem_inspecao"), f"sem inspeção não devia contar FVS atrasadas: {z.get('fvs_atrasadas')}")
+checar(not any("FVS" in s for s in z["alertas"]), f"alerta de FVS sem inspeção: {z['alertas']}")
+checar(z.get("teste") is True, "obra da empresa Custo Plano devia sair marcada como teste")
+checar(not y.get("teste"), "obra de cliente não pode sair como teste")
+
 if falhas:
     print("FALHOU:\n- " + "\n- ".join(falhas))
     sys.exit(1)
