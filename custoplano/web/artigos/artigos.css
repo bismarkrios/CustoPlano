@@ -120,3 +120,7 @@ th{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:up
 .rodape a{color:var(--muted);display:inline-flex;align-items:center;min-height:32px}
 .rodape a:hover{color:var(--ink)}
 @media print{.top,.cta,.mais,.rodape{display:none}.prancha{box-shadow:none}}
+.tabela{overflow-x:auto;margin:0 -2px}
+.tabela th:not(:first-child),.tabela td:not(:first-child){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tabela td:first-child{white-space:nowrap}
+@media (max-width:520px){.tabela table{font-size:12.5px}.tabela th,.tabela td{padding:8px 3px}.tabela th{font-size:10px;letter-spacing:0}}

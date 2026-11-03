@@ -380,7 +380,7 @@ def pagina_privacidade():
     return r
 
 
-ARTIGOS = ("obra-atrasada-ou-so-parece", "ppc-planejamento-semanal", "curva-s-como-ler", "controle-de-custo-de-obra", "planejamento-de-obras-ms-project")
+ARTIGOS = ("obra-atrasada-ou-so-parece", "ppc-planejamento-semanal", "curva-s-como-ler", "controle-de-custo-de-obra", "planejamento-de-obras-ms-project", "planilha-orcado-x-realizado")
 
 
 def _pagina_estatica(arquivo: str) -> Response:
@@ -425,12 +425,13 @@ ATUALIZADO_EM = {
     "/": "2026-11-01",
     "/manual": "2026-10-16",
     "/privacidade": "2026-10-29",
-    "/artigos": "2026-10-31",
+    "/artigos": "2026-11-03",
     "/artigos/obra-atrasada-ou-so-parece": "2026-10-31",
     "/artigos/ppc-planejamento-semanal": "2026-10-31",
     "/artigos/curva-s-como-ler": "2026-10-31",
     "/artigos/controle-de-custo-de-obra": "2026-10-31",
     "/artigos/planejamento-de-obras-ms-project": "2026-10-31",
+    "/artigos/planilha-orcado-x-realizado": "2026-11-03",
 }
 
 
