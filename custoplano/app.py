@@ -423,8 +423,8 @@ def robots():
 # Avisa o Google o que reler. Atualize na mesma publicação que muda a página.
 ATUALIZADO_EM = {
     "/": "2026-11-01",
-    "/manual": "2026-10-16",
-    "/privacidade": "2026-10-29",
+    "/manual": "2026-11-08",
+    "/privacidade": "2026-11-08",
     "/artigos": "2026-11-03",
     "/artigos/obra-atrasada-ou-so-parece": "2026-10-31",
     "/artigos/ppc-planejamento-semanal": "2026-10-31",
