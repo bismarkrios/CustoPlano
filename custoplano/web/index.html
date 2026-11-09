@@ -2453,7 +2453,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '</div>' +
         (S.prjMsg ? '<p class="note" role="status" style="margin:0">' + esc(S.prjMsg) + '</p>' : '') +
         ((API && S.hist && S.hist.length) ? '<details><summary style="cursor:pointer;font-weight:600;font-size:14px">Medições fechadas (' + S.hist.length + ')</summary><div class="scroll-x"><table class="tbl" style="margin-top:8px;min-width:640px"><thead><tr><th>Data de status</th><th>Fechada em</th><th>Real</th><th>Previsto</th><th>Arquivos</th></tr></thead><tbody>' +
-          S.hist.map(function (h) { return '<tr><td class="mono">' + esc(h.data_status.split('-').reverse().join('/')) + '</td><td class="mono">' + esc(h.fechado_em.replace('T', ' ').slice(0, 16)) + '</td><td class="mono">' + fmt1(h.avanco_real) + '%</td><td class="mono">' + fmt1(h.avanco_prev) + '%</td><td><a href="/api/historico/' + h.id + '/xml">XML</a> · <a href="/api/historico/' + h.id + '/csv">CSV</a> · <a href="/api/historico/' + h.id + '/xlsx">Excel</a></td></tr>'; }).join('') +
+          S.hist.map(function (h) { return '<tr><td class="mono">' + esc(h.data_status.split('-').reverse().join('/')) + '</td><td class="mono">' + esc(h.fechado_em.replace('T', ' ').slice(0, 16)) + '</td><td class="mono">' + fmt1(h.avanco_real) + '%</td><td class="mono">' + fmt1(h.avanco_prev) + '%</td><td><a rel="nofollow" href="/api/historico/' + h.id + '/xml">XML</a> · <a rel="nofollow" href="/api/historico/' + h.id + '/csv">CSV</a> · <a rel="nofollow" href="/api/historico/' + h.id + '/xlsx">Excel</a></td></tr>'; }).join('') +
           '</tbody></table></div></details>' : '') +
       '</section>' +
       '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="--pcols:' + pcolsCss + ';min-width:' + (pcolsSoma + tlW) + 'px">' +
@@ -3182,7 +3182,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum orçamento importado</b>' +
         '<p style="color:var(--muted);font-size:14px">Envie o orçamento em Excel com as abas <b>Orçamento</b> (itens com quantidade e código da composição), <b>Composições</b> (insumos com coeficiente e preço) e, se quiser, <b>Realizado</b> (custos já pagos). Cada item é ligado a uma tarefa do cronograma pela EAP, para distribuir o custo no tempo e medir o valor agregado. O orçamento no padrão Custo Plano (Planilha de Orçamento com os códigos UA) entra direto, sem montar planilha: cada serviço é ligado às tarefas do cronograma pelo código UA.</p>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuFile" class="btn btn-primary" style="cursor:pointer">Importar orçamento (.xlsx)</label>' +
-        '<a class="btn btn-ghost" href="/api/custos/modelo.xlsx">Baixar o modelo</a></div>' + msg + '</section>';
+        '<a class="btn btn-ghost" rel="nofollow" href="/api/custos/modelo.xlsx">Baixar o modelo</a></div>' + msg + '</section>';
     }
     var T = CU.totais, ds = isoBr(CU.data_status);
     var idcCor = T.idc == null ? 'inherit' : (T.idc < 0.98 ? 'var(--bad)' : 'var(--good)');
@@ -3204,7 +3204,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
     var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
       '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('ctl', 'Orçado x Realizado') + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + (CU.origem === 'erp' ? '' : tab('real', 'Valor agregado')) + '</div></div>' +
-      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'erp' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento e custos do arquivo do ERP (abas Orçamento e Analítico)</span>' + (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro arquivo do ERP</label>') : CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
+      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'erp' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento e custos do arquivo do ERP (abas Orçamento e Analítico)</span>' + (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro arquivo do ERP</label>') : CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" rel="nofollow" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
       (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
     if (CU.origem === 'erp' && S.cu.tab === 'real') S.cu.tab = 'fin';
     var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'ctl' ? vCusCtl() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
@@ -3622,7 +3622,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var rows = L.map(function (i) {
       var nNc = i.itens.filter(function (it) { return it.status === 'nc'; }).length;
       var acoes = '';
-      if (!i.pendente) acoes += '<a class="btn btn-ghost btn-sm" href="/api/qualidade/inspecao/' + i.id + '.pdf">PDF</a>';
+      if (!i.pendente) acoes += '<a class="btn btn-ghost btn-sm" rel="nofollow" href="/api/qualidade/inspecao/' + i.id + '.pdf">PDF</a>';
       if (i.resultado === 'reprovada' && !reinspecionadas[i.id] && !i.pendente) acoes += '<button type="button" class="btn btn-primary btn-sm" data-a="qreinsp:' + i.id + '">Reinspecionar</button>';
       if (!i.pendente) acoes += '<button type="button" class="linkbtn" data-a="qidel:' + i.id + '" style="font-size:12.5px">Excluir</button>';
       return '<div class="q-card"><div class="q-card-top"><b>' + esc(i.codigo) + ' · ' + esc(i.servico) + '</b><span class="chip ' + (i.resultado === 'aprovada' ? 'c-ok' : 'c-bad') + '">' + (i.resultado === 'aprovada' ? 'Aprovada' : 'Reprovada') + '</span></div>' +
@@ -3835,7 +3835,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var acao = '';
       if (i.m && i.ult && i.ult.resultado === 'reprovada') acao = '<button type="button" class="btn btn-primary btn-sm" data-a="qcins:' + i.uid + '">Reinspecionar</button>';
       else if (i.m && !(i.ult && i.ult.resultado === 'aprovada')) acao = '<button type="button" class="btn btn-ghost btn-sm" data-a="qcins:' + i.uid + '">Inspecionar</button>';
-      if (i.ult && !i.ult.pendente) acao += '<a class="linkbtn" style="font-size:12.5px" href="/api/qualidade/inspecao/' + i.ult.id + '.pdf">PDF</a>';
+      if (i.ult && !i.ult.pendente) acao += '<a class="linkbtn" style="font-size:12.5px" rel="nofollow" href="/api/qualidade/inspecao/' + i.ult.id + '.pdf">PDF</a>';
       var pai = i.t.parent ? i.t.parent.name : '';
       return '<tr><td><span class="sup-nome"><b>' + esc(servDe(i.t)) + (i.L.label !== servDe(i.t) ? ' · ' + esc(i.L.label) : '') + '</b><span>' + esc(i.t.wbs) + ' · ' + esc(i.t.name) + (pai && pai !== servDe(i.t) ? ' · ' + esc(pai) : '') + '</span></span></td>' +
         '<td><select class="qc-fvs" style="width:210px" data-qc-fvs="' + i.uid + '" aria-label="FVS da tarefa ' + esc(i.t.name) + '">' + opts + '</select></td>' +
@@ -4723,7 +4723,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       }).join('') + '</tbody></table></div></section>';
     // cópias
     h += '<section class="adm-card"><h2>' + aico('copias', 20) + 'Cópias de segurança</h2><p>O servidor faz uma cópia completa (todas as obras, com fotos) todo dia e guarda as 7 últimas. Uma vez por semana, baixe uma cópia e guarde no seu computador ou no OneDrive: assim os dados ficam salvos mesmo se o servidor tiver um problema.</p>' +
-      '<div class="adm-acoes"><a class="btn btn-primary" href="/api/admin/copia" style="text-decoration:none">' + aico('baixar') + 'Baixar cópia agora</a></div>' +
+      '<div class="adm-acoes"><a class="btn btn-primary" rel="nofollow" href="/api/admin/copia" style="text-decoration:none">' + aico('baixar') + 'Baixar cópia agora</a></div>' +
       (d.copias.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópias no servidor</th><th class="num">Tamanho</th></tr></thead><tbody>' +
         d.copias.map(function (c) { return '<tr><td class="mono">' + esc(c.nome) + '</td><td class="num">' + mb(c.bytes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p>Nenhuma cópia ainda; a primeira sai em até uma hora depois de o servidor ligar.</p>') +
       '</section>';
