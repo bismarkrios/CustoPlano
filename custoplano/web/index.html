@@ -480,7 +480,10 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .kpi-s{font-size:13px;color:var(--muted)}
 .bar{position:relative;height:8px;border-radius:4px;background:var(--cell);overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
-.cal-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}.cal-top h2{flex:1;margin:0;font-size:18px;text-align:center}.cal{max-width:920px}
+.cal-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}.cal-top h2{flex:1;margin:0;font-size:18px;text-align:center}
+.cal-wrap{display:flex;flex-direction:column;gap:16px}
+@media (min-width:1100px){.cal-wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}.cal-dia-lista{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}}
+.cal-dica{font-size:12.5px;color:var(--muted);margin:0 0 6px}
 .cal-grade{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
 .cal-sem{font-size:12px;color:var(--muted);text-align:center;padding:2px 0 6px;text-transform:capitalize}
 .cal-dia{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px;padding:6px 2px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
@@ -493,7 +496,8 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .cal-q.atr{background:var(--bad-bg);color:var(--bad)}
 .cal-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:12px 0 0}.cal-leg span{display:flex;align-items:center;gap:6px}
 .cal-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
-.cal-item{display:flex;gap:10px;align-items:stretch;padding:10px 0;border-top:1px solid var(--line)}.cal-item:first-child{border-top:0}
+.cal-lista li{border-top:1px solid var(--line)}.cal-lista li:first-child{border-top:0}
+.cal-item{display:flex;gap:10px;align-items:stretch;width:100%;padding:10px 6px;margin:0;border:0;border-radius:6px;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}.cal-item:hover{background:var(--blue-soft)}.cal-item:focus-visible{outline:3px solid var(--blue);outline-offset:-3px}
 .cal-item .grow{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.cal-item .grow span{font-size:12.5px;color:var(--muted)}
 .cal-barra{width:4px;border-radius:2px;flex:none}.cal-barra.c-ok{background:var(--good)}.cal-barra.c-bad{background:var(--bad)}.cal-barra.c-info{background:var(--info)}.cal-barra.c-muted{background:var(--line)}
 .cal-dir{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}.cal-pct{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -2994,7 +2998,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   document.getElementById('paFile').addEventListener('change', function (e) { paImport(e.target.files[0]); e.target.value = ''; });
 
   /* ---------- Medição pelo celular (funciona sem internet) ---------- */
-  S.med = { f: 'prev', q: '', torre: '', pav: '' };
+  S.med = { f: 'prev', q: '', torre: '', pav: '', uid: null };
   S.cal = { mes: null, dia: null };
   S.mod = 'plan';
   S.sync = '';
@@ -3126,10 +3130,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var quando = t.ms ? 'Marco · ' + fdata(t.finish) : fdata(t.start) + ' a ' + fdata(t.finish);
       if (diaUTC(t.start) === dia && !t.ms) quando = 'Começa hoje · até ' + fdata(t.finish);
       else if (diaUTC(t.finish) === dia && !t.ms) quando = 'Termina hoje · desde ' + fdata(t.start);
-      return '<li class="cal-item"><i class="cal-barra c-' + st[0] + '" aria-hidden="true"></i><div class="grow"><b>' + esc(nome) + '</b><span>' + esc(loc || pai) + '</span><span>' + quando + '</span></div>' +
-        '<div class="cal-dir"><span class="chip c-' + st[0] + '">' + st[1] + '</span><span class="cal-pct">' + fmt2(P.meas[t.uid] || 0) + '%</span></div></li>';
+      return '<li><button type="button" class="cal-item" data-a="calmed:' + esc(String(t.uid)) + '" aria-label="' + esc(nome + (loc ? ', ' + loc : '') + ', ' + st[1] + ', ' + fmt2(P.meas[t.uid] || 0) + '% medido. Abrir na Medição') + '"><i class="cal-barra c-' + st[0] + '" aria-hidden="true"></i><div class="grow"><b>' + esc(nome) + '</b><span>' + esc(loc || pai) + '</span><span>' + quando + '</span></div>' +
+        '<div class="cal-dir"><span class="chip c-' + st[0] + '">' + st[1] + '</span><span class="cal-pct">' + fmt2(P.meas[t.uid] || 0) + '%</span></div></button></li>';
     }).join('');
-    return '<section class="card cal">' +
+    return '<div class="cal-wrap"><section class="card cal">' +
         '<div class="cal-top"><button type="button" class="btn btn-ghost btn-sm" data-a="calm:-1" aria-label="Mês anterior">‹</button>' +
         '<h2 aria-live="polite">' + MES_LONGO[mes].charAt(0).toUpperCase() + MES_LONGO[mes].slice(1) + ' de ' + ano + '</h2>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-a="calm:1" aria-label="Próximo mês">›</button>' +
@@ -3137,9 +3141,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="cal-grade">' + cel + '</div>' +
         '<p class="cal-leg"><span><i class="cal-q" aria-hidden="true">3</i> atividades no dia</span><span><i class="cal-q atr" aria-hidden="true">3</i> com atraso</span></p>' +
       '</section>' +
-      '<section class="card"><h2 style="font-size:17px;margin:0 0 10px">' + titulo + ' · ' + doDia.length + (doDia.length === 1 ? ' atividade' : ' atividades') + '</h2>' +
-        (doDia.length ? '<ul class="cal-lista">' + itens + '</ul>' : '<p style="color:var(--muted);font-size:14px;margin:0">Nenhuma atividade do cronograma neste dia.</p>') +
-      '</section>';
+      '<section class="card cal-dia-lista"><h2 style="font-size:17px;margin:0 0 6px">' + titulo + ' · ' + doDia.length + (doDia.length === 1 ? ' atividade' : ' atividades') + '</h2>' +
+        (doDia.length ? '<p class="cal-dica">Toque em uma atividade para abrir a medição dela.</p><ul class="cal-lista">' + itens + '</ul>' : '<p style="color:var(--muted);font-size:14px;margin:0">Nenhuma atividade do cronograma neste dia.</p>') +
+      '</section></div>';
   }
 
   function vMed() {
@@ -3174,6 +3178,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var a = P.meas[t.uid] || 0, pp = plannedPct(t, P.statusDate);
       var ehPrev = pp > 0 && a < 100, ehAnd = a > 0 && a < 100;
       if (ehPrev) cont.prev++; if (ehAnd) cont.and++;
+      if (S.med.uid != null) return t.uid === S.med.uid;
       if (f === 'prev' && !ehPrev) return false;
       if (f === 'and' && !ehAnd) return false;
       if (q) { var txt = (t.wbs + ' ' + t.name + ' ' + (t.parent ? t.parent.name : '') + ' ' + (t.parent && t.parent.parent ? t.parent.parent.name : '')).toLowerCase(); if (txt.indexOf(q) < 0) return false; }
@@ -3212,6 +3217,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           '<div class="med-sd"><span id="pSdRot">Medição do dia</span><button type="button" class="med-dtb" data-psd aria-labelledby="pSdRot pSdTxt"><span id="pSdTxt">' + fdata(P.statusDate) + '</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg></button>' +
           '<input id="pSd" class="med-dtin" type="date" tabindex="-1" aria-hidden="true" value="' + isoDay(P.statusDate) + '"></div>' +
         '</div>' +
+        (S.med.uid != null ? '<p class="note" role="status" style="margin:0;display:flex;gap:10px;align-items:center;flex-wrap:wrap">Mostrando a atividade escolhida no Calendário.<button type="button" class="btn btn-ghost btn-sm" data-a="medtodas">Ver todas as tarefas</button><button type="button" class="btn btn-ghost btn-sm" data-a="nav:cal">Voltar ao Calendário</button></p>' : '') +
         '<div class="med-filt"><div class="tabs med-tabs" role="group" aria-label="Filtro de tarefas">' + tab('prev', 'A medir', cont.prev) + tab('and', 'Andamento', cont.and) + tab('todas', 'Todas', cont.todas) + '</div>' +
         '<input id="medQ" type="search" placeholder="Buscar tarefa ou EAP" value="' + esc(S.med.q) + '" aria-label="Buscar tarefa">' +
         (torres.length ? '<select id="medTorre" class="med-sel" aria-label="Torre"><option value="">Todas as torres</option>' +
@@ -4439,7 +4445,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     switch (a[0]) {
       case 'navmais': menuCel(!document.getElementById('side').classList.contains('aberto')); return;
       case 'navfecha': menuCel(false); return;
-      case 'nav': menuCel(false); S.screen = a[1]; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
+      case 'nav': menuCel(false); S.screen = a[1]; S.med.uid = null; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -4469,7 +4475,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         if (su) supSalvar(su.uid, { st: SUP_ST[Math.max(0, Math.min(SUP_ST.indexOf(su.st) + (a[0] === 'rsa' ? 1 : -1), 3))] });
         break;
       case 'pav': S.pa.view = a[1]; break;
-      case 'mf': S.med.f = a[1]; break;
+      case 'mf': S.med.f = a[1]; S.med.uid = null; break;
+      case 'medtodas': S.med.uid = null; break;
+      case 'calmed': S.med.uid = a.slice(1).join(':'); S.med.torre = ''; S.med.pav = ''; S.med.q = ''; S.screen = 'med'; render(); window.scrollTo(0, 0); return;
       case 'calm': var cm = new Date(S.cal.mes); S.cal.mes = Date.UTC(cm.getUTCFullYear(), cm.getUTCMonth() + parseInt(a[1], 10), 1); break;
       case 'cald': S.cal.dia = +a[1]; var cdd = new Date(S.cal.dia); S.cal.mes = Date.UTC(cdd.getUTCFullYear(), cdd.getUTCMonth(), 1); break;
       case 'calh': S.cal.dia = null; S.cal.mes = null; break;
@@ -4614,7 +4622,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       return;
     }
     if (e.target.id !== 'medQ') return;
-    S.med.q = e.target.value; render();
+    S.med.q = e.target.value; S.med.uid = null; render();
     var q2 = document.getElementById('medQ'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} }
   });
   app.addEventListener('submit', function (e) {
