@@ -269,6 +269,7 @@ class Tarefa:
     lb_inicio: dt.datetime | None
     lb_termino: dt.datetime | None
     campos: dict[str, float] = field(default_factory=dict)
+    custo: float = 0.0
     pai: "Tarefa | None" = None
     filhos: list["Tarefa"] = field(default_factory=list)
 
@@ -317,6 +318,7 @@ class Projeto:
                 marco=_txt(el, "Milestone") == "1", inicio=data(_txt(el, "Start")), termino=data(_txt(el, "Finish")),
                 dur_h=horas(_txt(el, "Duration")), pct=float(_txt(el, "PercentComplete") or 0),
                 fisico=float(_txt(el, "PhysicalPercentComplete") or 0), lb_inicio=lb_i, lb_termino=lb_t, campos=campos,
+                custo=float(_txt(el, "Cost") or 0) / 100,
             )
             while pilha and pilha[-1].nivel >= t.nivel:
                 pilha.pop()
@@ -341,6 +343,8 @@ class Projeto:
         criterio = criterio or self.peso
         if criterio == "dur":
             return 0.0 if t.marco else max(t.dur_h, 0.0)
+        if criterio == "custo":
+            return max(t.custo, 0.0)
         return t.campos.get(criterio, 0.0) or 0.0
 
     @staticmethod
@@ -498,6 +502,8 @@ class Projeto:
         criterio = criterio or self.peso
         if criterio == "dur":
             return "Duração"
+        if criterio == "custo":
+            return "Custo (uso da tarefa)"
         return next((c["nome"] for c in self.campos_peso if c["id"] == criterio), criterio)
 
     def exportar_csv(self, atual, anterior, data_status, criterio=None) -> str:
