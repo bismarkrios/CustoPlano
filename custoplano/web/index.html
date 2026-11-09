@@ -480,6 +480,24 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .kpi-s{font-size:13px;color:var(--muted)}
 .bar{position:relative;height:8px;border-radius:4px;background:var(--cell);overflow:hidden}
 .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+.cal-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}.cal-top h2{flex:1;margin:0;font-size:18px;text-align:center}.cal{max-width:920px}
+.cal-grade{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal-sem{font-size:12px;color:var(--muted);text-align:center;padding:2px 0 6px;text-transform:capitalize}
+.cal-dia{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px;padding:6px 2px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
+.cal-dia:hover{border-color:var(--blue)}.cal-dia:focus-visible{outline:3px solid var(--blue);outline-offset:1px}
+.cal-dia.fora{opacity:.55}
+.cal-n{font-weight:600;font-size:14px;line-height:24px;min-width:24px;border-radius:999px;font-variant-numeric:tabular-nums}
+.cal-dia.hoje .cal-n{background:var(--bad);color:#fff}
+.cal-dia.sel{border:2px solid var(--ink);background:var(--blue-soft)}
+.cal-q{display:inline-block;min-width:22px;padding:1px 6px;border-radius:999px;background:var(--info-bg);color:var(--info);font-size:11.5px;font-weight:700;font-style:normal;text-align:center;font-variant-numeric:tabular-nums}
+.cal-q.atr{background:var(--bad-bg);color:var(--bad)}
+.cal-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:12px 0 0}.cal-leg span{display:flex;align-items:center;gap:6px}
+.cal-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.cal-item{display:flex;gap:10px;align-items:stretch;padding:10px 0;border-top:1px solid var(--line)}.cal-item:first-child{border-top:0}
+.cal-item .grow{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.cal-item .grow span{font-size:12.5px;color:var(--muted)}
+.cal-barra{width:4px;border-radius:2px;flex:none}.cal-barra.c-ok{background:var(--good)}.cal-barra.c-bad{background:var(--bad)}.cal-barra.c-info{background:var(--info)}.cal-barra.c-muted{background:var(--line)}
+.cal-dir{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}.cal-pct{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.cal-dia{min-height:50px;padding:4px 1px}.cal-n{font-size:13px;line-height:22px;min-width:22px}.cal-q{min-width:18px;padding:0 4px;font-size:10.5px}}
 .chip{display:inline-flex;align-items:center;font-family:var(--body);font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
 .c-ok{background:var(--good-bg);color:var(--good)}.c-bad{background:var(--bad-bg);color:var(--bad)}.c-info{background:var(--info-bg);color:var(--info)}.c-muted{background:var(--cell);color:var(--muted)}
 .sw{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0}
@@ -1491,6 +1509,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       <div id="navPlan" class="nav-grp">
       <button class="nav-btn" type="button" data-a="nav:painel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Painel</button>
       <button class="nav-btn" type="button" data-a="nav:prj"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"></rect><path d="M9 4v16M3 9h18"></path><path d="M12 13h4M14 17h5"></path></svg>Project</button>
+      <button class="nav-btn" type="button" data-a="nav:cal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path><path d="M8 14h2M12 14h2M16 14h0M8 17h2M12 17h2"></path></svg>Calendário</button>
       <button class="nav-btn" type="button" data-a="nav:med"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M9 12l2 2 4-4"></path><path d="M11 18h2"></path></svg>Medição</button>
       <button class="nav-btn" type="button" data-a="nav:sup"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4z"></path><path d="M3 7v10l9 4 9-4V7"></path><path d="M12 11v10"></path></svg>Suprimentos<span class="count" id="supCount" style="background:var(--bad);color:var(--surface)">0</span></button>
       <button class="nav-btn" type="button" data-a="nav:cron"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h9M8 12h12M5 18h8"></path></svg>Cronograma</button>
@@ -1564,11 +1583,11 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   var TELA_SERV = { painel: 'planejamento', cron: 'planejamento', lb: 'planejamento', pa: 'planejamento', cp: 'planejamento', res: 'planejamento',
     cus: 'custos', sup: 'custos', qp: 'qualidade', qi: 'qualidade', qn: 'qualidade', qm: 'qualidade', qmod: 'qualidade' };
   function telaOk(t) {
-    if (t === 'prj' || t === 'med') return temBase();
+    if (t === 'prj' || t === 'cal' || t === 'med') return temBase();
     if (t === 'qc') return temServ('qualidade') && temBase();  // FVS do cronograma precisa do cronograma
     return !TELA_SERV[t] || temServ(TELA_SERV[t]);
   }
-  var ORDEM_TELAS = { plan: ['painel', 'prj', 'med', 'cus', 'sup', 'pa', 'cp'], qual: ['qp', 'qi', 'qc', 'qn', 'qm', 'qmod'] };
+  var ORDEM_TELAS = { plan: ['painel', 'prj', 'cal', 'med', 'cus', 'sup', 'pa', 'cp'], qual: ['qp', 'qi', 'qc', 'qn', 'qm', 'qmod'] };
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
     if (body instanceof FormData) o.body = body;
@@ -1865,6 +1884,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     qm: ['Matriz de inspeção', 'Situação da última FVS de cada serviço em cada local.'],
     qmod: ['Modelos de FVS', 'Itens de verificação e critérios de aceitação de cada serviço.'],
     cus: ['Custos', 'Orçamento com composições, cronograma físico-financeiro e custo orçado × realizado, com valor agregado pela medição física.'],
+    cal: ['Calendário', 'As atividades do cronograma dia a dia. Toque em um dia para ver o que está programado.'],
     med: ['Medição', 'Aponte o % de cada tarefa direto do canteiro. Sem internet, a medição fica guardada no aparelho e é enviada quando a conexão voltar.'],
     pa: ['Plano de ataque', 'Programação dos serviços pavimento por pavimento (escadinha): executado, atrasado e desvio contra a linha de base.'],
     lb: ['Linha de balanço', 'Pacotes de trabalho por pavimento e semana. Toque em um pacote para ver detalhes e atualizar.'],
@@ -2975,6 +2995,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
   /* ---------- Medição pelo celular (funciona sem internet) ---------- */
   S.med = { f: 'prev', q: '', torre: '', pav: '' };
+  S.cal = { mes: null, dia: null };
   S.mod = 'plan';
   S.sync = '';
   function semRede() { return API && typeof navigator !== 'undefined' && navigator.onLine === false; }
@@ -3061,6 +3082,64 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (precisaRede()) return;
     var ir = function () { location.href = '/api/relatorio.pdf' + (tipo && tipo !== 'consolidado' ? '?tipo=' + tipo : ''); };
     if (P) persist(true).then(ir); else ir();
+  }
+
+  /* ---------- Calendário: as atividades do cronograma em cada dia, como o calendário do celular ---------- */
+  var DIA_MS = 864e5, SEMANA_CURTA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+  var MES_LONGO = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  function diaUTC(ms) { var d = new Date(ms); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()); }
+  function hojeUTC() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function calSituacao(t) {
+    var a = P.meas[t.uid] || 0, pp = plannedPct(t, P.statusDate);
+    if (a >= 100) return ['ok', 'Concluída'];
+    if (pp > a + 0.5) return ['bad', 'Atrasada'];
+    if (a > 0) return ['info', 'Em andamento'];
+    return ['muted', 'A iniciar'];
+  }
+  function calNoDia(lista, d) {
+    var fim = d + DIA_MS;
+    return lista.filter(function (t) { return t.start < fim && (t.ms ? t.finish >= d : t.finish > d); });
+  }
+  function vCal() {
+    if (!P) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Nenhum cronograma importado</b><p style="color:var(--muted);font-size:14px">O calendário mostra as atividades do cronograma da obra. Importe o .mpp (ou o .xml do MS Project) na tela Project.</p><div><button type="button" class="btn btn-primary" data-a="nav:prj">Importar na tela Project</button></div></section>';
+    var folhas = P.tasks.filter(function (t) { return !t.children.length && t.start != null && t.finish != null; });
+    var hoje = hojeUTC(), ini = diaUTC(P.min), fimObra = diaUTC(P.max);
+    var base = hoje >= ini && hoje <= fimObra ? hoje : diaUTC(P.statusDate || ini);
+    var dia = S.cal.dia != null ? S.cal.dia : base;
+    if (S.cal.mes == null) { var bd = new Date(dia); S.cal.mes = Date.UTC(bd.getUTCFullYear(), bd.getUTCMonth(), 1); }
+    var m0 = new Date(S.cal.mes), ano = m0.getUTCFullYear(), mes = m0.getUTCMonth();
+    var primeiro = Date.UTC(ano, mes, 1), nDias = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+    var vazio = new Date(primeiro).getUTCDay();
+    var cel = SEMANA_CURTA.map(function (w) { return '<div class="cal-sem" aria-hidden="true">' + w + '</div>'; }).join('');
+    for (var i = 0; i < vazio; i++) cel += '<div class="cal-vazio" aria-hidden="true"></div>';
+    for (var dd = 1; dd <= nDias; dd++) {
+      var d = Date.UTC(ano, mes, dd), at = calNoDia(folhas, d), atr = d <= P.statusDate && at.some(function (t) { return calSituacao(t)[0] === 'bad'; });
+      var cls = 'cal-dia' + (d === dia ? ' sel' : '') + (d === hoje ? ' hoje' : '') + (d < ini || d > fimObra ? ' fora' : '');
+      var rot = dd + ' de ' + MES_LONGO[mes] + ', ' + (at.length ? at.length + (at.length === 1 ? ' atividade' : ' atividades') : 'sem atividades') + (atr ? ', com atraso' : '');
+      cel += '<button type="button" class="' + cls + '" data-a="cald:' + d + '" aria-label="' + rot + '"' + (d === dia ? ' aria-pressed="true"' : ' aria-pressed="false"') + '><span class="cal-n">' + dd + '</span>' +
+        (at.length ? '<span class="cal-q' + (atr ? ' atr' : '') + '" aria-hidden="true">' + at.length + '</span>' : '') + '</button>';
+    }
+    var doDia = calNoDia(folhas, dia).sort(function (a, b) { return a.start - b.start || natural(a.wbs, b.wbs); });
+    var dDia = new Date(dia), titulo = SEMANA_CURTA[dDia.getUTCDay()] + ', ' + dDia.getUTCDate() + ' de ' + MES_LONGO[dDia.getUTCMonth()];
+    var itens = doDia.map(function (t) {
+      var st = calSituacao(t), loc = localDe(t), pai = t.parent ? t.parent.name : '', nome = loc ? servDe(t) : t.name;
+      var quando = t.ms ? 'Marco · ' + fdata(t.finish) : fdata(t.start) + ' a ' + fdata(t.finish);
+      if (diaUTC(t.start) === dia && !t.ms) quando = 'Começa hoje · até ' + fdata(t.finish);
+      else if (diaUTC(t.finish) === dia && !t.ms) quando = 'Termina hoje · desde ' + fdata(t.start);
+      return '<li class="cal-item"><i class="cal-barra c-' + st[0] + '" aria-hidden="true"></i><div class="grow"><b>' + esc(nome) + '</b><span>' + esc(loc || pai) + '</span><span>' + quando + '</span></div>' +
+        '<div class="cal-dir"><span class="chip c-' + st[0] + '">' + st[1] + '</span><span class="cal-pct">' + fmt2(P.meas[t.uid] || 0) + '%</span></div></li>';
+    }).join('');
+    return '<section class="card cal">' +
+        '<div class="cal-top"><button type="button" class="btn btn-ghost btn-sm" data-a="calm:-1" aria-label="Mês anterior">‹</button>' +
+        '<h2 aria-live="polite">' + MES_LONGO[mes].charAt(0).toUpperCase() + MES_LONGO[mes].slice(1) + ' de ' + ano + '</h2>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-a="calm:1" aria-label="Próximo mês">›</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-a="calh">Hoje</button></div>' +
+        '<div class="cal-grade">' + cel + '</div>' +
+        '<p class="cal-leg"><span><i class="cal-q" aria-hidden="true">3</i> atividades no dia</span><span><i class="cal-q atr" aria-hidden="true">3</i> com atraso</span></p>' +
+      '</section>' +
+      '<section class="card"><h2 style="font-size:17px;margin:0 0 10px">' + titulo + ' · ' + doDia.length + (doDia.length === 1 ? ' atividade' : ' atividades') + '</h2>' +
+        (doDia.length ? '<ul class="cal-lista">' + itens + '</ul>' : '<p style="color:var(--muted);font-size:14px;margin:0">Nenhuma atividade do cronograma neste dia.</p>') +
+      '</section>';
   }
 
   function vMed() {
@@ -3450,7 +3529,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   // No celular o menu de telas rola de lado: mostra a tela atual e some com o esmaecido no fim.
   function navFim() { var sd = document.querySelector('.side'); if (sd) sd.classList.toggle('fim', sd.scrollLeft + sd.clientWidth >= sd.scrollWidth - 4); }
   // celular: as telas mais usadas na barra de baixo (até 4) e o resto em "Mais"
-  var BNAV_PRIO = ['painel', 'med', 'pa', 'cp', 'prj', 'sup', 'cus', 'res', 'cron', 'lb', 'qp', 'qi', 'qn', 'qc', 'qm', 'qmod'];
+  var BNAV_PRIO = ['painel', 'med', 'pa', 'cp', 'cal', 'prj', 'sup', 'cus', 'res', 'cron', 'lb', 'qp', 'qi', 'qn', 'qc', 'qm', 'qmod'];
   var BNAV_NOME = { cp: 'PPC', pa: 'Plano', qp: 'Painel', qi: 'FVS', qn: 'RNC', qc: 'FVS crono.', qm: 'Matriz', qmod: 'Modelos', lb: 'Balanço', cron: 'Cronograma' };
   function montarBnav() {
     var bn = document.getElementById('bnav'); if (!bn) return;
@@ -4281,7 +4360,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (NATIVO) { S.mod = 'plan'; S.screen = 'med'; }
     var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
+    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), cal: vCal, med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     var rel = API && !NATIVO && REL_TELA[S.screen];
     if (rel && !relOk(rel[0])) rel = null;
     body.innerHTML = '<div class="app-head"><div class="app-head-row"><div><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' +
@@ -4391,6 +4470,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         break;
       case 'pav': S.pa.view = a[1]; break;
       case 'mf': S.med.f = a[1]; break;
+      case 'calm': var cm = new Date(S.cal.mes); S.cal.mes = Date.UTC(cm.getUTCFullYear(), cm.getUTCMonth() + parseInt(a[1], 10), 1); break;
+      case 'cald': S.cal.dia = +a[1]; var cdd = new Date(S.cal.dia); S.cal.mes = Date.UTC(cdd.getUTCFullYear(), cdd.getUTCMonth(), 1); break;
+      case 'calh': S.cal.dia = null; S.cal.mes = null; break;
       case 'cut': S.cu.tab = a[1]; S.cu.tabEscolhida = true; break;
       case 'cuctlv': S.cu.ctlv = a[1]; break;
       case 'cunvmax': S.cu.nivMax = +a[1]; S.cu.nivOpen = {}; break;
