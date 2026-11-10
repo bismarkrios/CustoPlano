@@ -529,6 +529,11 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .q-mod2{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}@media (max-width:860px){.q-mod2{grid-template-columns:1fr}}
 .q-modl-l{display:flex;flex-direction:column;gap:2px;margin-top:6px}.q-modl-l button{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}.q-modl-l button:hover{background:var(--soft)}.q-modl-l button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}.q-modl-l small{font-size:12px;opacity:.75;white-space:nowrap}
 .q-modd{display:flex;flex-direction:column;gap:6px}.q-modd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.q-modd-top h2{margin:2px 0;font-size:22px}.q-modd-l{list-style:none;margin:8px 0 12px;padding:0}.q-modd-l li{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.q-modd-l i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}.q-modd-l span{display:flex;flex-direction:column;gap:2px;font-size:14px}.q-modd-l span span{font-size:13px;color:var(--muted)}
+#app .sup-real input.sup-inl{border:1px solid transparent;background:transparent;box-shadow:none;border-radius:6px;font:inherit;color:inherit;min-height:0;height:auto}
+#app .sup-real input.sup-forn.sup-inl{display:block;width:100%;max-width:260px;padding:1px 6px;margin-left:-6px;font-size:12.5px;color:var(--muted)}
+#app .sup-real input.sup-lead.sup-inl{width:52px;padding:3px 6px;text-align:right;font-variant-numeric:tabular-nums}
+#app .sup-real input.sup-inl:hover{border-color:var(--line);background:var(--surface)}#app .sup-real input.sup-inl:focus{border-color:var(--ink);background:var(--surface);color:var(--ink);outline:none}
+#app .sup-real td{padding-top:9px;padding-bottom:9px;vertical-align:middle}.sup-real .sup-onde{white-space:nowrap;font-size:13.5px}.sup-real .sup-nome b{font-weight:600}.sup-real .sup-actions{flex-wrap:nowrap;white-space:nowrap}
 .q-stbox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}.q-stbox button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);font:inherit;cursor:pointer;text-align:left}.q-stbox button:hover{background:var(--cell)}.q-stbox span{font-size:12.5px;color:var(--muted)}.q-stbox b{font-size:20px;font-variant-numeric:tabular-nums}
 .qc-pts{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.cal-dia.qc-fds{background:var(--soft)}.qc-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
 .qc-top{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:8px}.qc-nav{display:flex;align-items:center;gap:6px}.qc-nav h2{font-size:18px;margin:0 4px}.qc-nav .linkbtn{font-size:22px;line-height:1;padding:0 4px;text-decoration:none}.qc-res{font-size:13px;color:var(--muted)}
@@ -4458,6 +4463,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   }
   function natural(a, b) { return String(a).localeCompare(String(b), 'pt-BR', { numeric: true, sensitivity: 'base' }); }
   function hojeReal() { var d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); }
+  // "Onde" de um pacote: torres e faixa de pavimentos das tarefas debaixo da linha resumo
+  function supOnde(t) {
+    var trs = [], pvs = [], vai = function (x) { if (x.children.length) x.children.forEach(vai); else { var tr = torreDe(x), pv = pavDe(x); if (tr && trs.indexOf(tr) < 0) trs.push(tr); if (pv != null && pv < 1000 && pvs.indexOf(pv) < 0) pvs.push(pv); } };
+    vai(t); trs.sort(natural); pvs.sort(function (a, b) { return a - b; });
+    var curto = function (n) { return n === 0 ? 'térreo' : n < 0 ? 'subsolo ' + (-n) : n === 0.5 ? 'mezanino' : n + 'º'; };
+    var tt = !trs.length ? '' : trs.length === 1 ? trs[0] : trs[0].split(' ')[0] + 's ' + trs.map(function (x) { return x.split(' ').slice(1).join(' '); }).join(trs.length === 2 ? ' e ' : ', ');
+    var pp = !pvs.length ? '' : pvs.length === 1 ? curto(pvs[0]) + (pvs[0] > 0 && pvs[0] < 1000 ? ' pav.' : '') : curto(pvs[0]) + ' ao ' + curto(pvs[pvs.length - 1]);
+    return tt && pp ? tt + ' · ' + pp : tt || pp || '—';
+  }
   function supRealModel() {
     if (!P) return [];
     if (SUPR == null) loadSup();
@@ -4520,10 +4534,11 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (i.st !== 'entregue') acts += '<button type="button" class="btn btn-ghost btn-sm" data-a="rsa:' + i.uid + '">' + (i.st === 'solicitar' ? 'Cotar' : i.st === 'cotacao' ? 'Emitir pedido' : 'Receber') + '</button>';
       if (idx > 0) acts += '<button type="button" class="linkbtn" data-a="rsb:' + i.uid + '" style="font-size:12.5px" title="Voltar uma etapa">Desfazer</button>';
       var pai = i.t.parent && i.nivel > 0 ? i.t.parent.name : '';
-      return '<tr><td><span class="sup-nome" style="padding-left:' + Math.min(Math.max(i.nivel, 0), 4) * 14 + 'px"><b>' + esc(i.t.name) + '</b><span>' + esc(i.t.wbs) + (pai ? ' · ' + esc(pai) : '') + '</span></span></td>' +
-        '<td><input class="sup-forn" type="text" maxlength="120" placeholder="Fornecedor" data-sup-forn="' + i.uid + '" value="' + esc(i.forn) + '" aria-label="Fornecedor: ' + esc(i.t.name) + '"></td>' +
+      return '<tr><td><span class="sup-nome" style="padding-left:' + Math.min(Math.max(i.nivel, 0), 4) * 14 + 'px"><b title="' + esc(i.t.wbs + (pai ? ' · ' + pai : '')) + '">' + esc(i.t.name) + '</b>' +
+        '<input class="sup-forn sup-inl" type="text" maxlength="120" placeholder="fornecedor a definir" data-sup-forn="' + i.uid + '" value="' + esc(i.forn) + '" aria-label="Fornecedor: ' + esc(i.t.name) + '" title="Toque para editar o fornecedor"></span></td>' +
+        '<td class="sup-onde">' + esc(supOnde(i.t)) + '</td>' +
         '<td class="mono">' + fdate(i.need) + '</td>' +
-        '<td style="text-align:right;white-space:nowrap"><input class="sup-lead" type="number" min="0" max="365" inputmode="numeric" data-sup-lead="' + i.uid + '" value="' + i.lead + '" aria-label="Prazo do fornecedor em dias: ' + esc(i.t.name) + '"> d</td>' +
+        '<td style="text-align:right;white-space:nowrap"><input class="sup-lead sup-inl" type="number" min="0" max="365" inputmode="numeric" data-sup-lead="' + i.uid + '" value="' + i.lead + '" aria-label="Prazo do fornecedor em dias: ' + esc(i.t.name) + '"> d</td>' +
         '<td class="mono" style="font-weight:600">' + fdate(i.buy) + '</td>' +
         '<td><span style="display:flex;flex-direction:column;gap:6px"><span class="steps4" aria-hidden="true">' + steps + '</span><span style="font-size:12.5px">' + SUP_LAB[i.st] + '</span></span></td>' +
         '<td><span class="chip ' + i.risk[1] + '">' + i.risk[0] + '</span></td>' +
@@ -4538,12 +4553,11 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="card"><div class="kpi-t">Compras atrasadas</div><div class="kpi-v" style="color:' + (late ? 'var(--bad)' : 'var(--good)') + '">' + late + '</div><div class="kpi-s">risco de parar a produção</div></div>' +
         '<div class="card"><div class="kpi-t">Pedidos emitidos ou entregues</div><div class="kpi-v">' + done + '</div><div class="bar" style="margin-top:8px"><i style="width:' + (B.length ? done / B.length * 100 : 0) + '%;background:var(--good)"></i></div></div>' +
       '</div>' +
-      tsel +
-      '<div class="sup-bar"><div class="tabs" role="group" aria-label="Filtro de suprimentos">' + tab('todos', 'Todos', B.length) + tab('week', 'Comprar nesta semana', week) + tab('late', 'Atrasados', late) + tab('ok', 'Pedidos e entregas', done) + '</div>' +
-      '<input id="supQ" type="search" placeholder="Buscar pacote, EAP ou fornecedor" value="' + esc(R.q) + '" aria-label="Buscar pacote"></div>' +
+      '<div class="q-bar"><div class="tabs" role="group" aria-label="Filtro de suprimentos">' + tab('todos', 'Todos', B.length) + tab('week', 'Comprar nesta semana', week) + tab('late', 'Atrasados', late) + tab('ok', 'Pedidos e entregas', done) + '</div>' +
+      '<input id="supQ" type="search" placeholder="Buscar pacote, EAP ou fornecedor" value="' + esc(R.q) + '" aria-label="Buscar pacote">' + tsel + '</div>' +
       (R.msg ? '<p class="note" role="status" style="margin:0">' + esc(R.msg) + '</p>' : '') +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl" style="min-width:1080px"><thead><tr>' +
-        '<th scope="col">Linha resumo do cronograma</th><th scope="col">Fornecedor</th><th scope="col">Na obra</th><th scope="col" style="text-align:right">Prazo</th><th scope="col">Comprar até</th><th scope="col">Etapa</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl sup-real" style="min-width:1080px"><thead><tr>' +
+        '<th scope="col">Linha resumo / fornecedor</th><th scope="col">Onde</th><th scope="col">Na obra</th><th scope="col" style="text-align:right">Prazo</th><th scope="col">Comprar até</th><th scope="col">Etapa</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
       '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="color:var(--muted);padding:24px 14px">Nenhum pacote neste filtro.</td></tr>') + '</tbody></table></div></section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + list.length + ' pacotes. Use a busca ou a torre para achar os demais.</p>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">Cada linha resumo do cronograma é um pacote de compra. “Na obra” é o início da linha resumo no cronograma importado; “Comprar até” é essa data menos o prazo do fornecedor (15 dias se você não mudar). Prazo, fornecedor e etapa ficam salvos na sua conta. O fornecedor aparece na coluna Fornecedor da tela Project, na linha resumo e em todas as tarefas abaixo dela, e vai junto no .xml exportado para o MS Project.</p>';
