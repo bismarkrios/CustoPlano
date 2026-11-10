@@ -435,8 +435,8 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 #app .tb i.feito{background:#261FB3}
 #app .tb.tb-sum i.feito{background:var(--ink)}
 #app .prj .today{background:#C62300}
-#app .pa td.ok::before{content:'\2713\00a0';font-weight:700}
-#app .pa td.late::before{content:'!\00a0';font-weight:800}
+#app .pa:not(.q-mat) td.ok::before{content:'\2713\00a0';font-weight:700}
+#app .pa:not(.q-mat) td.late::before{content:'!\00a0';font-weight:800}
 #app .cu-ctl tr.cu-grp th{text-align:center;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--line);padding-top:10px;padding-bottom:6px}
 #app .cu-ctl tr.cu-grp th+th{border-left:1px solid var(--line)}
 #app .cu-ctl .cu-et th,#app .cu-ctl .cu-et td,#app .cu-ctl .cu-et .cu-sticky{background:#002455;color:#ECF0F1}
@@ -517,7 +517,38 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .cal-dia.sel{border:2px solid var(--ink);background:var(--blue-soft)}
 .cal-q{display:inline-block;min-width:22px;padding:1px 6px;border-radius:999px;background:var(--info-bg);color:var(--info);font-size:11.5px;font-weight:700;font-style:normal;text-align:center;font-variant-numeric:tabular-nums}
 .cal-q.atr{background:var(--bad-bg);color:var(--bad)}
-.qc-pts{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.cal-q.qc-ok{background:var(--good-bg);color:var(--good)}.cal-q.qc-rep{background:var(--bad);color:#fff}.cal-q.qc-nc{background:color-mix(in srgb,var(--gold) 22%,var(--surface));color:var(--ink)}.cal-dia.qc-fds{background:var(--soft)}@media (min-width:1100px){.cal-wrap.qc-wrap{height:auto;min-height:0}.qc-wrap .cal .cal-grade>.cal-dia{min-height:66px}}.qc-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.q-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.q-bar input{flex:1 1 260px;min-width:0}.q-bar .tabs{flex:none}
+.q-tbl td{vertical-align:middle}.q-tbl td b{font-weight:600}.q-obs{font-size:12.5px;color:var(--muted);margin-left:10px;white-space:nowrap}
+@media (min-width:861px){.q-tblcard + .q-cards{display:none}}@media (max-width:860px){.q-tblcard{display:none}}
+.q-bar .torre-sel{margin:0}
+#app select.qc-fvs{width:200px;font-size:13px;padding:5px 26px 5px 9px;min-height:0;height:32px}.qc-tbl td{padding-top:8px;padding-bottom:8px}.qc-tbl .sup-actions{flex-wrap:nowrap;white-space:nowrap}.qc-tbl .sup-nome span{font-size:12px}
+.q-tbl td{white-space:nowrap}.q-tbl td:first-child{white-space:normal;min-width:240px}.q-tbl .q-obs,.q-tbl .q-obs span{font-size:12.5px}.qc-tbl .sup-actions,.q-tbl .sup-actions{display:flex;flex-direction:row;align-items:center;gap:8px}
+.q-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}.q-col{display:flex;flex-direction:column;gap:10px;min-width:0}.q-col h2{display:flex;align-items:center;gap:8px;margin:0;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase}.q-col h2 i{width:9px;height:9px;border-radius:50%}
+.q-ncq{background:var(--surface);border:1px solid var(--line);border-left:4px solid;border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}.q-ncq p{margin:0;font-size:14px;line-height:1.45}.q-ncq-l{font-size:12.5px;color:var(--muted)}.q-ncq-f{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}.q-mais{font-size:12.5px;align-self:flex-start}
+@media (max-width:860px){.q-board{grid-template-columns:1fr}}
+.q-mod2{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}@media (max-width:860px){.q-mod2{grid-template-columns:1fr}}
+.q-modl-l{display:flex;flex-direction:column;gap:2px;margin-top:6px}.q-modl-l button{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}.q-modl-l button:hover{background:var(--soft)}.q-modl-l button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:600}.q-modl-l small{font-size:12px;opacity:.75;white-space:nowrap}
+.q-modd{display:flex;flex-direction:column;gap:6px}.q-modd-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.q-modd-top h2{margin:2px 0;font-size:22px}.q-modd-l{list-style:none;margin:8px 0 12px;padding:0}.q-modd-l li{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--line)}.q-modd-l i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}.q-modd-l span{display:flex;flex-direction:column;gap:2px;font-size:14px}.q-modd-l span span{font-size:13px;color:var(--muted)}
+.q-stbox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}.q-stbox button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px;border:0;border-radius:8px;background:var(--soft);color:var(--ink);font:inherit;cursor:pointer;text-align:left}.q-stbox button:hover{background:var(--cell)}.q-stbox span{font-size:12.5px;color:var(--muted)}.q-stbox b{font-size:20px;font-variant-numeric:tabular-nums}
+.qc-pts{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.cal-dia.qc-fds{background:var(--soft)}.qc-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.qc-top{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-bottom:8px}.qc-nav{display:flex;align-items:center;gap:6px}.qc-nav h2{font-size:18px;margin:0 4px}.qc-nav .linkbtn{font-size:22px;line-height:1;padding:0 4px;text-decoration:none}.qc-res{font-size:13px;color:var(--muted)}
+.qc-leg{margin:0 0 10px}.qe-q{display:inline-block;width:10px;height:10px;border-radius:2px}
+.cal-dia.qc-dia{align-items:stretch;justify-content:flex-start!important;text-align:left;gap:3px!important;padding:6px 6px;overflow:hidden;min-width:0}.qc-dia .cal-n{align-self:flex-start;text-align:center}
+.qc-fer{font-size:10.5px;color:var(--bad);line-height:1.2}
+.qc-pills{display:flex;flex-direction:column;gap:3px;min-width:0}.qe{display:block;font-size:11px;line-height:1.35;padding:1px 5px;border-left:3px solid;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}.qe-mais{font-size:10.5px;color:var(--muted);padding-left:4px}
+.qe-ok,.qe-q.qe-ok{color:var(--good);border-color:var(--good);background:color-mix(in srgb,var(--good) 10%,transparent)}.qe-q.qe-ok{background:var(--good)}
+.qe-rep{color:var(--bad);border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent);font-weight:700}.qe-q.qe-rep{background:var(--bad)}
+.qe-ins{color:var(--ink);border-color:var(--ink);background:color-mix(in srgb,var(--ink) 7%,transparent)}.qe-q.qe-ins{background:var(--ink)}
+.qe-nc{color:#9A6400;border-color:#C98A12;background:color-mix(in srgb,#C98A12 12%,transparent);font-weight:700}.qe-q.qe-nc{background:#C98A12}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .qe-nc{color:#E8B65A}}:root[data-theme="dark"] .qe-nc{color:#E8B65A}
+.qc-cont{display:none;align-self:center;min-width:20px;padding:0 5px;border-radius:999px;background:var(--info-bg);color:var(--info);font-size:10.5px;font-weight:700;text-align:center}.qc-cont.atr{background:var(--bad-bg);color:var(--bad)}
+.qc-dtop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.qc-dtop h2{font-size:17px;margin:0}.qc-dtop span{font-size:12.5px;color:var(--muted)}
+.cal-item .cal-dir .btn{pointer-events:none}
+.qc-prox{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 0;margin-top:8px;border-top:1px solid var(--line);font-size:13.5px}.qc-prox>span:first-of-type{font-size:12.5px;color:var(--muted)}
+.qc-nota{margin:auto 0 0;font-size:12.5px;color:var(--muted);background:var(--soft);border-radius:8px;padding:10px 12px}
+.cal-dia-lista:has(.qc-nota){display:flex;flex-direction:column}
+@media (max-width:640px){.qc-pills,.qc-fer{display:none}.qc-cont{display:inline-block}.cal-dia.qc-dia{align-items:center;text-align:center}.qc-dia .cal-n{align-self:center}}
+@media (min-width:1100px){.cal-wrap.qc-wrap{grid-template-columns:minmax(0,1fr) 340px;height:auto;min-height:0}.qc-wrap .cal .cal-grade>.cal-dia{min-height:88px;gap:3px}.qc-wrap .cal .cal-n{font-size:14px;line-height:24px;min-width:24px}.qc-wrap .cal-sem{text-transform:uppercase;letter-spacing:.08em;font-size:11px;text-align:left;padding-left:6px}}
 .cal-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:12px 0 0}.cal-leg span{display:flex;align-items:center;gap:6px}
 .cal-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .cal-lista li{border-top:1px solid var(--line)}.cal-lista li:first-child{border-top:0}
@@ -817,6 +848,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 @media (max-width:480px){.q-row2{grid-template-columns:1fr}}
 .q-sig{width:100%;height:auto;aspect-ratio:10/3;border:1px dashed var(--muted);border-radius:6px;background:#fff;touch-action:none;cursor:crosshair}
 .q-mat td.q-cell{padding:0}
+#app .pa.q-mat{border-spacing:5px 4px}#app .q-mat th,#app .q-mat td{border:0}#app .q-mat td.c{height:28px;border-radius:6px;font-size:12.5px;font-weight:600;min-width:84px}#app .q-mat td.q-cell{box-shadow:inset 0 0 0 1px var(--line);border-style:dashed}#app .q-mat td.q-cell button{min-height:28px;font-size:14px;border-radius:6px}#app .q-mat thead th{background:var(--surface);border-bottom:1px solid var(--line);vertical-align:middle}#app .q-mat thead th.pa-row{padding:8px 10px}#app .q-mat .q-mh{display:block;padding:8px 4px;text-align:center;font-size:12.5px;white-space:nowrap}#app .q-mat th.pa-row{font-weight:500;font-size:13px}
 .q-mat td.q-cell button{width:100%;min-height:34px;border:0;background:transparent;color:var(--muted);font-size:17px;cursor:pointer}
 .q-mat td.q-cell button:hover{background:var(--cell)}
 .q-mh{display:block;width:84px;height:84px;padding:6px;font-size:11.5px;font-weight:600;overflow:hidden;color:var(--ink);text-align:left;text-transform:none;letter-spacing:0;font-family:var(--body)}
@@ -3798,7 +3830,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<div class="card card-link" data-a="nav:qn" tabindex="0" role="link" title="Ver as não conformidades"><div class="kpi-t">Não conformidades abertas</div><div class="kpi-v" style="color:' + (abertas.length ? 'var(--bad)' : 'var(--good)') + '">' + abertas.length + '</div><div class="kpi-s">' + (venc.length ? '<span class="due">' + venc.length + ' com prazo vencido</span>' : 'nenhuma com prazo vencido') + '</div></div>' +
       '<div class="card card-link" data-a="nav:qn" tabindex="0" role="link" title="Ver as não conformidades"><div class="kpi-t">Tempo médio para fechar NC</div><div class="kpi-v">' + (tmed == null ? '—' : tmed + (tmed === 1 ? ' dia' : ' dias')) + '</div><div class="kpi-s">' + fech.length + ' NCs fechadas</div></div></div>';
     var acao = '<section class="card q-cta"><span style="flex:1 1 240px"><b>Inspecionar um serviço</b><span class="kpi-s" style="display:block">Aplique a FVS no local, marque cada item e registre as fotos. Funciona sem internet.</span></span><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button></section>';
-    var graf = '<section class="card"><div class="card-head"><h2>Não conformidades por serviço</h2></div>' + (ks.length ? '<div class="q-bars">' + ks.map(function (k) { return '<div><span>' + esc(k) + '</span><div class="bar" style="height:10px"><i style="width:' + (porServ[k] / mx * 100) + '%;background:var(--bad)"></i></div><b class="mono">' + porServ[k] + '</b></div>'; }).join('') + '</div>' : '<p class="kpi-s">Nenhuma não conformidade registrada.</p>') + '</section>';
+    var graf = '<section class="card"><div class="card-head"><h2>Não conformidades por serviço</h2></div>' + (ks.length ? '<div class="q-bars">' + ks.map(function (k) { return '<div><span>' + esc(k) + '</span><div class="bar" style="height:10px"><i style="width:' + (porServ[k] / mx * 100) + '%;background:var(--bad)"></i></div><b class="mono">' + porServ[k] + '</b></div>'; }).join('') + '</div>' : '<p class="kpi-s">Nenhuma não conformidade registrada.</p>') +
+      '<div class="q-stbox">' + [['aberta', 'Abertas', 'abertas'], ['tratamento', 'Em tratamento', 'tratamento'], ['fechada', 'Fechadas', 'fechada']].map(function (x) { return '<button type="button" data-a="qnvai:' + x[2] + '"><span>' + x[1] + '</span><b>' + N.filter(function (n) { return n.status === x[0]; }).length + '</b></button>'; }).join('') + '</div></section>';
     var ult = '<section class="card"><div class="card-head"><h2>Últimas inspeções</h2><button class="more" type="button" data-a="nav:qi">Todas →</button></div>' + (I.slice(0, 6).map(function (i) {
       return '<div class="list-row"><div class="grow"><span>' + esc(i.codigo + ' · ' + i.servico) + '</span><span>' + esc(i.local) + ' · ' + isoBr(i.data) + (i.pendente ? ' · aguardando envio' : '') + '</span></div><span class="chip ' + (i.resultado === 'aprovada' ? 'c-ok' : 'c-bad') + '">' + (i.resultado === 'aprovada' ? 'Aprovada' : 'Reprovada') + '</span></div>';
     }).join('') || '<p class="kpi-s">Nenhuma inspeção ainda.</p>') + '</section>';
@@ -3837,9 +3870,25 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="med-info"><span>' + esc(i.local) + '</span><span>' + isoBr(i.data) + '</span>' + (i.inspetor ? '<span>' + esc(i.inspetor) + '</span>' : '') + (nNc ? '<span style="color:var(--bad)">' + nNc + ' item(ns) não conforme(s)</span>' : '') + (i.reinspecao_de ? '<span>reinspeção</span>' : '') + (reinspecionadas[i.id] ? '<span>já reinspecionada</span>' : '') + (i.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '') + '</div>' +
         '<div class="q-acts">' + acoes + '</div></div>';
     }).join('');
-    return qMsg() + '<section class="card med-head"><div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button><span style="flex:1"></span><div class="tabs" role="group" aria-label="Filtro">' + tab('todas', 'Todas') + tab('aprovada', 'Aprovadas') + tab('reprovada', 'Reprovadas') + '</div></div>' +
-      '<input id="qBusca" type="search" placeholder="Buscar por FVS, serviço, local ou inspetor" value="' + esc(S.q.busca) + '" aria-label="Buscar inspeção"></section>' +
-      '<div class="q-list">' + (rows || '<p class="kpi-s">Nenhuma inspeção neste filtro.</p>') + '</div>';
+    // computador: tabela, como no protótipo; celular: cartões (uso no canteiro)
+    var linhas = L.map(function (i) {
+      var nNc = i.itens.filter(function (it) { return it.status === 'nc'; }).length, ok = i.resultado === 'aprovada';
+      var obs = nNc ? '<span style="color:var(--bad)">' + nNc + (nNc === 1 ? ' item não conforme' : ' itens não conformes') + '</span>' : reinspecionadas[i.id] ? 'já reinspecionada' : i.reinspecao_de ? 'reinspeção' : '';
+      if (i.pendente) obs = '<span class="chip c-warn">aguardando envio</span>';
+      var acoes = '';
+      if (!i.pendente) acoes += '<a class="btn btn-ghost btn-sm" rel="nofollow" href="/api/qualidade/inspecao/' + i.id + '.pdf">PDF</a>';
+      if (!ok && !reinspecionadas[i.id] && !i.pendente) acoes += '<button type="button" class="btn btn-primary btn-sm" data-a="qreinsp:' + i.id + '">Reinspecionar</button>';
+      if (!i.pendente) acoes += '<button type="button" class="linkbtn" data-a="qidel:' + i.id + '" style="font-size:12.5px">Excluir</button>';
+      return '<tr><td><b>' + esc(i.codigo) + ' · ' + esc(i.servico) + '</b></td><td>' + esc(i.local) + '</td><td class="mono">' + isoBr(i.data) + '</td><td>' + esc(i.inspetor || '—') + '</td>' +
+        '<td><span class="chip ' + (ok ? 'c-ok' : 'c-bad') + '">' + (ok ? 'Aprovada' : 'Reprovada') + '</span>' + (obs ? '<span class="q-obs">' + obs + '</span>' : '') + '</td><td><div class="sup-actions" style="justify-content:flex-end">' + acoes + '</div></td></tr>';
+    }).join('');
+    var nAll = Q.inspecoes.length, nApr = Q.inspecoes.filter(function (i) { return i.resultado === 'aprovada'; }).length;
+    var tab2 = function (id, t, n) { return '<button type="button" data-a="qfil:' + id + '" aria-pressed="' + (f === id) + '">' + t + ' · ' + n + '</button>'; };
+    return qMsg() + '<div class="q-bar"><button type="button" class="btn btn-primary" data-a="qnova">Nova inspeção</button>' +
+      '<input id="qBusca" type="search" placeholder="Buscar por FVS, serviço, local ou inspetor" value="' + esc(S.q.busca) + '" aria-label="Buscar inspeção">' +
+      '<div class="tabs" role="group" aria-label="Filtro">' + tab2('todas', 'Todas', nAll) + tab2('aprovada', 'Aprovadas', nApr) + tab2('reprovada', 'Reprovadas', nAll - nApr) + '</div></div>' +
+      (L.length ? '<section class="card q-tblcard" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl q-tbl"><thead><tr><th scope="col">FVS · Serviço</th><th scope="col">Local</th><th scope="col">Data</th><th scope="col">Inspetor</th><th scope="col">Resultado</th><th scope="col" aria-label="Ações"></th></tr></thead><tbody>' + linhas + '</tbody></table></div></section>' : '') +
+      '<div class="q-list q-cards">' + (rows || '<p class="kpi-s">Nenhuma inspeção neste filtro.</p>') + '</div>';
   }
   function vQForm() {
     var F = S.q.form, m = Q.modelos.filter(function (x) { return x.id === F.modelo_id; })[0];
@@ -3887,15 +3936,41 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var L = Q.ncs.filter(function (n) { return t === 'todas' ? true : t === 'abertas' ? n.status === 'aberta' : n.status === t; });
     var cont = function (st) { return Q.ncs.filter(function (n) { return st === 'todas' || n.status === st || (st === 'abertas' && n.status === 'aberta'); }).length; };
     var tab = function (id, tx) { return '<button type="button" data-a="qnct:' + id + '" aria-pressed="' + (t === id) + '">' + tx + ' · ' + cont(id) + '</button>'; };
-    var cards = L.map(function (n) {
+    var cardsDe = function (n) {
       var v = vencida(n);
       return '<div class="q-card"><div class="q-card-top"><b>' + (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'Nova NC') + ' · ' + esc(n.servico || 'Sem serviço') + '</b><span class="chip ' + NC_ST[n.status][1] + '">' + NC_ST[n.status][0] + '</span></div>' +
         '<p style="font-size:14.5px;margin:4px 0">' + esc(n.descricao) + '</p>' +
         '<div class="med-info"><span>' + esc(n.local || '—') + '</span><span>Gravidade ' + GRAV[n.gravidade || 'media'] + '</span><span>' + esc(n.origem || '') + '</span>' + (n.responsavel ? '<span>' + esc(n.responsavel) + '</span>' : '<span style="color:var(--bad)">sem responsável</span>') + (n.prazo ? '<span' + (v ? ' style="color:var(--bad);font-weight:600"' : '') + '>prazo ' + isoBr(n.prazo) + (v ? ' (vencido)' : '') + '</span>' : '') + (n.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '') + '</div>' +
         (n.fotos && n.fotos.length ? '<div class="q-fotos">' + n.fotos.map(function (f) { return '<span class="q-th"><img src="' + esc(fotoUrl(f)) + '" alt="Foto da NC" loading="lazy"></span>'; }).join('') + '</div>' : '') +
         (n.pendente ? '' : '<div class="q-acts"><button type="button" class="btn btn-ghost btn-sm" data-a="qncedit:' + n.id + '">' + (n.status === 'fechada' ? 'Ver' : 'Tratar') + '</button></div>') + '</div>';
-    }).join('');
-    return qMsg() + '<section class="card med-head"><div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qncnova">Registrar não conformidade</button><span style="flex:1"></span><div class="tabs" role="group" aria-label="Filtro">' + tab('abertas', 'Abertas') + tab('tratamento', 'Em tratamento') + tab('fechada', 'Fechadas') + tab('todas', 'Todas') + '</div></div></section>' +
+    }, cards;
+    var vis = S.q.ncVis || 'quadro', bq = semAcento((S.q.ncBusca || '').trim());
+    var achou = function (n) { return !bq || semAcento((n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : '') + ' ' + n.servico + ' ' + n.local + ' ' + n.descricao + ' ' + (n.responsavel || '')).indexOf(bq) >= 0; };
+    var vt = function (id, tx) { return '<button type="button" data-a="qncv:' + id + '" aria-pressed="' + (vis === id) + '">' + tx + '</button>'; };
+    var barra = '<div class="q-bar"><button type="button" class="btn btn-primary" data-a="qncnova">Registrar não conformidade</button>' +
+      '<input id="qncBusca" type="search" placeholder="Buscar por número, serviço, local ou responsável" value="' + esc(S.q.ncBusca || '') + '" aria-label="Buscar não conformidade">' +
+      '<div class="tabs" role="group" aria-label="Forma de ver">' + vt('quadro', 'Quadro') + vt('lista', 'Lista') + '</div></div>';
+    if (vis === 'quadro') {
+      var COLS = [['aberta', 'Aberta', 'var(--bad)'], ['tratamento', 'Em tratamento', '#C98A12'], ['fechada', 'Fechada', 'var(--good)']];
+      var cardQ = function (n, cor) {
+        var v = vencida(n), g = n.gravidade || 'media';
+        var bt = n.pendente ? '<span class="chip c-warn">aguardando envio</span>' : '<button type="button" class="btn btn-ghost btn-sm" data-a="qncedit:' + n.id + '">' + (n.status === 'fechada' ? 'Ver' : n.status === 'tratamento' && !n.eficacia ? 'Verificar eficácia' : 'Tratar') + '</button>';
+        var pz = n.status === 'fechada' ? (n.fechada_em ? 'fechada ' + isoBr(n.fechada_em) : 'fechada') : n.prazo ? '<span' + (v ? ' style="color:var(--bad)"' : '') + '>prazo ' + isoBr(n.prazo) + (v ? ' · vencido' : '') + '</span>' : '<span style="color:var(--bad)">sem prazo</span>';
+        return '<div class="q-ncq" style="border-left-color:' + cor + '"><div class="q-card-top"><b>' + (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'Nova NC') + ' · ' + esc(n.servico || 'Sem serviço') + '</b><span class="chip ' + (g === 'alta' ? 'c-bad' : g === 'media' ? 'c-warn' : 'c-muted') + '">' + GRAV[g] + '</span></div>' +
+          '<p>' + esc(n.descricao) + '</p><span class="q-ncq-l">' + esc(n.local || '—') + ' · ' + (n.responsavel ? esc(n.responsavel) : '<span style="color:var(--bad)">sem responsável</span>') + '</span>' +
+          '<div class="q-ncq-f"><b>' + pz + '</b>' + bt + '</div></div>';
+      };
+      return qMsg() + barra + '<div class="q-board">' + COLS.map(function (c) {
+        var L2 = Q.ncs.filter(function (n) { return n.status === c[0] && achou(n); });
+        if (c[0] === 'fechada') L2.sort(function (x, y) { return String(y.fechada_em || '').localeCompare(String(x.fechada_em || '')); });
+        var mx = c[0] === 'fechada' ? 4 : 99;
+        return '<section class="q-col"><h2><i style="background:' + c[2] + '"></i>' + c[1] + ' · ' + L2.length + '</h2>' + L2.slice(0, mx).map(function (n) { return cardQ(n, c[2]); }).join('') +
+          (L2.length > mx ? '<button type="button" class="linkbtn q-mais" data-a="qnvai:fechada">+ ' + (L2.length - mx) + ' fechadas anteriores</button>' : '') + (!L2.length ? '<p class="kpi-s">Nenhuma.</p>' : '') + '</section>';
+      }).join('') + '</div>';
+    }
+    L = L.filter(achou);
+    cards = L.map(function (n) { return cardsDe(n); }).join('');
+    return qMsg() + barra + '<div class="tabs" role="group" aria-label="Filtro">' + tab('abertas', 'Abertas') + tab('tratamento', 'Em tratamento') + tab('fechada', 'Fechadas') + tab('todas', 'Todas') + '</div>' +
       '<div class="q-list">' + (cards || '<p class="kpi-s">Nenhuma não conformidade neste filtro.</p>') + '</div>';
   }
   function vQNcForm() {
@@ -3925,24 +4000,32 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   }
 
   /* ---------- Matriz local × serviço ---------- */
+  // cabeçalho curto da matriz: "Revestimento argamassado" → "Argamassado", "Instalações elétricas" → "Elétricas"
+  function qMatCab(sv) { var w = String(sv || '').split(/[\s(]+/).filter(Boolean); return (w.length > 1 && FVS_GEN[semAcento(w[0])] ? w[1].charAt(0).toUpperCase() + w[1].slice(1) : w[0] || '').replace(/^Impermeabilização$/, 'Impermeab.').replace(/^Hidrossanit.*/i, 'Hidráulica').replace(/^El[ée]tricas?$/i, 'Elétrica'); }
   function vQMatriz() {
     if (!Q) return qVazio();
     var I = Q.inspecoes.slice().sort(function (a, b) { return (a.data + String(a.id)).localeCompare(b.data + String(b.id)); });
     var ult = {};
     I.forEach(function (i) { ult[i.local + '||' + i.servico] = i; });
     var servs = Q.modelos.map(function (m) { return m; });
-    var locs = (Q.locais || []).slice();
-    if (!locs.length) return qMsg() + '<section class="card"><b>Nenhum local ainda</b><p class="kpi-s" style="margin-top:6px">Os pavimentos vêm do Plano de ataque (área de Planejamento) ou das inspeções já feitas. Faça a primeira inspeção para começar.</p><button type="button" class="btn btn-primary" data-a="qnova" style="margin-top:10px">Nova inspeção</button></section>';
-    var cab = '<tr><th scope="col" class="pa-row">Local</th>' + servs.map(function (m) { return '<th scope="col"><span class="q-mh" title="' + esc(m.servico) + '">' + esc(m.servico) + '</span></th>'; }).join('') + '</tr>';
+    var locs = (Q.locais || []).slice().sort(natural), torres = [];
+    locs.forEach(function (l) { var t = (l.match(/torre\s+[\w-]+/i) || [''])[0]; if (t && torres.indexOf(t) < 0) torres.push(t); });
+    torres.sort(natural);
+    if (S.q.mt && torres.indexOf(S.q.mt) < 0) S.q.mt = '';
+    var todosLocs = locs.length;
+    if (S.q.mt) locs = locs.filter(function (l) { return l.indexOf(S.q.mt) >= 0; });
+    if (!todosLocs) return qMsg() + '<section class="card"><b>Nenhum local ainda</b><p class="kpi-s" style="margin-top:6px">Os pavimentos vêm do Plano de ataque (área de Planejamento) ou das inspeções já feitas. Faça a primeira inspeção para começar.</p><button type="button" class="btn btn-primary" data-a="qnova" style="margin-top:10px">Nova inspeção</button></section>';
+    var cab = '<tr><th scope="col" class="pa-row">Local</th>' + servs.map(function (m) { return '<th scope="col"><span class="q-mh" title="' + esc(m.servico) + '">' + esc(qMatCab(m.servico)) + '</span></th>'; }).join('') + '</tr>';
     var rows = locs.map(function (l) {
-      return '<tr><th scope="row" class="pa-row">' + esc(l) + '</th>' + servs.map(function (m) {
+      return '<tr><th scope="row" class="pa-row" title="' + esc(l) + '">' + esc(l.replace(/\s*pavimento/i, ' pav.')) + '</th>' + servs.map(function (m) {
         var i = ult[l + '||' + m.servico];
         if (!i) return '<td class="c q-cell"><button type="button" data-a="qcel:' + m.id + ':' + encodeURIComponent(l) + '" aria-label="Inspecionar ' + esc(m.servico) + ' em ' + esc(l) + '">+</button></td>';
         var cls = i.resultado === 'aprovada' ? 'ok' : 'late';
         return '<td class="c ' + cls + '" title="' + esc(m.servico + ' — ' + l + ': ' + (i.resultado === 'aprovada' ? 'aprovada' : 'reprovada') + ' em ' + isoBr(i.data)) + '">' + isoBr(i.data).slice(0, 5) + (i.resultado === 'aprovada' ? ' ✓' : ' ✗') + '</td>';
       }).join('') + '</tr>';
     }).join('');
-    return qMsg() + '<section class="card" style="display:flex;flex-direction:column;gap:10px;padding-bottom:0"><div class="legend-row pa-legend"><span><i style="background:var(--good);border-color:var(--good)"></i>Aprovada (última inspeção)</span><span><i style="background:var(--bad-bg);border:2px solid var(--bad)"></i>Reprovada, aguardando reinspeção</span><span><i style="background:var(--surface)"></i>Não inspecionado · toque em + para inspecionar</span></div>' +
+    var tsel = torres.length > 1 ? '<div class="torre-sel" role="group" aria-label="Torre"><span class="kpi-t">Torre</span><button type="button" data-a="qmt:" aria-pressed="' + !S.q.mt + '">Todas</button>' + torres.map(function (t) { return '<button type="button" data-a="qmt:' + esc(t) + '" aria-pressed="' + (S.q.mt === t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' : '';
+    return qMsg() + tsel + '<section class="card" style="display:flex;flex-direction:column;gap:10px;padding-bottom:0"><div class="legend-row pa-legend"><span><i style="background:var(--good);border-color:var(--good)"></i>Aprovada (última inspeção)</span><span><i style="background:var(--bad-bg);border:2px solid var(--bad)"></i>Reprovada, aguardando reinspeção</span><span><i style="background:var(--surface)"></i>Não inspecionado · toque em + para inspecionar</span></div>' +
       '<div class="pa-box"><table class="pa q-mat"><thead>' + cab + '</thead><tbody>' + rows + '</tbody></table></div></section>' +
       '<p style="font-size:12.5px;color:var(--muted)">Cada célula mostra a última inspeção daquela FVS naquele local. Os pavimentos vêm do Plano de ataque; os demais locais aparecem conforme as inspeções são feitas.</p>';
   }
@@ -3996,7 +4079,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     return !L.torre || !TORRE_RX.test(semAcento(insp.local)) || semAcento(insp.local).indexOf(semAcento(L.torre)) >= 0;
   }
   // prazo de inspeção: término da tarefa + 2 dias úteis (segunda a sexta)
-  function mais2Uteis(ms) { var d = diaUTC(ms), n = 0; while (n < 2) { d += 864e5; var w = new Date(d).getUTCDay(); if (w > 0 && w < 6) n++; } return d; }
+  function mais2Uteis(ms) { var d = diaUTC(ms), n = 0, c = P && P.cals && P.cals[P.calProj]; while (n < 2) { d += 864e5; var w = new Date(d).getUTCDay(); if (c ? diaUtil(c, d) : (w > 0 && w < 6)) n++; } return d; }
   function qcModel() {
     if (!P || !Q) return [];
     var A = aggregate(), hoje = hojeReal(), lig = Q.tarefas || {};
@@ -4039,7 +4122,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     });
     var LIM = 200, mais = list.length - LIM;
     var rows = list.slice(0, LIM).map(function (i) {
-      var opts = '<option value=""' + (!i.manual ? ' selected' : '') + '>' + (i.auto ? 'Auto: ' + esc(i.auto.codigo + ' · ' + i.auto.servico) : 'Auto: nenhuma') + '</option>' +
+      var opts = '<option value=""' + (!i.manual ? ' selected' : '') + '>' + (i.auto ? esc(i.auto.codigo + ' · ' + i.auto.servico) + ' (automática)' : 'Automática: nenhuma') + '</option>' +
         Q.modelos.map(function (x) { return '<option value="' + x.id + '"' + (i.manual && i.m && i.m.id === x.id ? ' selected' : '') + '>' + esc(x.codigo + ' · ' + x.servico) + '</option>'; }).join('') +
         '<option value="0"' + (i.manual && !i.m ? ' selected' : '') + '>Sem FVS</option>';
       var acao = '';
@@ -4048,7 +4131,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (i.ult && !i.ult.pendente) acao += '<a class="linkbtn" style="font-size:12.5px" rel="nofollow" href="/api/qualidade/inspecao/' + i.ult.id + '.pdf">PDF</a>';
       var pai = i.t.parent ? i.t.parent.name : '';
       return '<tr><td><span class="sup-nome"><b>' + esc(servDe(i.t)) + (i.L.label !== servDe(i.t) ? ' · ' + esc(i.L.label) : '') + '</b><span>' + esc(i.t.wbs) + ' · ' + esc(i.t.name) + (pai && pai !== servDe(i.t) ? ' · ' + esc(pai) : '') + '</span></span></td>' +
-        '<td><select class="qc-fvs" style="width:210px" data-qc-fvs="' + i.uid + '" aria-label="FVS da tarefa ' + esc(i.t.name) + '">' + opts + '</select></td>' +
+        '<td><select class="qc-fvs" data-qc-fvs="' + i.uid + '" aria-label="FVS da tarefa ' + esc(i.t.name) + '">' + opts + '</select></td>' +
         '<td class="mono">' + fdate(i.t.finish) + '<span class="kpi-s" style="display:block">' + fmt2(i.real) + '% feito</span></td>' +
         '<td class="mono" style="font-weight:600">' + (i.m ? fdate(i.ate) : '—') + '</td>' +
         '<td><span class="chip ' + i.sit[1] + '">' + i.sit[0] + '</span></td>' +
@@ -4061,12 +4144,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="card"><div class="kpi-t">Serviços com FVS</div><div class="kpi-v">' + com.length + '</div><div class="kpi-s">de ' + B.length + ' tarefas do cronograma</div></div>' +
         '<div class="card"><div class="kpi-t">Inspecionar nesta semana</div><div class="kpi-v">' + week + '</div><div class="kpi-s">em execução ou já concluídos</div></div>' +
         '<div class="card"><div class="kpi-t">Atrasadas ou reprovadas</div><div class="kpi-v" style="color:' + (late ? 'var(--bad)' : 'var(--good)') + '">' + late + '</div><div class="kpi-s">serviço liberado sem inspeção aprovada</div></div>' +
-        '<div class="card"><div class="kpi-t">Aprovadas</div><div class="kpi-v">' + ok + '</div><div class="bar" style="margin-top:8px"><i style="width:' + (com.length ? ok / com.length * 100 : 0) + '%;background:var(--good)"></i></div></div>' +
-      '</div>' + tsel +
-      '<div class="sup-bar"><div class="tabs" role="group" aria-label="Filtro das FVS">' + tab('todos', 'Com FVS', com.length) + tab('week', 'Nesta semana', week) + tab('late', 'Atrasadas', late) + tab('ok', 'Aprovadas', ok) + tab('sem', 'Sem FVS', sem) + '</div>' +
+        '<div class="card"><div class="kpi-t">Aprovadas</div><div class="kpi-v">' + ok + '</div><div class="kpi-s">' + (com.length ? fmt2(ok / com.length * 100) + '% dos serviços com FVS' : '—') + '</div><div class="bar" style="margin-top:8px"><i style="width:' + (com.length ? ok / com.length * 100 : 0) + '%;background:var(--good)"></i></div></div>' +
+      '</div><div class="q-bar">' + tsel +
+      '<div class="tabs" role="group" aria-label="Filtro das FVS">' + tab('todos', 'Com FVS', com.length) + tab('week', 'Nesta semana', week) + tab('late', 'Atrasadas', late) + tab('ok', 'Aprovadas', ok) + tab('sem', 'Sem FVS', sem) + '</div>' +
       '<input id="qcQ" type="search" placeholder="Buscar tarefa, EAP, local ou FVS" value="' + esc(R.q) + '" aria-label="Buscar tarefa"></div>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl" style="min-width:900px"><thead><tr>' +
-        '<th scope="col">Serviço e local (tarefa do cronograma)</th><th scope="col">FVS</th><th scope="col">Término</th><th scope="col">Inspecionar até</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl qc-tbl" style="min-width:900px"><thead><tr>' +
+        '<th scope="col">Serviço e local</th><th scope="col">FVS</th><th scope="col">Término</th><th scope="col">Inspecionar até</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
       '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" style="color:var(--muted);padding:24px 14px">Nenhuma tarefa neste filtro.</td></tr>') + '</tbody></table></div></section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + list.length + ' tarefas. Use a busca ou a torre para achar as demais.</p>' : '') +
       '<p style="font-size:12.5px;color:var(--muted)">Cada tarefa do cronograma é um serviço a inspecionar. O local vem da torre e do pavimento no nome da tarefa ou das linhas resumo acima dela; a FVS é escolhida pelo nome do serviço, e você pode trocar ou tirar em cada linha. “Inspecionar até” é o término da tarefa no cronograma mais 2 dias úteis. A situação vem da última inspeção daquela FVS naquele local.</p>';
@@ -4089,49 +4172,62 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     Q.ncs.forEach(function (n) { var d = qIsoMs(n.prazo); if (d != null && n.status !== 'fechada') add(d, { k: 'nc', n: n, late: vencida(n) }); });
     return E;
   }
+  // rótulo curto do local, como no protótipo: "6º A" (pavimento e torre)
+  function qLocCurto(l) {
+    l = String(l || ''); var pv = l.match(/(\d+)\s*[º°o]?\s*pav/i) || l.match(/(\d+)\s*º/), tr = l.match(/torre\s+([\w-]+)/i);
+    var r = (pv ? pv[1] + 'º' : /t[ée]rreo/i.test(l) ? 'Térreo' : '') + (tr ? (pv || /t[ée]rreo/i.test(l) ? ' ' : 'Torre ') + tr[1] : '');
+    return r || l;
+  }
+  var Q_ABREV = { alvenaria: 'Alv.', concretagem: 'Concreto', revestimento: 'Revest.', impermeabilizacao: 'Impermeab.', instalacoes: 'Inst.', esquadrias: 'Esquadr.' };
+  function qServCurto(sv) { var w = String(sv || '').split(/[\s(]/)[0]; return Q_ABREV[semAcento(w)] || (w.length > 10 ? w.slice(0, 7) + '.' : w); }
+  function qFeriado(d) { var w = new Date(d).getUTCDay(); if (w === 0 || w === 6 || !P || !P.cals) return false; var c = P.cals[P.calProj]; return !!c && !diaUtil(c, d); }
   function vQCal() {
     if (!Q) return qVazio();
     var E = qCalEventos(), hoje = hojeReal(), C = S.q.cal;
     var dia = C.dia != null ? C.dia : hoje;
     if (C.mes == null) { var bd = new Date(dia); C.mes = Date.UTC(bd.getUTCFullYear(), bd.getUTCMonth(), 1); }
-    var m0 = new Date(C.mes), ano = m0.getUTCFullYear(), mes = m0.getUTCMonth(), primeiro = C.mes, nDias = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
-    var cel = SEMANA_CURTA.map(function (w) { return '<div class="cal-sem" aria-hidden="true">' + w + '</div>'; }).join('');
-    for (var i = 0; i < new Date(primeiro).getUTCDay(); i++) cel += '<div class="cal-vazio" aria-hidden="true"></div>';
-    var K = { prev: 0, late: 0, apr: 0, rep: 0, nc: 0 };
+    var m0 = new Date(C.mes), ano = m0.getUTCFullYear(), mes = m0.getUTCMonth(), nDias = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+    var QCOR = { prev: 'qe-ins', late: 'qe-rep', ok: 'qe-ok', rep: 'qe-rep', nc: 'qe-nc', ncv: 'qe-rep' };
+    var tipo = function (e) { return e.k === 'prev' ? (e.late ? 'late' : 'prev') : e.k === 'feita' ? (e.x.resultado === 'aprovada' ? 'ok' : 'rep') : (e.late ? 'ncv' : 'nc'); };
+    var rotE = function (e) {
+      if (e.k === 'prev') return qServCurto(e.i.m.servico) + ' ' + qLocCurto(e.i.L.label) + (e.i.ult && e.i.ult.resultado === 'reprovada' ? ' · reinsp.' : '');
+      if (e.k === 'feita') return qServCurto(e.x.servico) + ' ' + qLocCurto(e.x.local);
+      return e.n.numero ? 'NC-' + ('00' + e.n.numero).slice(-3) : 'NC';
+    };
+    var cel = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'].map(function (w) { return '<div class="cal-sem" aria-hidden="true">' + w + '</div>'; }).join('');
+    for (var i = 0; i < (new Date(C.mes).getUTCDay() + 6) % 7; i++) cel += '<div class="cal-vazio" aria-hidden="true"></div>';
+    var K = { prev: 0, apr: 0, rep: 0, nc: 0 };
     for (var dd = 1; dd <= nDias; dd++) {
-      var d = Date.UTC(ano, mes, dd), ev = E[d] || [], w = new Date(d).getUTCDay();
-      var np = ev.filter(function (e) { return e.k === 'prev'; }), nf = ev.filter(function (e) { return e.k === 'feita'; }), nn = ev.filter(function (e) { return e.k === 'nc'; });
-      var pl = np.some(function (e) { return e.late; }), fr = nf.some(function (e) { return e.x.resultado === 'reprovada'; }), nl = nn.some(function (e) { return e.late; });
-      K.prev += np.length; K.late += np.filter(function (e) { return e.late; }).length; K.nc += nn.length;
-      nf.forEach(function (e) { K[e.x.resultado === 'aprovada' ? 'apr' : 'rep']++; });
-      var rot = dd + ' de ' + MES_LONGO[mes] + (np.length ? ', ' + np.length + ' a inspecionar' : '') + (nf.length ? ', ' + nf.length + ' feitas' : '') + (nn.length ? ', ' + nn.length + ' prazo de NC' : '') + (!ev.length ? ', sem eventos' : '');
-      cel += '<button type="button" class="cal-dia' + (d === dia ? ' sel' : '') + (d === hoje ? ' hoje' : '') + (w === 0 || w === 6 ? ' qc-fds' : '') + '" data-a="qcald:' + d + '" aria-label="' + rot + '" aria-pressed="' + (d === dia) + '"><span class="cal-n">' + dd + '</span>' +
-        (ev.length ? '<span class="qc-pts" aria-hidden="true">' +
-          (np.length ? '<i class="cal-q' + (pl ? ' atr' : '') + '">' + np.length + '</i>' : '') +
-          (nf.length ? '<i class="cal-q ' + (fr ? 'qc-rep' : 'qc-ok') + '">' + nf.length + '</i>' : '') +
-          (nn.length ? '<i class="cal-q ' + (nl ? 'atr' : 'qc-nc') + '">' + nn.length + '</i>' : '') + '</span>' : '') + '</button>';
+      var d = Date.UTC(ano, mes, dd), ev = E[d] || [], w = new Date(d).getUTCDay(), fer = qFeriado(d);
+      ev.forEach(function (e) { var t = tipo(e); if (e.k === 'prev') K.prev++; else if (t === 'ok') K.apr++; else if (t === 'rep') K.rep++; else K.nc++; });
+      var np = ev.filter(function (e) { return e.k === 'prev'; }).length, nf = ev.length - np - ev.filter(function (e) { return e.k === 'nc'; }).length, nn = ev.length - np - nf;
+      var ruim = ev.some(function (e) { return QCOR[tipo(e)] === 'qe-rep'; });
+      var rot = dd + ' de ' + MES_LONGO[mes] + (fer ? ', feriado' : '') + (np ? ', ' + np + ' a inspecionar' : '') + (nf ? ', ' + nf + ' feitas' : '') + (nn ? ', ' + nn + ' prazo de NC' : '') + (!ev.length ? ', sem eventos' : '');
+      var pills = ev.slice(0, 3).map(function (e) { return '<span class="qe ' + QCOR[tipo(e)] + '">' + esc(rotE(e)) + '</span>'; }).join('') + (ev.length > 3 ? '<span class="qe-mais">+' + (ev.length - 3) + '</span>' : '');
+      cel += '<button type="button" class="cal-dia qc-dia' + (d === dia ? ' sel' : '') + (d === hoje ? ' hoje' : '') + (w === 0 || w === 6 || fer ? ' qc-fds' : '') + '" data-a="qcald:' + d + '" aria-label="' + rot + '" aria-pressed="' + (d === dia) + '"><span class="cal-n">' + dd + '</span>' +
+        (fer ? '<span class="qc-fer">Feriado</span>' : '') + (ev.length ? '<span class="qc-pills" aria-hidden="true">' + pills + '</span><span class="qc-cont' + (ruim ? ' atr' : '') + '" aria-hidden="true">' + ev.length + '</span>' : '') + '</button>';
     }
-    var ev = (E[dia] || []).slice(), dDia = new Date(dia), titulo = SEMANA_CURTA[dDia.getUTCDay()] + ', ' + dDia.getUTCDate() + ' de ' + MES_LONGO[dDia.getUTCMonth()];
+    var ev = (E[dia] || []).slice(), dDia = new Date(dia), titulo = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][dDia.getUTCDay()] + ', ' + fdata(dia);
     var grupo = function (tit, L, f) { return L.length ? '<h3 class="qc-h">' + tit + ' · ' + L.length + '</h3><ul class="cal-lista">' + L.map(f).join('') + '</ul>' : ''; };
     var item = function (a, barra, nome, l1, l2, chip) { return '<li><button type="button" class="cal-item" data-a="' + a + '"><i class="cal-barra ' + barra + '" aria-hidden="true"></i><div class="grow"><b>' + nome + '</b><span>' + l1 + '</span>' + (l2 ? '<span>' + l2 + '</span>' : '') + '</div><div class="cal-dir">' + chip + '</div></button></li>'; };
     var prevs = ev.filter(function (e) { return e.k === 'prev'; }), feitas = ev.filter(function (e) { return e.k === 'feita'; }), ncs = ev.filter(function (e) { return e.k === 'nc'; });
-    var lista = grupo('A inspecionar', prevs, function (e) { var x = e.i; return item('qcins:' + esc(String(x.uid)), x.sit[1], esc(x.m.codigo + ' · ' + x.m.servico), esc(x.L.label), 'Tarefa termina em ' + fdate(x.t.finish) + ' · ' + fmt2(x.real) + '% feito', '<span class="chip ' + x.sit[1] + '">' + esc(x.sit[0]) + '</span>'); }) +
+    var lista = grupo('A inspecionar', prevs, function (e) { var x = e.i, re = x.ult && x.ult.resultado === 'reprovada'; return item('qcins:' + esc(String(x.uid)), x.sit[1], esc(x.m.codigo + ' · ' + x.m.servico), esc(x.L.label) + (re ? ' · reinspeção da ficha de ' + isoBr(x.ult.data) : ''), 'Tarefa termina em ' + fdate(x.t.finish) + ' · ' + fmt2(x.real) + '% feito', '<span class="chip ' + x.sit[1] + '">' + esc(x.sit[0]) + '</span><span class="btn btn-' + (re ? 'primary' : 'ghost') + ' btn-sm">' + (re ? 'Reinspecionar' : 'Inspecionar') + '</span>'); }) +
       grupo('Inspeções feitas', feitas, function (e) { var x = e.x, ok = x.resultado === 'aprovada'; return item('nav:qi', ok ? 'c-ok' : 'c-bad', esc(x.codigo + ' · ' + x.servico), esc(x.local), x.inspetor ? 'Inspetor: ' + esc(x.inspetor) : '', '<span class="chip ' + (ok ? 'c-ok' : 'c-bad') + '">' + (ok ? 'Aprovada' : 'Reprovada') + '</span>'); }) +
-      grupo('Prazos de não conformidade', ncs, function (e) { var n = e.n; return item('qncedit:' + n.id, e.late ? 'c-bad' : 'c-info', (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'NC') + ' · ' + esc(n.servico || 'Sem serviço'), esc(n.local || '—'), n.responsavel ? 'Responsável: ' + esc(n.responsavel) : '<span style="color:var(--bad)">sem responsável</span>', '<span class="chip ' + (e.late ? 'c-bad' : NC_ST[n.status][1]) + '">' + (e.late ? 'Vencida' : NC_ST[n.status][0]) + '</span>'); });
-    var aviso = P ? '' : '<div class="notebox">Sem cronograma importado: o calendário mostra só as inspeções feitas e os prazos de NC. As inspeções previstas aparecem quando o .mpp for importado na tela Project.</div>';
-    var nomeMes = MES_LONGO[mes].charAt(0).toUpperCase() + MES_LONGO[mes].slice(1);
-    return qMsg() + aviso + '<div class="grid4">' +
-        '<div class="card"><div class="kpi-t">A inspecionar em ' + MES_LONGO[mes] + '</div><div class="kpi-v">' + K.prev + '</div><div class="kpi-s">término da tarefa + 2 dias úteis</div></div>' +
-        '<div class="card"><div class="kpi-t">Atrasadas</div><div class="kpi-v" style="color:' + (K.late ? 'var(--bad)' : 'var(--good)') + '">' + K.late + '</div><div class="kpi-s">prazo passou sem inspeção aprovada</div></div>' +
-        '<div class="card"><div class="kpi-t">Feitas no mês</div><div class="kpi-v">' + (K.apr + K.rep) + '</div><div class="kpi-s">' + K.apr + ' aprovadas · ' + K.rep + ' reprovadas</div></div>' +
-        '<div class="card"><div class="kpi-t">Prazos de NC no mês</div><div class="kpi-v">' + K.nc + '</div><div class="kpi-s">não conformidades abertas ou em tratamento</div></div>' +
-      '</div><div class="cal-wrap qc-wrap"><section class="card cal">' +
-        '<div class="cal-top"><button type="button" class="btn btn-ghost btn-sm" data-a="qcalm:-1" aria-label="Mês anterior">‹</button><h2 aria-live="polite">' + nomeMes + ' de ' + ano + '</h2>' +
-        '<button type="button" class="btn btn-ghost btn-sm" data-a="qcalm:1" aria-label="Próximo mês">›</button><button type="button" class="btn btn-ghost btn-sm" data-a="qcalh">Hoje</button></div>' +
+      grupo('Prazos de não conformidade', ncs, function (e) { var n = e.n; return item('qncedit:' + n.id, e.late ? 'c-bad' : 'c-warn', (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'NC') + ' · ' + esc(n.servico || 'Sem serviço'), esc(n.local || '—') + ' · ' + esc(n.descricao || ''), n.responsavel ? 'Responsável: ' + esc(n.responsavel) : '<span style="color:var(--bad)">sem responsável</span>', '<span class="chip ' + (e.late ? 'c-bad' : NC_ST[n.status][1]) + '">' + (e.late ? 'Vencida' : NC_ST[n.status][0]) + '</span>'); });
+    // próximos 7 dias a partir do dia escolhido
+    var p7i = 0, p7n = 0;
+    for (var k = 1; k <= 7; k++) (E[dia + k * 864e5] || []).forEach(function (e) { if (e.k === 'prev') p7i++; else if (e.k === 'nc') p7n++; });
+    var prox = '<div class="qc-prox"><b>Próximos 7 dias</b><span>' + p7i + (p7i === 1 ? ' inspeção' : ' inspeções') + ' e ' + p7n + (p7n === 1 ? ' prazo' : ' prazos') + ' de NC</span><span class="chip c-muted">' + fdata(dia + 864e5).slice(0, 5) + ' a ' + fdata(dia + 7 * 864e5) + '</span></div>';
+    var aviso = P ? '' : '<div class="notebox">Sem cronograma importado: o calendário mostra só as inspeções feitas e os prazos de NC. As inspeções a fazer aparecem quando o .mpp for importado na tela Project.</div>';
+    var leg = '<p class="cal-leg qc-leg"><span><i class="qe-q qe-ok"></i>Aprovada</span><span><i class="qe-q qe-rep"></i>Reprovada ou atrasada</span><span><i class="qe-q qe-ins"></i>Inspecionar</span><span><i class="qe-q qe-nc"></i>Prazo de NC</span></p>';
+    var nomeMes = MES_LONGO[mes] + ' de ' + ano;
+    return qMsg() + aviso + '<div class="cal-wrap qc-wrap"><section class="card cal">' +
+        '<div class="qc-top"><span class="qc-nav"><button type="button" class="linkbtn" data-a="qcalm:-1" aria-label="Mês anterior">‹</button><h2 aria-live="polite">' + nomeMes + '</h2><button type="button" class="linkbtn" data-a="qcalm:1" aria-label="Próximo mês">›</button><button type="button" class="btn btn-ghost btn-sm" data-a="qcalh">Hoje</button></span>' +
+        '<span class="qc-res">' + K.prev + ' a inspecionar · ' + K.apr + (K.apr === 1 ? ' aprovada' : ' aprovadas') + ' · ' + K.rep + (K.rep === 1 ? ' reprovada' : ' reprovadas') + ' · ' + K.nc + (K.nc === 1 ? ' prazo' : ' prazos') + ' de NC</span></div>' + leg +
         '<div class="cal-grade">' + cel + '</div>' +
-        '<p class="cal-leg"><span><i class="cal-q">2</i> a inspecionar</span><span><i class="cal-q qc-ok">1</i> feitas</span><span><i class="cal-q qc-nc">1</i> prazo de NC</span><span><i class="cal-q atr">1</i> atrasada, reprovada ou vencida</span></p>' +
-      '</section><section class="card cal-dia-lista"><h2 style="font-size:17px;margin:0 0 6px">' + titulo + '</h2>' +
-        (ev.length ? '<p class="cal-dica">Toque em uma inspeção prevista para abrir a FVS no local, ou em uma NC para tratar.</p>' + lista : '<p style="color:var(--muted);font-size:14px;margin:0">Nada de qualidade neste dia.</p>') +
+      '</section><section class="card cal-dia-lista"><div class="qc-dtop"><h2>' + titulo + '</h2><span>' + (prevs.length ? prevs.length + (prevs.length === 1 ? ' inspeção' : ' inspeções') : ev.length ? ev.length + (ev.length === 1 ? ' evento' : ' eventos') : '') + '</span></div>' +
+        (ev.length ? lista : '<p style="color:var(--muted);font-size:14px;margin:6px 0 0">Nada de qualidade neste dia.</p>') + prox +
+        '<p class="qc-nota">“Inspecionar até” = término da tarefa no cronograma + 2 dias úteis, como na tela FVS do cronograma.</p>' +
       '</section></div>';
   }
 
@@ -4148,10 +4244,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="q-lab">Itens de verificação<div class="q-mod-list">' + its + '</div><button type="button" class="btn btn-ghost btn-sm" data-a="qmiadd" style="align-self:flex-start">+ Item</button></div>' +
         '<div class="prj-bar"><button type="button" class="btn btn-primary" data-a="qmsalvar">Salvar FVS</button>' + (E.id ? '<span style="flex:1"></span><button type="button" class="linkbtn" data-a="qmdel" style="font-size:13px">Excluir FVS</button>' : '') + '</div></section>';
     }
-    return qMsg() + '<section class="card med-head"><div class="prj-bar"><span class="kpi-s" style="flex:1">Fichas de verificação usadas nas inspeções. Os critérios são uma referência: ajuste aos procedimentos da empresa.</span><button type="button" class="btn btn-primary" data-a="qmnova">Nova FVS</button></div></section>' +
-      '<div class="q-list">' + Q.modelos.map(function (m) {
-        return '<div class="q-card"><div class="q-card-top"><b>' + esc(m.codigo + ' · ' + m.servico) + '</b><button type="button" class="btn btn-ghost btn-sm" data-a="qmedit:' + m.id + '">Editar</button></div><ol class="q-ol">' + m.itens.map(function (it) { return '<li><b>' + esc(it.item) + '</b> — <span class="kpi-s">' + esc(it.criterio) + '</span></li>'; }).join('') + '</ol></div>';
-      }).join('') + '</div>';
+    var sel = Q.modelos.filter(function (m) { return m.id === S.q.modSel; })[0] || Q.modelos[0];
+    if (!sel) return qMsg() + '<section class="card"><b>Nenhum modelo de FVS</b><p class="kpi-s" style="margin-top:6px">Crie a primeira ficha de verificação.</p><button type="button" class="btn btn-primary" data-a="qmnova" style="margin-top:10px">Nova FVS</button></section>';
+    var uso = Q.inspecoes.filter(function (i) { return i.modelo_id === sel.id; }).length;
+    var lista = '<section class="card q-modl"><div class="card-head"><h2>' + Q.modelos.length + (Q.modelos.length === 1 ? ' modelo' : ' modelos') + '</h2><button type="button" class="btn btn-primary btn-sm" data-a="qmnova">Nova FVS</button></div><div class="q-modl-l">' +
+      Q.modelos.map(function (m) { return '<button type="button" data-a="qmsel:' + m.id + '" aria-pressed="' + (m.id === sel.id) + '"><span>' + esc(m.codigo + ' · ' + m.servico) + '</span><small>' + m.itens.length + ' itens</small></button>'; }).join('') + '</div></section>';
+    var det = '<section class="card q-modd"><div class="q-modd-top"><span><span class="kpi-t">' + esc(sel.codigo) + '</span><h2>' + esc(sel.servico) + '</h2><span class="kpi-s">' + sel.itens.length + ' itens · usada em ' + uso + (uso === 1 ? ' inspeção' : ' inspeções') + '</span></span><button type="button" class="btn btn-ghost btn-sm" data-a="qmedit:' + sel.id + '">Editar</button></div>' +
+      '<ol class="q-modd-l">' + sel.itens.map(function (it, k) { return '<li><i>' + (k + 1) + '</i><span><b>' + esc(it.item) + '</b><span>Critério de aceitação: ' + esc(it.criterio) + '</span></span></li>'; }).join('') + '</ol>' +
+      '<p class="qc-nota">Os critérios são uma referência: ajuste aos procedimentos da empresa.</p></section>';
+    return qMsg() + '<div class="q-mod2">' + lista + det + '</div>';
   }
   function lerModForm() {
     var E = S.q.modEdit; if (!E) return;
@@ -4195,6 +4296,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         api('/api/qualidade/inspecao/remover', { id: +a[1] }).then(function (r) { Q = r; S.q.msg = 'Inspeção excluída.'; render(); }, function (e) { S.q.msg = e.message; render(); }); return true;
       case 'qfil': S.q.filtro = a[1]; render(); return true;
       case 'qnct': S.q.ncTab = a[1]; render(); return true;
+      case 'qncv': S.q.ncVis = a[1]; render(); return true;
+      case 'qmsel': S.q.modSel = +a[1]; render(); if (window.innerWidth < 861) { var qd = document.querySelector('.q-modd'); if (qd) qd.scrollIntoView({ block: 'start' }); } return true;
+      case 'qmt': S.q.mt = a.slice(1).join(':'); render(); return true;
+      case 'qnvai': S.q.ncVis = 'lista'; S.q.ncTab = a[1]; S.q.ncEdit = null; S.screen = 'qn'; render(); window.scrollTo(0, 0); return true;
       case 'qncnova': S.q.ncEdit = { cid: uidNovo(), descricao: '', gravidade: 'media', status: 'aberta', fotos: [], prazo: '' }; S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
       case 'qncedit': var n = Q.ncs.filter(function (x) { return String(x.id) === a[1]; })[0]; if (n) { S.screen = 'qn'; S.q.ncEdit = JSON.parse(JSON.stringify(n)); S.q.msg = ''; render(); window.scrollTo(0, 0); } return true;
       case 'qnccancel': S.q.ncEdit = null; render(); return true;
@@ -4226,6 +4331,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     else if (F && t.hasAttribute('data-qobs')) F.itens[+t.getAttribute('data-qobs')].obs = t.value;
     else if (S.q.modEdit && t.hasAttribute('data-mi')) { var p = t.getAttribute('data-mi').split(':'); S.q.modEdit.itens[+p[0]][p[1]] = t.value; }
     else if (t.id === 'qcQ') { S.q.qc.q = t.value; render(); var q4 = document.getElementById('qcQ'); if (q4) { q4.focus(); var n4 = q4.value.length; try { q4.setSelectionRange(n4, n4); } catch (er) {} } }
+    else if (t.id === 'qncBusca') { S.q.ncBusca = t.value; render(); var q5 = document.getElementById('qncBusca'); if (q5) { q5.focus(); var n5 = q5.value.length; try { q5.setSelectionRange(n5, n5); } catch (er) {} } }
     else if (t.id === 'qBusca') { S.q.busca = t.value; render(); var q2 = document.getElementById('qBusca'); if (q2) { q2.focus(); var n = q2.value.length; try { q2.setSelectionRange(n, n); } catch (er) {} } }
   });
   app.addEventListener('change', function (e) {
