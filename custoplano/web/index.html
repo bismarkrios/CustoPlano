@@ -2827,12 +2827,14 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
     // avanço mês a mês: previsto pelo cronograma atual × real das medições fechadas
     var prevAt = function (at, lb) { var sp = 0; fs.forEach(function (t) { sp += wOf(t) * fracUtil(t, at, lb) * 100; }); return tot ? sp / tot : 0; };
-    var medEm = function (at) { var r = null; hist.concat([{ t: sd, r: real }]).forEach(function (h) { if (h.t < at) r = h.r; }); return r; };
+    // última medição antes de 'at' ({t, r}); o real do mês só vale com uma medição no fim do mês anterior (até 10 dias antes) e outra dentro do mês
+    var medEm = function (at) { var r = null; hist.concat([{ t: sd, r: real }]).forEach(function (h) { if (h.t < at) r = h; }); return r; };
     var mIni = new Date(ini), mm0 = Date.UTC(mIni.getUTCFullYear(), mIni.getUTCMonth(), 1), MM = [];
     for (var mx = mm0; mx <= fimX; mx = Date.UTC(new Date(mx).getUTCFullYear(), new Date(mx).getUTCMonth() + 1, 1)) {
       var mf = Date.UTC(new Date(mx).getUTCFullYear(), new Date(mx).getUTCMonth() + 1, 1);
-      var r0 = mx <= ini ? 0 : medEm(mx), r1 = medEm(Math.min(mf, sd + 1));
-      MM.push({ m: mx, p: prevAt(mf) - prevAt(mx), pa: prevAt(mf), b: prevAt(mf, true) - prevAt(mx, true), ba: prevAt(mf, true), r: r1 != null && r0 != null && mx <= sd ? r1 - r0 : null, ra: mx <= sd ? r1 : null });
+      var h0 = mx <= ini ? { t: mx, r: 0 } : medEm(mx), h1 = medEm(Math.min(mf, sd + 1));
+      var r0 = h0 && h0.t >= mx - 10 * dia ? h0.r : null, r1 = h1 && h1.t >= mx ? h1.r : null;
+      MM.push({ m: mx, p: prevAt(mf) - prevAt(mx), pa: prevAt(mf), b: prevAt(mf, true) - prevAt(mx, true), ba: prevAt(mf, true), r: r1 != null && r0 != null && mx <= sd ? r1 - r0 : null, ra: mx <= sd && h1 ? h1.r : null });
     }
     var mAt = MM.filter(function (o) { return sd >= o.m; }).pop() || MM[0];
     var nomeM = function (o) { var d = new Date(o.m); return MES[d.getUTCMonth()] + '/' + String(d.getUTCFullYear()).slice(2); };
@@ -2851,7 +2853,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     }).join('');
     var mensal = '<section class="card"><div class="card-head"><h2>Avanço mês a mês</h2>' +
         '<span class="legend-row"><span><i class="sw" style="background:var(--pa2)"></i>Linha de base</span><span><i class="sw" style="background:var(--line)"></i>Previsto atual</span><span><i class="sw" style="background:var(--accent)"></i>Real</span></span></div>' +
-      '<p class="pm-res"><b>' + nomeM(mAt) + '</b>: previsto <b>+' + fmt2(mAt.p) + ' p.p.</b> (até ' + fmt2(mAt.pa) + '%) · linha de base +' + fmt2(mAt.b) + ' p.p. (até ' + fmt2(mAt.ba) + '%)' + (mAt.r != null ? ' · real até agora <b>+' + fmt2(mAt.r) + ' p.p.</b> (' + fmt2(mAt.ra) + '%)' : '') + '</p>' +
+      '<p class="pm-res"><b>' + nomeM(mAt) + '</b>: previsto <b>+' + fmt2(mAt.p) + ' p.p.</b> (até ' + fmt2(mAt.pa) + '%) · linha de base +' + fmt2(mAt.b) + ' p.p. (até ' + fmt2(mAt.ba) + '%)' + (mAt.r != null ? ' · real até agora <b>+' + fmt2(mAt.r) + ' p.p.</b> (' + fmt2(mAt.ra) + '%)' : mAt.ra != null ? ' · real acumulado <b>' + fmt2(mAt.ra) + '%</b> (sem medição salva no fim do mês anterior)' : '') + '</p>' +
       '<div class="scroll-x pm-wrap" data-x="' + (MM.indexOf(mAt) * gw) + '"><svg class="pm-graf" viewBox="-6 -18 ' + (GW + 6) + ' ' + (GH + 46) + '" width="' + (GW + 6) + '" height="' + (GH + 46) + '" role="img" aria-label="Avanço físico mês a mês, previsto e real">' + barras + '</svg></div>' +
       '<p class="kpi-s" style="margin:6px 0 0">Previsto pelo cronograma atual do arquivo, repartido pelos dias úteis de cada tarefa; real pelas medições salvas no sistema' + (hist.length ? '' : ' (o real de cada mês aparece a partir das próximas medições)') + '.</p></section>';
     html += mensal;
