@@ -76,12 +76,12 @@ def mpp_para_xml(dados: bytes) -> str:
 # Campos do XML do MS Project que o sistema usa. Recursos, atribuições e calendários ficam de
 # fora: num cronograma grande eles são a maior parte do arquivo e não cabem na memória do servidor.
 _RAIZ = {"Name", "Title", "StatusDate", "CurrentDate", "StartDate", "FinishDate", "CurrencySymbol",
-         "MinutesPerDay", "MinutesPerWeek", "DaysPerMonth", "ExtendedAttributes"}
+         "MinutesPerDay", "MinutesPerWeek", "DaysPerMonth", "ExtendedAttributes", "CalendarUID", "Calendars"}
 _TAREFA = {"UID", "ID", "Name", "Type", "IsNull", "WBS", "OutlineNumber", "OutlineLevel", "Priority", "Start",
            "Finish", "Duration", "DurationFormat", "Work", "Milestone", "Summary", "Critical", "PercentComplete",
            "PercentWorkComplete", "PhysicalPercentComplete", "Cost", "ActualStart", "ActualFinish",
            "ActualDuration", "RemainingDuration", "ActualCost", "RemainingCost", "ConstraintType",
-           "ConstraintDate", "Active", "Manual", "Estimated", "PredecessorLink", "ExtendedAttribute", "Baseline"}
+           "ConstraintDate", "Active", "Manual", "Estimated", "PredecessorLink", "ExtendedAttribute", "Baseline", "CalendarUID"}
 _LINHA_BASE = {"Number", "Start", "Finish", "Duration", "DurationFormat", "Cost", "Work"}
 
 

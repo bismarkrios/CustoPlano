@@ -2165,7 +2165,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (!/^\d{1,9}$/.test(uid)) return; // o MS Project só grava números aqui; qualquer outra coisa é arquivo adulterado
       var t = {
         el: el, uid: uid, id: tx(el, 'ID'), name: tx(el, 'Name') || '(sem nome)', wbs: tx(el, 'WBS') || tx(el, 'OutlineNumber'), lvl: lvl,
-        ms: tx(el, 'Milestone') === '1', start: pdate(tx(el, 'Start')), finish: pdate(tx(el, 'Finish')), durH: hrs(tx(el, 'Duration')), cost: (+tx(el, 'Cost') || 0) / 100,
+        ms: tx(el, 'Milestone') === '1', start: pdate(tx(el, 'Start')), finish: pdate(tx(el, 'Finish')), durH: hrs(tx(el, 'Duration')), cost: (+tx(el, 'Cost') || 0) / 100, cal: tx(el, 'CalendarUID'),
         pct: +tx(el, 'PercentComplete') || 0, phys: +tx(el, 'PhysicalPercentComplete') || 0, bStart: null, bFinish: null, pred: [], ext: {}, children: []
       };
       kids(el, 'Baseline').forEach(function (b) { var n = tx(b, 'Number'); if (n === '' || n === '0') { t.bStart = pdate(tx(b, 'Start')); t.bFinish = pdate(tx(b, 'Finish')); } });
@@ -2187,6 +2187,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     tasks.forEach(function (t) { base[t.uid] = usePhys ? t.phys : t.pct; if (t.lvl <= minL + 1) open[t.uid] = true; });
     return {
       doc: doc, root: root, xml: text, fileName: fileName || 'cronograma.xml', title: tx(root, 'Title') || tx(root, 'Name') || (fileName || '').replace(/\.xml$/i, ''),
+      cals: lerCalendarios(root), calProj: tx(root, 'CalendarUID'),
       tasks: tasks, byUid: byUid, wOpts: wOpts, weight: auto ? auto.id : 'dur', usePhys: usePhys,
       min: Math.min.apply(null, starts), max: Math.max.apply(null, ends),
       base: base, meas: Object.assign({}, base), open: open, edit: false, msg: '',
@@ -2194,6 +2195,61 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     };
   }
 
+  /* calendários do Project: dias da semana trabalhados e exceções (feriados), para repartir o previsto por dias úteis */
+  function lerCalendarios(root) {
+    var C = {}, cs = kid(root, 'Calendars');
+    if (!cs) return C;
+    kids(cs, 'Calendar').forEach(function (c) { C[tx(c, 'UID')] = { el: c, base: tx(c, 'BaseCalendarUID') }; });
+    Object.keys(C).forEach(function (u) {
+      var c = C[u], wk = [null, null, null, null, null, null, null], off = {}, on = {};
+      var wds = kid(c.el, 'WeekDays');
+      if (wds) kids(wds, 'WeekDay').forEach(function (w) {
+        var dt = +tx(w, 'DayType');
+        if (dt >= 1 && dt <= 7) wk[dt - 1] = tx(w, 'DayWorking') === '1';
+        else if (dt === 0) { var tp = kid(w, 'TimePeriod'); if (tp) marcar(tx(tp, 'FromDate'), tx(tp, 'ToDate'), tx(w, 'DayWorking') === '1' ? on : off); }
+      });
+      // o Project já grava as exceções expandidas dia a dia em WeekDays (tipo 0); as de Exceptions só valem se forem de uma vez (tipo 1)
+      var exs = kid(c.el, 'Exceptions');
+      if (exs && !Object.keys(off).length && !Object.keys(on).length) kids(exs, 'Exception').forEach(function (e) { var tp = kid(e, 'TimePeriod'); if (tp && tx(e, 'Type') === '1') marcar(tx(tp, 'FromDate'), tx(tp, 'ToDate'), tx(e, 'DayWorking') === '1' ? on : off); });
+      c.wk = wk; c.off = off; c.on = on;
+    });
+    function marcar(de, ate, alvo) {
+      var a = Date.parse(de.slice(0, 10) + 'T00:00:00Z'), b = Date.parse(ate.slice(0, 10) + 'T00:00:00Z');
+      if (isNaN(a) || isNaN(b) || b - a > 60 * 864e5) return;
+      for (var d = a; d <= b; d += 864e5) alvo[d] = 1;
+    }
+    Object.keys(C).forEach(function (u) { delete C[u].el; });
+    return C;
+  }
+  // dia útil? usa o calendário da tarefa (ou o do projeto) e herda do calendário base o que faltar
+  function diaUtil(cal, d) {
+    for (var c = cal, n = 0; c && n < 5; c = P.cals[c.base], n++) {
+      if (c.on[d]) return true; if (c.off[d]) return false;
+    }
+    var wd = new Date(d).getUTCDay();
+    for (c = cal, n = 0; c && n < 5; c = P.cals[c.base], n++) if (c.wk[wd] != null) return c.wk[wd];
+    return wd !== 0 && wd !== 6;
+  }
+  // fração do previsto da tarefa até 'at', repartida pelos dias úteis (como o Uso da tarefa do Project)
+  var CUM = {};
+  function fracUtil(t, at) {
+    var i = t.start, f = t.finish;
+    if (i == null || f == null) return 0;
+    if (at <= i) return 0; if (at >= f) return 1;
+    var uid = (t.cal && t.cal !== '-1' && P.cals && P.cals[t.cal]) ? t.cal : P.calProj;
+    var cal = P.cals && P.cals[uid];
+    if (!cal) return (at - i) / (f - i);
+    var key = uid + '|' + P.min, c = CUM[key];
+    if (!c) {
+      var d0 = Math.floor(P.min / 864e5) * 864e5, nd = Math.ceil((P.max - d0) / 864e5) + 2, arr = new Int32Array(nd + 1);
+      for (var k = 0; k < nd; k++) arr[k + 1] = arr[k] + (diaUtil(cal, d0 + k * 864e5) ? 1 : 0);
+      c = CUM[key] = { d0: d0, a: arr };
+    }
+    var ix = function (ms) { return Math.max(0, Math.min(c.a.length - 1, Math.floor((ms - c.d0) / 864e5))); };
+    var tot = c.a[ix(f) + 1] - c.a[ix(i)];
+    if (tot <= 0) return (at - i) / (f - i);
+    return Math.max(0, Math.min(1, (c.a[ix(at)] - c.a[ix(i)]) / tot));
+  }
   /* pesos e avanço ponderado */
   function wOf(t) {
     if (P.weight === 'dur') return t.ms ? 0 : Math.max(t.durH, 0);
@@ -2770,7 +2826,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     html += '<div class="grid-2-1 pn-par">' + curva + pacotes + '</div>';
 
     // avanço mês a mês: previsto pelo cronograma atual × real das medições fechadas
-    var prevAt = function (at) { var sp = 0; fs.forEach(function (t) { var i = t.start, f = t.finish; if (i == null || f == null) return; sp += wOf(t) * (at <= i ? 0 : at >= f ? 100 : (at - i) / (f - i) * 100); }); return tot ? sp / tot : 0; };
+    var prevAt = function (at) { var sp = 0; fs.forEach(function (t) { sp += wOf(t) * fracUtil(t, at) * 100; }); return tot ? sp / tot : 0; };
     var medEm = function (at) { var r = null; hist.concat([{ t: sd, r: real }]).forEach(function (h) { if (h.t < at) r = h.r; }); return r; };
     var mIni = new Date(ini), mm0 = Date.UTC(mIni.getUTCFullYear(), mIni.getUTCMonth(), 1), MM = [];
     for (var mx = mm0; mx <= fimX; mx = Date.UTC(new Date(mx).getUTCFullYear(), new Date(mx).getUTCMonth() + 1, 1)) {
@@ -2796,7 +2852,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<span class="legend-row"><span><i class="sw" style="background:var(--line)"></i>Previsto no mês</span><span><i class="sw" style="background:var(--accent)"></i>Real no mês</span></span></div>' +
       '<p class="pm-res"><b>' + nomeM(mAt) + '</b>: previsto <b>+' + fmt2(mAt.p) + ' p.p.</b> (até ' + fmt2(mAt.pa) + '%)' + (mAt.r != null ? ' · real até agora <b>+' + fmt2(mAt.r) + ' p.p.</b> (' + fmt2(mAt.ra) + '%)' : '') + '</p>' +
       '<div class="scroll-x pm-wrap" data-x="' + (MM.indexOf(mAt) * gw) + '"><svg class="pm-graf" viewBox="-6 -18 ' + (GW + 6) + ' ' + (GH + 46) + '" width="' + (GW + 6) + '" height="' + (GH + 46) + '" role="img" aria-label="Avanço físico mês a mês, previsto e real">' + barras + '</svg></div>' +
-      '<p class="kpi-s" style="margin:6px 0 0">Previsto pelo cronograma atual do arquivo; real pelas medições salvas no sistema' + (hist.length ? '' : ' (o real de cada mês aparece a partir das próximas medições)') + '.</p></section>';
+      '<p class="kpi-s" style="margin:6px 0 0">Previsto pelo cronograma atual do arquivo, repartido pelos dias úteis de cada tarefa; real pelas medições salvas no sistema' + (hist.length ? '' : ' (o real de cada mês aparece a partir das próximas medições)') + '.</p></section>';
     html += mensal;
 
     // avanço por etapa: barras horizontais, real × previsto
