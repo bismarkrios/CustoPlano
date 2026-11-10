@@ -841,7 +841,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .med-frase p{margin:0}
 .med-real{font-size:22px;line-height:1.25;color:var(--ink)}.med-real b{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .med-peso{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:13.5px;color:var(--muted);margin-top:8px}.med-peso select{width:auto;flex:0 1 auto;min-width:0;font:inherit;color:var(--ink);padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card,#fff);max-width:100%}
-.pm-res{margin:2px 0 10px;font-size:14.5px;color:var(--muted)}.pm-res b{color:var(--ink)}.pm-graf text{font-size:11px;fill:var(--muted)}.pm-graf{display:block}.pm-graf .pm-v{font-size:9.5px;fill:var(--muted)}.pm-graf .pm-vr{fill:var(--ink);font-weight:600}
+.pm-res{margin:2px 0 10px;font-size:14.5px;color:var(--muted)}.pm-res b{color:var(--ink)}.pm-graf text{font-size:11px;fill:var(--muted)}.pm-graf{display:block}.pm-graf .pm-m{cursor:pointer;outline:none}.pm-graf .pm-m:hover rect:not([fill="transparent"]),.pm-graf .pm-m:focus rect:not([fill="transparent"]){filter:brightness(.92)}.pm-graf .pm-tip{display:none;pointer-events:none}.pm-graf .pm-tip.on{display:inline}.pm-graf .pm-tb{fill:var(--surface);stroke:var(--line)}.pm-graf .pm-tip text{fill:var(--muted)}.pm-graf .pm-tip .pm-tv{fill:var(--ink);font-weight:700}
 .med-ctx{font-size:15px;color:var(--muted);margin-top:4px!important}.med-ctx b{color:var(--ink);font-weight:600;white-space:nowrap}
 .med-ctx .ruim{color:var(--bad);font-weight:600;white-space:nowrap}.med-ctx .bom{color:var(--good);font-weight:600;white-space:nowrap}
 .med-sd{grid-column:2;grid-row:1;position:relative;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
@@ -2845,21 +2845,24 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var nomeM = function (o) { var d = new Date(o.m); return MES[d.getUTCMonth()] + '/' + String(d.getUTCFullYear()).slice(2); };
     var vmax = Math.max.apply(null, MM.map(function (o) { return Math.max(o.p, o.b, o.r || 0); }).concat([1]));
     var bw = 24, gw = 3 * bw + 16, GH = 150, GW = MM.length * gw;
-    var barras = MM.map(function (o, n) {
+    var tips = '', barras = MM.map(function (o, n) {
       var x = n * gw, hb = Math.max(0, o.b) / vmax * GH, hp = Math.max(0, o.p) / vmax * GH, hr = Math.max(0, o.r || 0) / vmax * GH, at = o === mAt;
-      var rot = function (v, xc, h, cls) { return v >= 0.005 ? '<text class="pm-v' + (cls || '') + '" x="' + xc + '" y="' + (GH - h - 4).toFixed(1) + '" text-anchor="middle">' + fmt2(v) + '</text>' : ''; };
-      return '<g><title>' + nomeM(o) + ': linha de base ' + fmt2(o.b) + ' p.p. · previsto ' + fmt2(o.p) + ' p.p.' + (o.r != null ? ' · real ' + fmt2(o.r) + ' p.p.' : '') + '</title>' +
+      // número interativo: os valores do mês aparecem numa caixa acima das barras ao passar o mouse ou tocar (o mês atual já vem aberto)
+      var TW = 112, tx = Math.max(-6, Math.min(GW - TW, x + gw / 2 - 8 - TW / 2)), lin = function (i, cor, nome, v) { return '<rect x="' + (tx + 8) + '" y="' + (-49 + i * 14) + '" width="8" height="8" rx="2" fill="' + cor + '"></rect><text x="' + (tx + 21) + '" y="' + (-42 + i * 14) + '">' + nome + '</text><text class="pm-tv" x="' + (tx + TW - 8) + '" y="' + (-42 + i * 14) + '" text-anchor="end">' + fmt2(v) + '</text>'; };
+      tips += '<g class="pm-tip' + (at ? ' on' : '') + '" data-m="' + n + '"><rect class="pm-tb" x="' + tx + '" y="-56" width="' + TW + '" height="' + (o.r != null ? 48 : 34) + '" rx="6"></rect>' +
+        lin(0, 'var(--pa2)', 'Base', o.b) + lin(1, 'var(--line)', 'Previsto', o.p) + (o.r != null ? lin(2, 'var(--accent)', 'Real', o.r) : '') + '</g>';
+      return '<g class="pm-m" data-m="' + n + '" tabindex="0"><title>' + nomeM(o) + ': linha de base ' + fmt2(o.b) + ' p.p. · previsto ' + fmt2(o.p) + ' p.p.' + (o.r != null ? ' · real ' + fmt2(o.r) + ' p.p.' : '') + '</title>' +
         (at ? '<rect x="' + (x + 4) + '" y="' + (GH + 23) + '" width="' + (3 * bw - 6) + '" height="3" fill="var(--accent)" rx="1.5"></rect>' : '') +
         '<rect x="' + x + '" y="' + (GH - hb).toFixed(1) + '" width="' + (bw - 2) + '" height="' + hb.toFixed(1) + '" fill="var(--pa2)" rx="3"></rect>' +
         '<rect x="' + (x + bw) + '" y="' + (GH - hp).toFixed(1) + '" width="' + (bw - 2) + '" height="' + hp.toFixed(1) + '" fill="var(--line)" rx="3"></rect>' +
         (o.r != null ? '<rect x="' + (x + 2 * bw) + '" y="' + (GH - hr).toFixed(1) + '" width="' + (bw - 2) + '" height="' + hr.toFixed(1) + '" fill="var(--accent)" rx="3"></rect>' : '') +
-        rot(o.b, x + bw / 2 - 1, hb) + rot(o.p, x + bw * 1.5 - 1, hp) + (o.r != null ? rot(o.r, x + bw * 2.5 - 1, hr, ' pm-vr') : '') +
+        '<rect x="' + (x - 4) + '" y="0" width="' + gw + '" height="' + (GH + 26) + '" fill="transparent"></rect>' +
         '<text x="' + (x + bw * 1.5) + '" y="' + (GH + 18) + '" text-anchor="middle"' + (at ? ' font-weight="700"' : '') + '>' + nomeM(o) + '</text></g>';
     }).join('');
     var mensal = '<section class="card"><div class="card-head"><h2>Avanço mês a mês</h2>' +
         '<span class="legend-row"><span><i class="sw" style="background:var(--pa2)"></i>Linha de base</span><span><i class="sw" style="background:var(--line)"></i>Previsto atual</span><span><i class="sw" style="background:var(--accent)"></i>Real</span></span></div>' +
       '<p class="pm-res"><b>' + nomeM(mAt) + '</b>: previsto <b>+' + fmt2(mAt.p) + ' p.p.</b> (até ' + fmt2(mAt.pa) + '%) · linha de base +' + fmt2(mAt.b) + ' p.p. (até ' + fmt2(mAt.ba) + '%)' + (mAt.r != null ? ' · real até agora <b>+' + fmt2(mAt.r) + ' p.p.</b> (' + fmt2(mAt.ra) + '%)' : mAt.ra != null ? ' · real acumulado <b>' + fmt2(mAt.ra) + '%</b> (sem medição salva no fim do mês anterior)' : '') + '</p>' +
-      '<div class="scroll-x pm-wrap" data-x="' + (MM.indexOf(mAt) * gw) + '"><svg class="pm-graf" viewBox="-6 -18 ' + (GW + 6) + ' ' + (GH + 46) + '" width="' + (GW + 6) + '" height="' + (GH + 46) + '" role="img" aria-label="Avanço físico mês a mês, previsto e real">' + barras + '</svg></div>' +
+      '<div class="scroll-x pm-wrap" data-x="' + (MM.indexOf(mAt) * gw) + '"><svg class="pm-graf" data-def="' + MM.indexOf(mAt) + '" viewBox="-6 -60 ' + (GW + 6) + ' ' + (GH + 88) + '" width="' + (GW + 6) + '" height="' + (GH + 88) + '" role="img" aria-label="Avanço físico mês a mês, previsto e real">' + barras + tips + '</svg></div>' +
       '<p class="kpi-s" style="margin:6px 0 0">Previsto pelo cronograma atual do arquivo, repartido pelos dias úteis de cada tarefa; real pelas medições salvas no sistema' + (hist.length ? '' : ' (o real de cada mês aparece a partir das próximas medições)') + '.</p></section>';
     html += mensal;
 
@@ -4420,6 +4423,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function ehDemo() { return user === 'demo@custoplano.com.br'; }
   // Tabela larga que rola para o lado precisa receber o foco do teclado e ter nome (WCAG 2.1.1 e 4.1.2)
   function marcarRolagem() {
+    if (!window._pmTip) { window._pmTip = 1; var pmSel = function (g, i) { g.querySelectorAll('.pm-tip').forEach(function (t) { t.classList.toggle('on', t.dataset.m === String(i)); }); };
+      ['pointerover', 'focusin', 'click'].forEach(function (ev) { document.addEventListener(ev, function (e) { var m = e.target.closest && e.target.closest('.pm-graf .pm-m'); if (m) pmSel(m.closest('.pm-graf'), m.dataset.m); }); });
+      document.addEventListener('pointerout', function (e) { var g = e.target.closest && e.target.closest('.pm-graf'); if (g && e.pointerType === 'mouse' && !g.contains(e.relatedTarget)) pmSel(g, g.dataset.def); }); }
     var pw = document.querySelector('#app .pm-wrap'); if (pw && !pw.dataset.ok) { pw.dataset.ok = '1'; pw.scrollLeft = Math.max(0, +pw.dataset.x - pw.clientWidth / 2 + 40); }
     Array.prototype.forEach.call(document.querySelectorAll('#app .scroll-x'), function (el) {
       if (el.scrollWidth > el.clientWidth + 1) {
