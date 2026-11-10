@@ -969,6 +969,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .cu-sum b{color:var(--ink)}
 .pa-grid2 .tbl td.mono{white-space:nowrap;font-family:var(--body);font-variant-numeric:tabular-nums}
 .pa-chart .pt{cursor:pointer}
+@media (min-width:1101px){.grid-2-1.pn-par{align-items:stretch}.pn-pac{height:0;min-height:100%;display:flex;flex-direction:column}.pn-pac-lista{flex:1;min-height:0;overflow-y:auto;margin-right:-8px;padding-right:8px}}
 @media (max-width:1100px){.split{grid-template-columns:1fr}.grid-2-1{grid-template-columns:1fr}.svc-prog{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media (max-width:860px){
   .app{grid-template-columns:1fr;align-content:start}
@@ -2760,13 +2761,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var cores = ['var(--pa0)', 'var(--pa2)', 'var(--pa3)', 'var(--pa1)', 'var(--pa4)', 'var(--pa5)'], corDe = {};
     var corS = function (nome) { if (!(nome in corDe)) corDe[nome] = cores[Object.keys(corDe).length % cores.length]; return corDe[nome]; };
     var LIMP = 8;
-    var pacotes = '<section class="card"><div class="card-head"><h2>Pacotes da semana</h2><button class="more" type="button" data-a="nav:cp">Ver todos →</button></div>' +
+    var pacotes = '<section class="card pn-pac"><div class="card-head"><h2>Pacotes da semana</h2><button class="more" type="button" data-a="nav:cp">Ver todos →</button></div><div class="pn-pac-lista">' +
       (pac.length ? pac.slice(0, LIMP).map(function (t) {
         var serv = servDe(t), local = localDe(t) || (t.parent ? t.parent.name : '');
         return '<div class="list-row"><i class="sw" style="background:' + corS(serv) + '"></i><div class="grow"><span>' + esc(serv) + '</span><span>' + esc(local) + '</span></div>' + chip(t) + '</div>';
       }).join('') + (pac.length > LIMP ? '<p class="kpi-s" style="margin:6px 0 0">e mais ' + (pac.length - LIMP) + ' pacotes</p>' : '')
-        : '<p class="kpi-s">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</section>';
-    html += '<div class="grid-2-1">' + curva + pacotes + '</div>';
+        : '<p class="kpi-s">Nenhum pacote previsto no cronograma para esta semana.</p>') + '</div></section>';
+    html += '<div class="grid-2-1 pn-par">' + curva + pacotes + '</div>';
 
     // avanço mês a mês: previsto pelo cronograma atual × real das medições fechadas
     var prevAt = function (at) { var sp = 0; fs.forEach(function (t) { var i = t.start, f = t.finish; if (i == null || f == null) return; sp += wOf(t) * (at <= i ? 0 : at >= f ? 100 : (at - i) / (f - i) * 100); }); return tot ? sp / tot : 0; };
