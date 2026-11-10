@@ -422,6 +422,11 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .app.real [data-a="nav:cron"],.app.real [data-a="nav:lb"],.app.real [data-a="nav:res"],.app.real #obraSel,.app.real label[for="obraSel"],.app.real .weeknav,.app.real #wkTag{display:none!important}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
 .app.real .obra-nome{display:inline}
+.obra-emp{font-weight:700}.obra-sep{color:var(--muted);margin:0 8px;font-weight:400}.obra-st{font-weight:500;font-size:13px;color:var(--muted);margin-left:12px;padding-left:12px;border-left:1px solid var(--line)}
+/* indicadores: rótulo curto em caixa alta e ponto de cor quando o valor está em alerta */
+.kpi-t{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.card:has(> .kpi-v[style*="--bad"]) > .kpi-t::before,.card:has(> .kpi-v[style*="--good"]) > .kpi-t::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;background:var(--bad)}
+.card:has(> .kpi-v[style*="--good"]) > .kpi-t::before{background:var(--good)}
 .demo-tag{white-space:nowrap;font-family:var(--mono);font-size:11.5px;color:var(--muted);border:1px dashed var(--line);padding:4px 8px;border-radius:4px}
 .demo-tag.ro-tag:not([hidden]){display:inline-block;border-style:solid;color:var(--ink)}
 .user{margin-left:auto;display:flex;align-items:center;gap:10px}
@@ -4431,7 +4436,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (REAL) {
       if (DEMO_TELAS[S.screen]) S.screen = 'prj';
       var nomeObra = !ehDemo() && CONTA && CONTA.obra ? CONTA.obra.nome + (P ? '' : ' · nenhum cronograma importado') : (P ? (P.title || P.nome || 'Obra') : 'Nenhum cronograma importado');
-      document.getElementById('obraNome').innerHTML = esc(nomeObra) + (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
+      var emp = ehDemo() ? 'Construtora Exemplo' : (CONTA && CONTA.obra && CONTA.obra.empresa ? CONTA.obra.empresa : '');
+      document.getElementById('obraNome').innerHTML = (emp ? '<span class="obra-emp">' + esc(emp) + '</span><span class="obra-sep" aria-hidden="true">/</span>' : '') + esc(nomeObra) +
+        (P && P.statusDate ? '<span class="obra-st">status ' + fdata(+P.statusDate) + '</span>' : '') +
+        (ehDemo() ? ' <span class="chip c-muted" style="font-weight:500;margin-left:6px">obra de demonstração</span>' : '');
       document.getElementById('roTag').hidden = !(CONTA && CONTA.obra && CONTA.obra.papel === 'leitor');
     }
     if (!telaOk(S.screen)) S.screen = ORDEM_TELAS[S.mod === 'qual' ? 'qual' : 'plan'].filter(telaOk)[0] || S.screen;
