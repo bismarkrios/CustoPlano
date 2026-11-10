@@ -517,6 +517,7 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .cal-dia.sel{border:2px solid var(--ink);background:var(--blue-soft)}
 .cal-q{display:inline-block;min-width:22px;padding:1px 6px;border-radius:999px;background:var(--info-bg);color:var(--info);font-size:11.5px;font-weight:700;font-style:normal;text-align:center;font-variant-numeric:tabular-nums}
 .cal-q.atr{background:var(--bad-bg);color:var(--bad)}
+.qc-pts{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.cal-q.qc-ok{background:var(--good-bg);color:var(--good)}.cal-q.qc-rep{background:var(--bad);color:#fff}.cal-q.qc-nc{background:color-mix(in srgb,var(--gold) 22%,var(--surface));color:var(--ink)}.cal-dia.qc-fds{background:var(--soft)}@media (min-width:1100px){.cal-wrap.qc-wrap{height:auto;min-height:0}.qc-wrap .cal .cal-grade>.cal-dia{min-height:66px}}.qc-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
 .cal-leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:12px 0 0}.cal-leg span{display:flex;align-items:center;gap:6px}
 .cal-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .cal-lista li{border-top:1px solid var(--line)}.cal-lista li:first-child{border-top:0}
@@ -1551,6 +1552,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       </div>
       <div id="navQual" class="nav-grp" hidden>
       <button class="nav-btn" type="button" data-a="nav:qp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>Painel da qualidade</button>
+      <button class="nav-btn" type="button" data-a="nav:qcal"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"></rect><path d="M3 9h18M8 2v4M16 2v4"></path><path d="M9 15l2 2 4-4"></path></svg>Calendário de inspeções</button>
       <button class="nav-btn" type="button" data-a="nav:qi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 3v2h6V3"></path><path d="M9 12l2 2 4-4"></path></svg>Inspeções (FVS)</button>
       <button class="nav-btn" type="button" data-a="nav:qc"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h6M3 12h10M3 19h14"></path><path d="M17 4l2 2 3-3"></path></svg>FVS do cronograma</button>
       <button class="nav-btn" type="button" data-a="nav:qn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.01"></path></svg>Não conformidades<span class="count" id="qnCount">0</span></button>
@@ -1611,13 +1613,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function temServ(s) { return servs().indexOf(s) >= 0; }
   function temBase() { return temServ('planejamento') || temServ('custos'); }  // cronograma e medição servem aos dois
   var TELA_SERV = { painel: 'planejamento', cron: 'planejamento', lb: 'planejamento', pa: 'planejamento', cp: 'planejamento', res: 'planejamento',
-    cus: 'custos', sup: 'custos', qp: 'qualidade', qi: 'qualidade', qn: 'qualidade', qm: 'qualidade', qmod: 'qualidade' };
+    cus: 'custos', sup: 'custos', qp: 'qualidade', qcal: 'qualidade', qi: 'qualidade', qn: 'qualidade', qm: 'qualidade', qmod: 'qualidade' };
   function telaOk(t) {
     if (t === 'prj' || t === 'cal' || t === 'med') return temBase();
     if (t === 'qc') return temServ('qualidade') && temBase();  // FVS do cronograma precisa do cronograma
     return !TELA_SERV[t] || temServ(TELA_SERV[t]);
   }
-  var ORDEM_TELAS = { plan: ['painel', 'prj', 'cal', 'med', 'cus', 'sup', 'pa', 'cp'], qual: ['qp', 'qi', 'qc', 'qn', 'qm', 'qmod'] };
+  var ORDEM_TELAS = { plan: ['painel', 'prj', 'cal', 'med', 'cus', 'sup', 'pa', 'cp'], qual: ['qp', 'qcal', 'qi', 'qc', 'qn', 'qm', 'qmod'] };
   function api(path, body, method) {
     var o = { method: method || (body ? 'POST' : 'GET'), credentials: 'same-origin', headers: {} };
     if (body instanceof FormData) o.body = body;
@@ -1908,6 +1910,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     sup: ['Suprimentos', 'Compras puxadas pelo cronograma: data de necessidade na obra menos o prazo do fornecedor.'],
     cron: ['Cronograma', 'Etapas planejadas × realizadas, com a posição de hoje.'],
     qp: ['Painel da qualidade', 'Inspeções, aprovação na primeira inspeção e não conformidades da obra.'],
+    qcal: ['Calendário de inspeções', 'Inspeções previstas pelo cronograma, inspeções feitas e prazos de não conformidade, dia a dia.'],
     qc: ['FVS do cronograma', 'Cada tarefa do Project ligada à sua FVS, com local, prazo de inspeção e situação.'],
     qi: ['Inspeções (FVS)', 'Fichas de verificação de serviço aplicadas no canteiro, com fotos e assinatura. Funciona sem internet.'],
     qn: ['Não conformidades', 'Registro, tratamento, prazo e fechamento com verificação de eficácia.'],
@@ -3190,7 +3193,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   var REL_TELA = { painel: ['consolidado', 'Relatório consolidado'], prj: ['prazo', 'Relatório de prazo'], med: ['medicao', 'Relatório de medição'],
     pa: ['plano', 'Relatório do plano de ataque'], cron: ['prazo', 'Relatório de prazo'], lb: ['plano', 'Relatório do plano de ataque'],
     cp: ['curto', 'Relatório de curto prazo'], res: ['curto', 'Relatório de curto prazo'], cus: ['custos', 'Relatório de custos'],
-    sup: ['suprimentos', 'Relatório de suprimentos'], qp: ['qualidade', 'Relatório de qualidade'], qi: ['inspecoes', 'Relatório de inspeções'],
+    sup: ['suprimentos', 'Relatório de suprimentos'], qp: ['qualidade', 'Relatório de qualidade'], qi: ['inspecoes', 'Relatório de inspeções'], qcal: ['inspecoes', 'Relatório de inspeções'],
     qc: ['inspecoes', 'Relatório de inspeções'], qm: ['inspecoes', 'Relatório de inspeções'], qn: ['ncs', 'Relatório de não conformidades'],
     qmod: ['modelos', 'Relatório dos modelos de FVS'] };
   // o mesmo mapa do servidor (relatorio.SERVICO_DO_TIPO): só mostra o relatório dos serviços contratados
@@ -3655,8 +3658,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   // No celular o menu de telas rola de lado: mostra a tela atual e some com o esmaecido no fim.
   function navFim() { var sd = document.querySelector('.side'); if (sd) sd.classList.toggle('fim', sd.scrollLeft + sd.clientWidth >= sd.scrollWidth - 4); }
   // celular: as telas mais usadas na barra de baixo (até 4) e o resto em "Mais"
-  var BNAV_PRIO = ['painel', 'med', 'pa', 'cp', 'cal', 'prj', 'sup', 'cus', 'res', 'cron', 'lb', 'qp', 'qi', 'qn', 'qc', 'qm', 'qmod'];
-  var BNAV_NOME = { cp: 'PPC', pa: 'Plano', qp: 'Painel', qi: 'FVS', qn: 'RNC', qc: 'FVS crono.', qm: 'Matriz', qmod: 'Modelos', lb: 'Balanço', cron: 'Cronograma' };
+  var BNAV_PRIO = ['painel', 'med', 'pa', 'cp', 'cal', 'prj', 'sup', 'cus', 'res', 'cron', 'lb', 'qp', 'qcal', 'qi', 'qn', 'qc', 'qm', 'qmod'];
+  var BNAV_NOME = { cp: 'PPC', pa: 'Plano', qp: 'Painel', qcal: 'Agenda', qi: 'FVS', qn: 'RNC', qc: 'FVS crono.', qm: 'Matriz', qmod: 'Modelos', lb: 'Balanço', cron: 'Cronograma' };
   function montarBnav() {
     var bn = document.getElementById('bnav'); if (!bn) return;
     var vis = [].filter.call(document.querySelectorAll('#side .nav-grp:not([hidden]) .nav-btn'), function (b) { return b.style.display !== 'none'; });
@@ -3701,7 +3704,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
   /* ================= QUALIDADE: FVS, não conformidades, matriz, modelos ================= */
   var Q = null;
-  S.q = { form: null, ncTab: 'abertas', ncEdit: null, modEdit: null, msg: '', filtro: 'todas', busca: '' };
+  S.q = { cal: { mes: null, dia: null }, form: null, ncTab: 'abertas', ncEdit: null, modEdit: null, msg: '', filtro: 'todas', busca: '' };
   var Q_ST = { ok: ['Conforme', 'c-ok'], nc: ['Não conforme', 'c-bad'], na: ['Não se aplica', 'c-muted'] };
   var NC_ST = { aberta: ['Aberta', 'c-bad'], tratamento: ['Em tratamento', 'c-warn'], fechada: ['Fechada', 'c-ok'] };
   var GRAV = { baixa: 'Baixa', media: 'Média', alta: 'Alta' };
@@ -3992,6 +3995,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     // local sem torre no nome ("Pav. 3") vale para qualquer torre; com torre, tem que ser a mesma
     return !L.torre || !TORRE_RX.test(semAcento(insp.local)) || semAcento(insp.local).indexOf(semAcento(L.torre)) >= 0;
   }
+  // prazo de inspeção: término da tarefa + 2 dias úteis (segunda a sexta)
+  function mais2Uteis(ms) { var d = diaUTC(ms), n = 0; while (n < 2) { d += 864e5; var w = new Date(d).getUTCDay(); if (w > 0 && w < 6) n++; } return d; }
   function qcModel() {
     if (!P || !Q) return [];
     var A = aggregate(), hoje = hojeReal(), lig = Q.tarefas || {};
@@ -4003,7 +4008,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       else m = auto;
       var ult = null;
       if (m) insp.forEach(function (i) { if (i.modelo_id === m.id && mesmoLocal(i, L)) ult = i; });
-      var ate = t.finish + 2 * 864e5, dias = Math.round((hoje - ate) / 864e5), real = aPct(A[t.uid], 'r'), sit;
+      var ate = mais2Uteis(t.finish), dias = Math.round((hoje - ate) / 864e5), real = aPct(A[t.uid], 'r'), sit;
       if (!m) sit = ['Sem FVS', 'c-muted', 'sem'];
       else if (ult && ult.resultado === 'aprovada') sit = ['Aprovada ' + isoBr(ult.data).slice(0, 5), 'c-ok', 'ok'];
       else if (ult) sit = ['Reprovada · reinspecionar', 'c-bad', 'late'];
@@ -4064,7 +4069,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<th scope="col">Serviço e local (tarefa do cronograma)</th><th scope="col">FVS</th><th scope="col">Término</th><th scope="col">Inspecionar até</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
       '</tr></thead><tbody>' + (rows || '<tr><td colspan="6" style="color:var(--muted);padding:24px 14px">Nenhuma tarefa neste filtro.</td></tr>') + '</tbody></table></div></section>' +
       (mais > 0 ? '<p class="kpi-s">Mostrando ' + LIM + ' de ' + list.length + ' tarefas. Use a busca ou a torre para achar as demais.</p>' : '') +
-      '<p style="font-size:12.5px;color:var(--muted)">Cada tarefa do cronograma é um serviço a inspecionar. O local vem da torre e do pavimento no nome da tarefa ou das linhas resumo acima dela; a FVS é escolhida pelo nome do serviço, e você pode trocar ou tirar em cada linha. “Inspecionar até” é o término da tarefa no cronograma mais 2 dias. A situação vem da última inspeção daquela FVS naquele local.</p>';
+      '<p style="font-size:12.5px;color:var(--muted)">Cada tarefa do cronograma é um serviço a inspecionar. O local vem da torre e do pavimento no nome da tarefa ou das linhas resumo acima dela; a FVS é escolhida pelo nome do serviço, e você pode trocar ou tirar em cada linha. “Inspecionar até” é o término da tarefa no cronograma mais 2 dias úteis. A situação vem da última inspeção daquela FVS naquele local.</p>';
   }
   function qcSalvar(uid, valor) {
     if (!Q) return;
@@ -4072,6 +4077,62 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (valor === '') delete Q.tarefas[uid]; else Q.tarefas[uid] = { modelo_id: +valor };
     S.q.msg = '';
     api('/api/qualidade/tarefa', { uid: uid, modelo_id: valor === '' ? null : +valor }).then(function (r) { Q = r; render(); }, function (e) { S.q.msg = 'Não foi possível salvar: ' + e.message; render(); });
+  }
+
+  /* ---------- Calendário de inspeções ---------- */
+  // no mesmo formato do Calendário do Planejamento: inspeções previstas (término + 2 dias úteis), inspeções feitas e prazos de NC
+  function qIsoMs(s) { return s ? Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) : null; }
+  function qCalEventos() {
+    var E = {}, add = function (d, e) { (E[d] = E[d] || []).push(e); };
+    qcModel().forEach(function (i) { if (i.m && i.sit[2] !== 'ok') add(i.ate, { k: 'prev', i: i, late: i.sit[2] === 'late' }); });
+    Q.inspecoes.forEach(function (x) { var d = qIsoMs(x.data); if (d != null) add(d, { k: 'feita', x: x }); });
+    Q.ncs.forEach(function (n) { var d = qIsoMs(n.prazo); if (d != null && n.status !== 'fechada') add(d, { k: 'nc', n: n, late: vencida(n) }); });
+    return E;
+  }
+  function vQCal() {
+    if (!Q) return qVazio();
+    var E = qCalEventos(), hoje = hojeReal(), C = S.q.cal;
+    var dia = C.dia != null ? C.dia : hoje;
+    if (C.mes == null) { var bd = new Date(dia); C.mes = Date.UTC(bd.getUTCFullYear(), bd.getUTCMonth(), 1); }
+    var m0 = new Date(C.mes), ano = m0.getUTCFullYear(), mes = m0.getUTCMonth(), primeiro = C.mes, nDias = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
+    var cel = SEMANA_CURTA.map(function (w) { return '<div class="cal-sem" aria-hidden="true">' + w + '</div>'; }).join('');
+    for (var i = 0; i < new Date(primeiro).getUTCDay(); i++) cel += '<div class="cal-vazio" aria-hidden="true"></div>';
+    var K = { prev: 0, late: 0, apr: 0, rep: 0, nc: 0 };
+    for (var dd = 1; dd <= nDias; dd++) {
+      var d = Date.UTC(ano, mes, dd), ev = E[d] || [], w = new Date(d).getUTCDay();
+      var np = ev.filter(function (e) { return e.k === 'prev'; }), nf = ev.filter(function (e) { return e.k === 'feita'; }), nn = ev.filter(function (e) { return e.k === 'nc'; });
+      var pl = np.some(function (e) { return e.late; }), fr = nf.some(function (e) { return e.x.resultado === 'reprovada'; }), nl = nn.some(function (e) { return e.late; });
+      K.prev += np.length; K.late += np.filter(function (e) { return e.late; }).length; K.nc += nn.length;
+      nf.forEach(function (e) { K[e.x.resultado === 'aprovada' ? 'apr' : 'rep']++; });
+      var rot = dd + ' de ' + MES_LONGO[mes] + (np.length ? ', ' + np.length + ' a inspecionar' : '') + (nf.length ? ', ' + nf.length + ' feitas' : '') + (nn.length ? ', ' + nn.length + ' prazo de NC' : '') + (!ev.length ? ', sem eventos' : '');
+      cel += '<button type="button" class="cal-dia' + (d === dia ? ' sel' : '') + (d === hoje ? ' hoje' : '') + (w === 0 || w === 6 ? ' qc-fds' : '') + '" data-a="qcald:' + d + '" aria-label="' + rot + '" aria-pressed="' + (d === dia) + '"><span class="cal-n">' + dd + '</span>' +
+        (ev.length ? '<span class="qc-pts" aria-hidden="true">' +
+          (np.length ? '<i class="cal-q' + (pl ? ' atr' : '') + '">' + np.length + '</i>' : '') +
+          (nf.length ? '<i class="cal-q ' + (fr ? 'qc-rep' : 'qc-ok') + '">' + nf.length + '</i>' : '') +
+          (nn.length ? '<i class="cal-q ' + (nl ? 'atr' : 'qc-nc') + '">' + nn.length + '</i>' : '') + '</span>' : '') + '</button>';
+    }
+    var ev = (E[dia] || []).slice(), dDia = new Date(dia), titulo = SEMANA_CURTA[dDia.getUTCDay()] + ', ' + dDia.getUTCDate() + ' de ' + MES_LONGO[dDia.getUTCMonth()];
+    var grupo = function (tit, L, f) { return L.length ? '<h3 class="qc-h">' + tit + ' · ' + L.length + '</h3><ul class="cal-lista">' + L.map(f).join('') + '</ul>' : ''; };
+    var item = function (a, barra, nome, l1, l2, chip) { return '<li><button type="button" class="cal-item" data-a="' + a + '"><i class="cal-barra ' + barra + '" aria-hidden="true"></i><div class="grow"><b>' + nome + '</b><span>' + l1 + '</span>' + (l2 ? '<span>' + l2 + '</span>' : '') + '</div><div class="cal-dir">' + chip + '</div></button></li>'; };
+    var prevs = ev.filter(function (e) { return e.k === 'prev'; }), feitas = ev.filter(function (e) { return e.k === 'feita'; }), ncs = ev.filter(function (e) { return e.k === 'nc'; });
+    var lista = grupo('A inspecionar', prevs, function (e) { var x = e.i; return item('qcins:' + esc(String(x.uid)), x.sit[1], esc(x.m.codigo + ' · ' + x.m.servico), esc(x.L.label), 'Tarefa termina em ' + fdate(x.t.finish) + ' · ' + fmt2(x.real) + '% feito', '<span class="chip ' + x.sit[1] + '">' + esc(x.sit[0]) + '</span>'); }) +
+      grupo('Inspeções feitas', feitas, function (e) { var x = e.x, ok = x.resultado === 'aprovada'; return item('nav:qi', ok ? 'c-ok' : 'c-bad', esc(x.codigo + ' · ' + x.servico), esc(x.local), x.inspetor ? 'Inspetor: ' + esc(x.inspetor) : '', '<span class="chip ' + (ok ? 'c-ok' : 'c-bad') + '">' + (ok ? 'Aprovada' : 'Reprovada') + '</span>'); }) +
+      grupo('Prazos de não conformidade', ncs, function (e) { var n = e.n; return item('qncedit:' + n.id, e.late ? 'c-bad' : 'c-info', (n.numero ? 'NC-' + ('00' + n.numero).slice(-3) : 'NC') + ' · ' + esc(n.servico || 'Sem serviço'), esc(n.local || '—'), n.responsavel ? 'Responsável: ' + esc(n.responsavel) : '<span style="color:var(--bad)">sem responsável</span>', '<span class="chip ' + (e.late ? 'c-bad' : NC_ST[n.status][1]) + '">' + (e.late ? 'Vencida' : NC_ST[n.status][0]) + '</span>'); });
+    var aviso = P ? '' : '<div class="notebox">Sem cronograma importado: o calendário mostra só as inspeções feitas e os prazos de NC. As inspeções previstas aparecem quando o .mpp for importado na tela Project.</div>';
+    var nomeMes = MES_LONGO[mes].charAt(0).toUpperCase() + MES_LONGO[mes].slice(1);
+    return qMsg() + aviso + '<div class="grid4">' +
+        '<div class="card"><div class="kpi-t">A inspecionar em ' + MES_LONGO[mes] + '</div><div class="kpi-v">' + K.prev + '</div><div class="kpi-s">término da tarefa + 2 dias úteis</div></div>' +
+        '<div class="card"><div class="kpi-t">Atrasadas</div><div class="kpi-v" style="color:' + (K.late ? 'var(--bad)' : 'var(--good)') + '">' + K.late + '</div><div class="kpi-s">prazo passou sem inspeção aprovada</div></div>' +
+        '<div class="card"><div class="kpi-t">Feitas no mês</div><div class="kpi-v">' + (K.apr + K.rep) + '</div><div class="kpi-s">' + K.apr + ' aprovadas · ' + K.rep + ' reprovadas</div></div>' +
+        '<div class="card"><div class="kpi-t">Prazos de NC no mês</div><div class="kpi-v">' + K.nc + '</div><div class="kpi-s">não conformidades abertas ou em tratamento</div></div>' +
+      '</div><div class="cal-wrap qc-wrap"><section class="card cal">' +
+        '<div class="cal-top"><button type="button" class="btn btn-ghost btn-sm" data-a="qcalm:-1" aria-label="Mês anterior">‹</button><h2 aria-live="polite">' + nomeMes + ' de ' + ano + '</h2>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-a="qcalm:1" aria-label="Próximo mês">›</button><button type="button" class="btn btn-ghost btn-sm" data-a="qcalh">Hoje</button></div>' +
+        '<div class="cal-grade">' + cel + '</div>' +
+        '<p class="cal-leg"><span><i class="cal-q">2</i> a inspecionar</span><span><i class="cal-q qc-ok">1</i> feitas</span><span><i class="cal-q qc-nc">1</i> prazo de NC</span><span><i class="cal-q atr">1</i> atrasada, reprovada ou vencida</span></p>' +
+      '</section><section class="card cal-dia-lista"><h2 style="font-size:17px;margin:0 0 6px">' + titulo + '</h2>' +
+        (ev.length ? '<p class="cal-dica">Toque em uma inspeção prevista para abrir a FVS no local, ou em uma NC para tratar.</p>' + lista : '<p style="color:var(--muted);font-size:14px;margin:0">Nada de qualidade neste dia.</p>') +
+      '</section></div>';
   }
 
   /* ---------- Modelos de FVS ---------- */
@@ -4104,6 +4165,9 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     switch (a[0]) {
       case 'qnova': S.screen = 'qi'; novaForm(null, ''); S.q.msg = ''; render(); window.scrollTo(0, 0); return true;
       case 'qcf': S.q.qc.f = a[1]; render(); return true;
+      case 'qcalm': var qm0 = new Date(S.q.cal.mes); S.q.cal.mes = Date.UTC(qm0.getUTCFullYear(), qm0.getUTCMonth() + parseInt(a[1], 10), 1); render(); return true;
+      case 'qcald': S.q.cal.dia = +a[1]; var qd0 = new Date(S.q.cal.dia); S.q.cal.mes = Date.UTC(qd0.getUTCFullYear(), qd0.getUTCMonth(), 1); render(); return true;
+      case 'qcalh': S.q.cal = { mes: null, dia: null }; render(); return true;
       case 'qct': S.q.qc.torre = a.slice(1).join(':'); render(); return true;
       case 'qcins':
         var it = qcModel().filter(function (x) { return String(x.uid) === a[1]; })[0];
@@ -4493,7 +4557,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     if (NATIVO) { S.mod = 'plan'; S.screen = 'med'; }
     var hd = (contaReal() && HEADS_REAL[S.screen]) || HEADS[S.screen];
     document.getElementById('supCount').textContent = (contaReal() ? supRealModel() : supModel()).filter(function (i) { return i.risk[2] !== 'ok'; }).length;
-    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), cal: vCal, med: vMed, cus: vCus, qp: vQPainel, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
+    var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), cal: vCal, med: vMed, cus: vCus, qp: vQPainel, qcal: vQCal, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     var rel = API && !NATIVO && REL_TELA[S.screen];
     if (rel && !relOk(rel[0])) rel = null;
     body.innerHTML = '<div class="app-head"><div class="app-head-row"><div><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' +
