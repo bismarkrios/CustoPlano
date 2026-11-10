@@ -423,6 +423,24 @@ footer.site .copy{flex-basis:100%;font-size:13px}
 .obra-nome{display:none;font-weight:700;font-size:15px;color:var(--ink)}
 .app.real .obra-nome{display:inline}
 .obra-emp{font-weight:700}.obra-sep{color:var(--muted);margin:0 8px;font-weight:400}.obra-st{font-weight:500;font-size:13px;color:var(--muted);margin-left:12px;padding-left:12px;border-left:1px solid var(--line)}
+/* ---------- Visual novo do sistema (10/11/2026): cores da marca, menu, cartões e Gantt ---------- */
+@media (prefers-color-scheme: light){html:not([data-theme="dark"]) #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--line:#d6dee6;--ground:#ECF0F1;--panel:#002455;--panel-ink:#ECF0F1;--panel-muted:rgba(236,240,241,.78);--panel-line:rgba(236,240,241,.15);--bad:#C62300;--good:#2A8A5C}}
+html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--line:#d6dee6;--ground:#ECF0F1;--panel:#002455;--panel-ink:#ECF0F1;--panel-muted:rgba(236,240,241,.78);--panel-line:rgba(236,240,241,.15);--bad:#C62300;--good:#2A8A5C}
+#app .app-main{background:var(--ground)}
+#app .card{border-radius:12px}
+#app .nav-btn{border-radius:8px;white-space:nowrap}
+#app .nav-btn[aria-current="page"]{background:rgba(236,240,241,.14);color:#fff;font-weight:600}
+#app .tb{height:12px;border-radius:3px}
+#app .tb i.base{background:#c9d2dc;opacity:1}
+#app .tb i.feito{background:#261FB3}
+#app .tb.tb-sum i.feito{background:var(--ink)}
+#app .prj .today{background:#C62300}
+#app .pa td.ok::before{content:'\2713\00a0';font-weight:700}
+#app .pa td.late::before{content:'!\00a0';font-weight:800}
+#app .cu-ctl tr.cu-grp th{text-align:center;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--line);padding-top:10px;padding-bottom:6px}
+#app .cu-ctl tr.cu-grp th+th{border-left:1px solid var(--line)}
+#app .cu-ctl .cu-et th,#app .cu-ctl .cu-et td,#app .cu-ctl .cu-et .cu-sticky{background:#002455;color:#ECF0F1}
+#app .cu-ctl .cu-et td.ruim{color:#FF9C85}
 /* indicadores: rótulo curto em caixa alta e ponto de cor quando o valor está em alerta */
 .kpi-t{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .card:has(> .kpi-v[style*="--bad"]) > .kpi-t::before,.card:has(> .kpi-v[style*="--good"]) > .kpi-t::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px;background:var(--bad)}
@@ -2481,8 +2499,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var bar = '';
       if (t.bStart != null && t.bFinish != null && !t.ms) bar += '<span style="position:absolute;top:23px;height:4px;border-radius:2px;background:var(--muted);opacity:.45;left:' + lp(t.bStart) + '%;width:' + Math.max(0.2, lp(t.bFinish) - lp(t.bStart)) + '%" title="Linha de base"></span>';
       if (t.ms) bar += '<span class="ms" style="left:' + lp(t.finish) + '%" title="Marco"></span>';
-      else if (sum) bar += '<span class="sb" style="top:8px;left:' + lp(t.start) + '%;width:' + Math.max(0.3, lp(t.finish) - lp(t.start)) + '%"></span>';
-      else bar += '<span class="tb" style="top:6px;left:' + lp(t.start) + '%;width:' + Math.max(0.3, lp(t.finish) - lp(t.start)) + '%"><i class="base" style="background:#3F79B5"></i><i style="width:' + pr + '%;background:#3F79B5"></i></span>';
+      else bar += '<span class="tb' + (sum ? ' tb-sum' : '') + '" style="top:7px;left:' + lp(t.start) + '%;width:' + Math.max(0.3, lp(t.finish) - lp(t.start)) + '%"><i class="base"></i><i class="feito" style="width:' + pr + '%"></i></span>';
       var pctCell = (!sum && P.edit)
         ? '<input class="pct-in" type="number" min="0" max="100" step="1" inputmode="numeric" data-meas="' + t.uid + '" value="' + Math.round(pr) + '" aria-label="% concluído: ' + esc(t.name) + '">'
         : '<span class="pct">' + fmt1(pr) + '%</span>';
@@ -2548,7 +2565,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<div class="prj-row head"><span class="num">Id</span><span>Nome da tarefa</span><span>Fornecedor</span>' + hOpc(['dur']) + '<span>Início</span><span>Término</span>' + hOpc(['bini', 'bfim', 'desv', 'pred', 'peso']) + '<span style="text-align:right">%</span>' + head + '</div>' +
         rows +
       '</div></div></section>' +
-      '<p style="font-size:12.5px;color:var(--muted)">Barra azul: tarefa, com a parte escura = % concluído. Traço cinza: linha de base. Linha amarela: data de status. O avanço dos grupos é a média das tarefas ponderada pelo peso escolhido. As medições ficam salvas neste navegador.</p>';
+      '<p style="font-size:12.5px;color:var(--muted)">Barra cinza: prazo da tarefa, com a parte escura = % concluído. Traço fino: linha de base. Linha vermelha: data de status. O avanço dos grupos é a média das tarefas ponderada pelo peso escolhido. As medições ficam salvas neste navegador.</p>';
   }
 
   /* ---------- Plano de ataque (escadinha): pavimento × serviço ---------- */
@@ -3567,7 +3584,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><label for="cuCtlFile" class="btn btn-primary" style="cursor:pointer">Importar a planilha Orçado x Realizado</label></div></section>';
     var cel = function (x, k) { return '<td class="mono num' + (k === 'desvio' && x[k] < -0.5 ? ' ruim' : '') + (k === 'a_contratar' && x[k] ? ' prem' : '') + '">' + rs0(x[k]) + '</td>'; };
     var idx = function (v) { return '<td class="mono num' + (v != null && v > 1 ? ' ruim' : '') + '">' + (v == null ? '–' : fmt2(v)) + '</td>'; };
-    var cab = '<tr><th class="cu-sticky">Serviço<br>&nbsp;<br>&nbsp;</th>' + CTL_COLS.map(function (c) { return '<th>' + c[1].split('|').map(esc).join('<br>') + '<br><span class="cl">(' + c[2] + ')</span></th>'; }).join('') + '</tr>';
+    var cab = '<tr class="cu-grp"><th class="cu-sticky"></th><th colspan="2">Orçamento</th><th colspan="5">Contratos e realizado</th><th colspan="2">Previsão</th><th colspan="2">Resultado</th></tr><tr><th class="cu-sticky">Serviço<br>&nbsp;<br>&nbsp;</th>' + CTL_COLS.map(function (c) { return '<th>' + c[1].split('|').map(esc).join('<br>') + '<br><span class="cl">(' + c[2] + ')</span></th>'; }).join('') + '</tr>';
     var rows = C.linhas.map(function (x) {
       return '<tr><th scope="row" class="pa-row cu-sticky">' + esc((x.codigo ? x.codigo + ' ' : '') + x.servico) + '</th>' + CTL_COLS.slice(0, -1).map(function (c) { return cel(x, c[0]); }).join('') + idx(x.indice) + '</tr>';
     }).join('');
