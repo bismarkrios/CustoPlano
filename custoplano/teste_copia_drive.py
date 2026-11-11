@@ -69,6 +69,70 @@ copia_drive.enviar(arq)
 if d.pastas != ["P1"]:
     falhas.append("pasta duplicada no segundo envio")
 
+# criptografia: restaura uma cópia real num banco temporário; segredo errado e arquivo mexido são recusados
+import sqlite3  # noqa: E402
+
+db = os.path.join(pasta, "orig.db")
+con = sqlite3.connect(db)
+con.execute("CREATE TABLE obras (id INTEGER, nome TEXT)")
+con.executemany("INSERT INTO obras VALUES (?, ?)", [(i, f"Obra {i}") for i in range(500)])
+con.commit()
+con.close()
+gzc = db + ".gz"
+with open(db, "rb") as f, gzip.open(gzc, "wb") as g:
+    g.write(f.read())
+cif = gzc + ".cp"
+copia_drive.cifrar(gzc, cif, "segredo-de-teste")
+if open(cif, "rb").read().find(b"Obra 1") >= 0 or gzip.compress(b"x")[:2] in open(cif, "rb").read()[:20]:
+    falhas.append("a cópia cifrada ainda mostra conteúdo aberto")
+saida = os.path.join(pasta, "restaurado.db.gz")
+copia_drive.decifrar(cif, saida, "segredo-de-teste")
+with gzip.open(saida, "rb") as f, open(saida[:-3], "wb") as g:
+    g.write(f.read())
+con = sqlite3.connect(saida[:-3])
+if con.execute("SELECT COUNT(*), MAX(nome) FROM obras").fetchone() != (500, "Obra 99"):
+    falhas.append("restauração não trouxe as 500 obras")
+con.close()
+try:
+    copia_drive.decifrar(cif, saida, "segredo-errado")
+    falhas.append("abriu com segredo errado")
+except Exception:  # noqa: BLE001
+    pass
+dados_cif = bytearray(open(cif, "rb").read())
+dados_cif[40] ^= 1
+open(cif + "x", "wb").write(dados_cif)
+try:
+    copia_drive.decifrar(cif + "x", saida, "segredo-de-teste")
+    falhas.append("abriu arquivo alterado")
+except Exception:  # noqa: BLE001
+    pass
+
+# com o segredo no ambiente: envia .cp e apaga do Drive as cópias abertas
+d2 = Drive()
+d2.pastas = ["P1"]
+d2.arquivos = [{"id": "aberta", "name": "custoplano-2026-11-11-0030.db.gz"}]
+copia_drive._sessao = lambda: d2
+os.environ["CP_DRIVE_CRIPTO"] = "segredo-de-teste"
+arq_db = os.path.join(pasta, "custoplano-2026-11-12-0030.db.gz")
+with open(db, "rb") as f, gzip.open(arq_db, "wb") as g:
+    g.write(f.read())
+copia_drive.enviar(arq_db)
+os.environ.pop("CP_DRIVE_CRIPTO")
+lixo = os.path.join(pasta, "lixo.db.gz")
+open(lixo, "wb").write(gzip.compress(b"isto nao e um banco"))
+copia_drive.cifrar(lixo, lixo + ".cp", "segredo-de-teste")
+os.environ["CP_DRIVE_CRIPTO"] = "segredo-de-teste"
+try:
+    copia_drive.testar_restauracao(lixo + ".cp", tempfile.mkdtemp())
+    falhas.append("aceitou cópia que não é banco")
+except Exception:  # noqa: BLE001
+    pass
+os.environ.pop("CP_DRIVE_CRIPTO")
+if not d2.arquivos[-1]["name"].endswith(".db.gz.cp") or d2.apagados != ["aberta"]:
+    falhas.append(f"envio cifrado: {d2.arquivos[-1]['name']} apagados={d2.apagados}")
+if d2.recebido[:9] != copia_drive.MAGICA:
+    falhas.append("o Drive recebeu a cópia sem criptografia")
+
 # sem as variáveis, não liga
 for k in ("CP_DRIVE_CHAVE", "CP_DRIVE_USUARIO"):
     os.environ.pop(k, None)

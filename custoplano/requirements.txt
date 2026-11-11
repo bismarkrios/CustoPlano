@@ -9,4 +9,5 @@ anthropic>=2.3
 mpxj>=13.0
 # Cópia diária do banco no Google Drive da empresa (copia_drive.py):
 google-auth>=2.30
+cryptography>=43
 requests>=2.32

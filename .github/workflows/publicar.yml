@@ -32,7 +32,7 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependências
-        run: pip install flask openpyxl reportlab
+        run: pip install flask openpyxl reportlab cryptography
 
       - name: Verificar sintaxe
         run: python -m py_compile app.py banco.py cronograma.py correio.py whatsapp.py
