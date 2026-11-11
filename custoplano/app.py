@@ -91,12 +91,12 @@ elif _adm_email:
     _adm = next((u for u in banco.listar_usuarios() if u["email"].lower() == _adm_email), None)
     if _adm is None:
         banco.criar_usuario(_adm_email, _adm_senha, "Custo Plano", admin=True)
-        print(f"Conta de acesso criada: {_adm_email}", flush=True)
+        print("Conta de acesso da equipe criada (CP_ADMIN_EMAIL).", flush=True)
     else:
         banco.tornar_admin(_adm["id"])  # a conta da CP_ADMIN_EMAIL é da equipe: vê todas as obras
         if not banco.autenticar(_adm["email"], _adm_senha):
             banco.trocar_senha(_adm["email"], _adm_senha)
-            print(f"Senha da conta {_adm_email} atualizada pela CP_ADMIN_SENHA.", flush=True)
+            print("Senha da conta da equipe atualizada pela CP_ADMIN_SENHA.", flush=True)
 if DEMO and not banco.autenticar(DEMO_EMAIL, DEMO_SENHA):
     try:
         banco.criar_usuario(DEMO_EMAIL, DEMO_SENHA, "Obra de demonstração")
@@ -1402,7 +1402,7 @@ def _atender_whatsapp(lista) -> None:
                 else:
                     pdf, nome = r[2]
                     wa.enviar_pdf(numero, pdf, nome, f"Relatório da obra {r[1]['nome']}, gerado agora pelo sistema Custo Plano.")
-                    print(f"WhatsApp: relatório da obra {r[1]['id']} enviado para {u['email']}.", flush=True)
+                    print(f"WhatsApp: relatório da obra {r[1]['id']} enviado para o usuário {u['id']}.", flush=True)
         except Exception as e:  # um erro numa mensagem não pode travar as outras
             print(f"WhatsApp: erro ao responder ({type(e).__name__}).", flush=True)
 
