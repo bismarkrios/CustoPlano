@@ -7,3 +7,6 @@ pillow>=13.0
 anthropic>=2.3
 # Leitura direta de .mpp (precisa do Java 11+ instalado):
 mpxj>=13.0
+# Cópia diária do banco no Google Drive da empresa (copia_drive.py):
+google-auth>=2.30
+requests>=2.32

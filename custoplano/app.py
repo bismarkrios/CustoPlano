@@ -27,6 +27,7 @@ import click
 from flask import Flask, Response, abort, jsonify, request, send_from_directory, session
 
 import banco
+import copia_drive
 import correio
 from cronograma import ErroCronograma, Projeto, enxugar_xml, ler_arquivo, nome_base
 from plano_ataque import ErroPlano, ler_plano, plano_do_projeto
@@ -130,7 +131,7 @@ def semear_demo(forcar: bool = False) -> None:
 
 
 # Cópia de segurança diária do banco inteiro (todas as obras, com fotos) na pasta copias do disco
-# permanente; ficam as 7 últimas. Para guardar fora do servidor: Administração > Baixar cópia.
+# permanente; ficam as 7 últimas. Fora do servidor: Google Drive da empresa (copia_drive.py, 30 cópias).
 def _copias_diarias() -> None:
     import time
 
@@ -146,7 +147,29 @@ def _copias_diarias() -> None:
                     banco.limpar_copias(7)
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa da cópia
             print(f"Não consegui fazer a cópia de segurança: {e}", flush=True)
+        _copia_no_drive()
         time.sleep(3600)
+
+
+def _copia_no_drive() -> None:
+    """Manda a cópia diária mais recente ao Google Drive da empresa (uma vez por cópia; tenta de novo
+    na hora seguinte se falhar). Só roda com CP_DRIVE_CHAVE e CP_DRIVE_USUARIO no painel do Render."""
+    if not copia_drive.configurado():
+        return
+    try:
+        diarias = [c for c in banco.listar_copias() if "-antes-" not in c["nome"] and "-baixada" not in c["nome"]]
+        if not diarias:
+            return
+        marca = os.path.join(banco.pasta_copias(), "drive-enviada.txt")
+        ultima = open(marca).read().strip() if os.path.exists(marca) else ""
+        if diarias[0]["nome"] == ultima:
+            return
+        copia_drive.enviar(os.path.join(banco.pasta_copias(), diarias[0]["nome"]))
+        with open(marca, "w") as f:
+            f.write(diarias[0]["nome"])
+        print(f"Cópia enviada ao Google Drive: {diarias[0]['nome']}", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print(f"Não consegui enviar a cópia ao Google Drive ({type(e).__name__}): {str(e)[:200]}", flush=True)
 
 
 if os.environ.get("CP_COPIAS_AUTO", "1") == "1":

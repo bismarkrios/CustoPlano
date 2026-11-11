@@ -136,6 +136,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: python teste_whatsapp.py
 
+      - name: Testar a cópia diária no Google Drive (Drive simulado)
+        env:
+          CP_BANCO: ${{ runner.temp }}/drive/t.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/drive" && python teste_copia_drive.py
+
       - name: Testar a imagem Docker
         run: docker build -t custoplano .
 
