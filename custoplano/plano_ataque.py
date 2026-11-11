@@ -420,7 +420,10 @@ def plano_do_projeto(p, atual: dict | None = None, data_status: dt.datetime | No
         c["ini"] = min(c["ini"], t.inicio)
         if t.lb_inicio:
             c["lb"] = min(c["lb"], t.lb_inicio) if c["lb"] else t.lb_inicio
-        c["ok"] = c["ok"] and float(atual.get(t.uid, t.pct) or 0) >= 99.5
+        # executado quando a medição do sistema OU o próprio Project (% concluída ou % físico) marca 100%:
+        # há cronogramas que preenchem só uma das duas colunas do Project
+        feito = max(float(atual.get(t.uid, t.pct) or 0), float(t.pct or 0), float(getattr(t, "fisico", 0) or 0))
+        c["ok"] = c["ok"] and feito >= 99.5
         ordem_serv[(torre, chave)] = min(ordem_serv.get((torre, chave), t.inicio), t.inicio)
         ordem_torre[torre] = min(ordem_torre.get(torre, t.inicio), t.inicio)
 
