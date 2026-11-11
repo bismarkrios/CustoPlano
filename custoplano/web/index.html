@@ -4411,7 +4411,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
   /* ---------- Suprimentos da conta real: um pacote de compra por linha resumo do cronograma ---------- */
   var SUPR = null, supCarregando = false;
-  S.supR = { f: 'todos', torre: '', q: '', msg: '' };
+  S.supR = { f: 'todos', torre: '', q: '', msg: '', nivel: 1 };
   function loadSup() {
     if (!API || supCarregando || !temServ('custos')) return;
     supCarregando = true;
@@ -4514,7 +4514,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     L.forEach(function (i) { if (i.torre && torres.indexOf(i.torre) < 0) torres.push(i.torre); });
     torres.sort(function (a, b) { return a.localeCompare(b, 'pt-BR', { numeric: true }); });
     if (R.torre && torres.indexOf(R.torre) < 0) R.torre = '';
-    var B = L.filter(function (i) { return !R.torre || i.torre === R.torre; });
+    // nível: abre só com as linhas resumo de cima (pacotes); a busca procura em todos os níveis
+    var maxNiv = L.reduce(function (m, i) { return Math.max(m, i.nivel); }, 0);
+    if (R.nivel !== 99 && R.nivel > maxNiv + 1) R.nivel = 99;
+    var B = L.filter(function (i) { return (!R.torre || i.torre === R.torre) && (R.q.trim() || R.nivel === 99 || i.nivel < R.nivel); });
     var late = B.filter(function (i) { return i.risk[2] === 'late'; }).length;
     var week = B.filter(function (i) { return i.risk[2] === 'week'; }).length;
     var done = B.filter(function (i) { return i.st === 'pedido' || i.st === 'entregue'; }).length;
@@ -4545,16 +4548,19 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '<td><div class="sup-actions">' + acts + '</div></td></tr>';
     }).join('');
     var tab = function (id, t, n) { return '<button type="button" data-a="rsf:' + id + '" aria-pressed="' + (R.f === id) + '">' + t + ' · ' + n + '</button>'; };
+    var nsel = maxNiv > 0 ? '<div class="torre-sel" role="group" aria-label="Nível das linhas resumo"><span class="kpi-t">Nível</span>' +
+      [1, 2, 3].filter(function (n) { return n <= maxNiv; }).map(function (n) { return '<button type="button" data-a="rsn:' + n + '" aria-pressed="' + (R.nivel === n) + '">' + n + '</button>'; }).join('') +
+      '<button type="button" data-a="rsn:99" aria-pressed="' + (R.nivel === 99) + '">Todos</button></div>' : '';
     var tsel = torres.length ? '<div class="torre-sel" role="group" aria-label="Torre"><span class="kpi-t">Torre</span><button type="button" data-a="rst:" aria-pressed="' + !R.torre + '">Todas</button>' +
       torres.map(function (t) { return '<button type="button" data-a="rst:' + esc(t) + '" aria-pressed="' + (R.torre === t) + '">' + esc(t) + '</button>'; }).join('') + '</div>' : '';
     return '<div class="grid4">' +
-        '<div class="card"><div class="kpi-t">Pacotes de compra</div><div class="kpi-v">' + B.length + '</div><div class="kpi-s">um por linha resumo do cronograma</div></div>' +
+        '<div class="card"><div class="kpi-t">Pacotes de compra</div><div class="kpi-v">' + B.length + '</div><div class="kpi-s">' + (R.nivel === 99 || R.q.trim() ? 'linhas resumo de todos os níveis' : 'linhas resumo até o nível ' + R.nivel) + '</div></div>' +
         '<div class="card"><div class="kpi-t">Comprar nesta semana</div><div class="kpi-v">' + week + '</div><div class="kpi-s">data limite até ' + fdate(hojeReal() + 7 * 864e5) + '</div></div>' +
         '<div class="card"><div class="kpi-t">Compras atrasadas</div><div class="kpi-v" style="color:' + (late ? 'var(--bad)' : 'var(--good)') + '">' + late + '</div><div class="kpi-s">risco de parar a produção</div></div>' +
         '<div class="card"><div class="kpi-t">Pedidos emitidos ou entregues</div><div class="kpi-v">' + done + '</div><div class="bar" style="margin-top:8px"><i style="width:' + (B.length ? done / B.length * 100 : 0) + '%;background:var(--good)"></i></div></div>' +
       '</div>' +
       '<div class="q-bar"><div class="tabs" role="group" aria-label="Filtro de suprimentos">' + tab('todos', 'Todos', B.length) + tab('week', 'Comprar nesta semana', week) + tab('late', 'Atrasados', late) + tab('ok', 'Pedidos e entregas', done) + '</div>' +
-      '<input id="supQ" type="search" placeholder="Buscar pacote, EAP ou fornecedor" value="' + esc(R.q) + '" aria-label="Buscar pacote">' + tsel + '</div>' +
+      '<input id="supQ" type="search" placeholder="Buscar pacote, EAP ou fornecedor" value="' + esc(R.q) + '" aria-label="Buscar pacote">' + nsel + tsel + '</div>' +
       (R.msg ? '<p class="note" role="status" style="margin:0">' + esc(R.msg) + '</p>' : '') +
       '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><table class="tbl sup-tbl sup-real" style="min-width:1080px"><thead><tr>' +
         '<th scope="col">Linha resumo / fornecedor</th><th scope="col">Onde</th><th scope="col">Na obra</th><th scope="col" style="text-align:right">Prazo</th><th scope="col">Comprar até</th><th scope="col">Etapa</th><th scope="col">Situação</th><th scope="col">Ação</th>' +
@@ -4781,6 +4787,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       case 'sf': S.supF = a[1]; break;
       case 'rsf': S.supR.f = a[1]; break;
       case 'rst': S.supR.torre = a.slice(1).join(':'); break;
+      case 'rsn': S.supR.nivel = +a[1] || 1; break;
       case 'rsa': case 'rsb':
         var su = supRealModel().filter(function (i) { return i.uid === a[1]; })[0];
         if (su) supSalvar(su.uid, { st: SUP_ST[Math.max(0, Math.min(SUP_ST.indexOf(su.st) + (a[0] === 'rsa' ? 1 : -1), 3))] });
