@@ -529,6 +529,7 @@ def abrir_sessao(uid: int) -> None:
     if obra_id:
         session["obra"] = obra_id
     banco.registrar_entrada(uid, obra_id)
+    banco.registrar_acesso(uid, _ip())
 
 
 def conta() -> dict:

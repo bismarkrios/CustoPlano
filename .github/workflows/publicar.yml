@@ -81,6 +81,13 @@ jobs:
           CP_SECRET: teste
         run: python teste_isolamento.py
 
+      - name: Testar os registros de acesso (Marco Civil, 6 meses)
+        env:
+          CP_BANCO: ${{ runner.temp }}/acesso.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: python teste_registros_acesso.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

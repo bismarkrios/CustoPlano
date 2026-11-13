@@ -42,6 +42,17 @@ CREATE TABLE IF NOT EXISTS acessos (
     papel       TEXT NOT NULL DEFAULT 'editor',   -- editor | leitor
     PRIMARY KEY (usuario_id, obra_id)
 );
+-- Registros de acesso (Marco Civil da Internet, art. 15): data, hora e IP de cada login, guardados por 6 meses
+-- e apagados depois (LGPD: não guardar mais que o necessário). Sem ligação com usuarios: o registro fica
+-- mesmo se a conta for removida, até completar os 6 meses.
+CREATE TABLE IF NOT EXISTS registros_acesso (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    usuario_id  INTEGER NOT NULL,
+    email       TEXT NOT NULL DEFAULT '',
+    ip          TEXT NOT NULL DEFAULT '',
+    quando      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS registros_acesso_quando ON registros_acesso (quando);
 CREATE TABLE IF NOT EXISTS links_senha (
     hash        TEXT PRIMARY KEY,                 -- sha256 do código do link (o código em si não fica guardado)
     usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -323,6 +334,19 @@ def remover_usuario(uid: int) -> None:
 def registrar_entrada(uid: int, obra_id: int | None) -> None:
     with conectar() as con:
         con.execute("UPDATE usuarios SET ultimo_login = ?, obra_atual = COALESCE(?, obra_atual) WHERE id = ?", (agora(), obra_id, uid))
+
+
+GUARDA_ACESSO_DIAS = 190  # 6 meses do Marco Civil, com folga de alguns dias
+
+
+def registrar_acesso(uid: int, ip: str) -> None:
+    """Guarda data, hora e IP do login (Marco Civil, art. 15) e apaga os registros com mais de 6 meses."""
+    limite = (dt.datetime.now() - dt.timedelta(days=GUARDA_ACESSO_DIAS)).isoformat(timespec="seconds")
+    with conectar() as con:
+        r = con.execute("SELECT email FROM usuarios WHERE id = ?", (uid,)).fetchone()
+        con.execute("INSERT INTO registros_acesso (usuario_id, email, ip, quando) VALUES (?, ?, ?, ?)",
+                    (uid, r[0] if r else "", (ip or "")[:64], agora()))
+        con.execute("DELETE FROM registros_acesso WHERE quando < ?", (limite,))
 
 
 # ---------------------------------------------------------------------- obras
