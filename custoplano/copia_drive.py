@@ -90,12 +90,36 @@ def testar_restauracao(cifrado: str, pasta: str) -> int:
         if con.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise RuntimeError("a cópia restaurada não passou na conferência do banco")
         n = con.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'").fetchone()[0]
+        tem_obras = con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='obras'").fetchone()
+        obras = con.execute("SELECT COUNT(*) FROM obras").fetchone()[0] if tem_obras else 0
     finally:
         con.close()
     os.remove(gz)
     os.remove(db)
-    print(f"Restauração testada: cópia cifrada abriu inteira ({n} tabelas).", flush=True)
+    print(f"Restauração testada: cópia cifrada abriu inteira ({n} tabelas, {obras} obras).", flush=True)
     return n
+
+
+def testar_copia_do_drive() -> str:
+    """Teste de restauração do mês: baixa do Drive a cópia cifrada mais recente e a abre num banco
+    temporário (nunca no banco do sistema). Confere que o que está guardado fora do Render abre de verdade."""
+    s = _sessao()
+    pasta = _pasta(s)
+    q = f"'{pasta}' in parents and trashed=false and appProperties has {{ key='custoplano' and value='copia' }}"
+    r = s.get(API, params={"q": q, "fields": "files(id,name)", "orderBy": "name desc", "pageSize": 200}, timeout=60)
+    r.raise_for_status()
+    cifradas = [f for f in r.json().get("files", []) if f["name"].endswith(".cp")]
+    if not cifradas:
+        raise RuntimeError("não há cópia cifrada no Drive")
+    f = cifradas[0]
+    r = s.get(f"{API}/{f['id']}", params={"alt": "media"}, timeout=300)
+    r.raise_for_status()
+    with tempfile.TemporaryDirectory() as d:
+        baixada = os.path.join(d, f["name"])
+        with open(baixada, "wb") as g:
+            g.write(r.content)
+        testar_restauracao(baixada, d)
+    return f["name"]
 
 
 def configurado() -> bool:

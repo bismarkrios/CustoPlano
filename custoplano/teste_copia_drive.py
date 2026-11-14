@@ -11,8 +11,8 @@ falhas = []
 
 
 class Resp:
-    def __init__(self, cod, js=None, headers=None):
-        self.status_code, self._js, self.headers = cod, js or {}, headers or {}
+    def __init__(self, cod, js=None, headers=None, content=b""):
+        self.status_code, self._js, self.headers, self.content = cod, js or {}, headers or {}, content
 
     def json(self):
         return self._js
@@ -24,9 +24,11 @@ class Resp:
 
 class Drive:
     def __init__(self):
-        self.pastas, self.arquivos, self.recebido, self.apagados = [], [], b"", []
+        self.pastas, self.arquivos, self.recebido, self.apagados, self.conteudo = [], [], b"", [], {}
 
     def get(self, url, params=None, timeout=None):
+        if params.get("alt") == "media":
+            return Resp(200, content=self.conteudo[url.rsplit("/", 1)[1]])
         if "folder" in params["q"]:
             return Resp(200, {"files": [{"id": p} for p in self.pastas]})
         return Resp(200, {"files": sorted(self.arquivos, key=lambda f: f["name"], reverse=True)})
@@ -133,6 +135,20 @@ if not d2.arquivos[-1]["name"].endswith(".db.gz.cp") or d2.apagados != ["aberta"
 if d2.recebido[:9] != copia_drive.MAGICA:
     falhas.append("o Drive recebeu a cópia sem criptografia")
 
+# teste do mês: baixa do Drive a cifrada mais recente e abre num banco temporário
+d2.conteudo[d2.arquivos[-1]["id"]] = d2.recebido
+d2.arquivos.append({"id": "velha", "name": "custoplano-2026-11-01-0030.db.gz.cp"})
+os.environ["CP_DRIVE_CRIPTO"] = "segredo-de-teste"
+if copia_drive.testar_copia_do_drive() != "custoplano-2026-11-12-0030.db.gz.cp":
+    falhas.append("teste do mês não pegou a cópia mais recente")
+d2.conteudo[d2.arquivos[-2]["id"]] = d2.recebido[:-1] + bytes([d2.recebido[-1] ^ 1])
+try:
+    copia_drive.testar_copia_do_drive()
+    falhas.append("teste do mês aceitou cópia mexida")
+except Exception:  # noqa: BLE001
+    pass
+os.environ.pop("CP_DRIVE_CRIPTO")
+
 # sem as variáveis, não liga
 for k in ("CP_DRIVE_CHAVE", "CP_DRIVE_USUARIO"):
     os.environ.pop(k, None)
@@ -151,6 +167,17 @@ app._copia_no_drive()
 app._copia_no_drive()
 if len(enviados) != 1:
     falhas.append(f"envios pelo app: {enviados}")
+
+# no app: o teste do mês roda uma vez por mês, só com a criptografia ligada
+testes = []
+copia_drive.testar_copia_do_drive = lambda: testes.append(1) or "x.db.gz.cp"
+app._teste_mensal_do_drive()
+os.environ["CP_DRIVE_CRIPTO"] = "segredo-de-teste"
+app._teste_mensal_do_drive()
+app._teste_mensal_do_drive()
+os.environ.pop("CP_DRIVE_CRIPTO")
+if len(testes) != 1:
+    falhas.append(f"teste do mês pelo app: {len(testes)} vezes")
 
 if falhas:
     print("FALHOU:\n- " + "\n- ".join(falhas))

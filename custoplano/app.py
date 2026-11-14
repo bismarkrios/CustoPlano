@@ -148,6 +148,7 @@ def _copias_diarias() -> None:
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa da cópia
             print(f"Não consegui fazer a cópia de segurança: {e}", flush=True)
         _copia_no_drive()
+        _teste_mensal_do_drive()
         time.sleep(3600)
 
 
@@ -170,6 +171,24 @@ def _copia_no_drive() -> None:
         print(f"Cópia enviada ao Google Drive: {diarias[0]['nome']}", flush=True)
     except Exception as e:  # noqa: BLE001
         print(f"Não consegui enviar a cópia ao Google Drive ({type(e).__name__}): {str(e)[:200]}", flush=True)
+
+
+def _teste_mensal_do_drive() -> None:
+    """Uma vez por mês, baixa do Drive a cópia cifrada mais recente e testa a restauração num banco
+    temporário. O resultado sai no registro do Render ("TESTE-RESTAURACAO")."""
+    if not (copia_drive.configurado() and copia_drive._chave()):
+        return
+    mes = dt.date.today().strftime("%Y-%m")
+    marca = os.path.join(banco.pasta_copias(), "teste-drive.txt")
+    if os.path.exists(marca) and open(marca).read().strip() == mes:
+        return
+    try:
+        nome = copia_drive.testar_copia_do_drive()
+        print(f"TESTE-RESTAURACAO ok: {nome} baixada do Drive e aberta num banco temporário.", flush=True)
+        with open(marca, "w") as f:
+            f.write(mes)
+    except Exception as e:  # noqa: BLE001
+        print(f"ATENÇÃO: TESTE-RESTAURACAO falhou ({type(e).__name__}): {str(e)[:200]}", flush=True)
 
 
 if os.environ.get("CP_COPIAS_AUTO", "1") == "1":
