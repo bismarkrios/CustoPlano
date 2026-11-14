@@ -16,6 +16,7 @@ import datetime as dt
 import getpass
 import io
 import json
+import gzip
 import os
 import re
 import secrets
@@ -790,6 +791,53 @@ def admin_usuario_remover():
         return erro("Esse acesso não pode ser removido por aqui.", 403)
     banco.remover_usuario(u["id"])
     return jsonify(ok=True)
+
+
+@app.get("/api/admin/restaurar/lista")
+@so_admin
+@sem_demo
+def admin_restaurar_lista():
+    """Cópias que podem ser restauradas: as do servidor e as cifradas do Drive."""
+    servidor = [c for c in banco.listar_copias()]
+    drive, aviso = [], ""
+    if copia_drive.configurado() and copia_drive._chave():
+        try:
+            drive = copia_drive.listar_cifradas()
+        except Exception as e:  # noqa: BLE001
+            aviso = f"Não consegui ler as cópias do Drive agora ({type(e).__name__})."
+    return jsonify(servidor=servidor, drive=drive, aviso=aviso)
+
+
+@app.post("/api/admin/restaurar")
+@so_admin
+@sem_demo
+def admin_restaurar():
+    """Volta o sistema inteiro para uma cópia. Pede a palavra RESTAURAR e guarda antes o banco de agora."""
+    p = request.get_json(silent=True) or {}
+    if str(p.get("confirmar", "")).strip().upper() != "RESTAURAR":
+        return erro("Para confirmar, digite RESTAURAR.")
+    import tempfile
+
+    with tempfile.TemporaryDirectory(dir=os.path.dirname(os.path.abspath(banco.CAMINHO))) as d:
+        db = os.path.join(d, "restaurar.db")
+        try:
+            if p.get("origem") == "drive":
+                if not (copia_drive.configurado() and copia_drive._chave()):
+                    return erro("As cópias do Drive não estão ligadas neste servidor.")
+                nome = copia_drive.baixar_e_abrir(str(p.get("id", "")), db)
+            else:
+                nome = os.path.basename(str(p.get("nome", "")))
+                if nome not in {c["nome"] for c in banco.listar_copias()}:
+                    return erro("Essa cópia não está no servidor.", 404)
+                with gzip.open(os.path.join(banco.pasta_copias(), nome), "rb") as f, open(db, "wb") as g:
+                    shutil.copyfileobj(f, g)
+            r = banco.restaurar(db)
+        except (ValueError, OSError, gzip.BadGzipFile) as e:
+            return erro(f"A cópia não foi restaurada: {e}")
+        except Exception as e:  # noqa: BLE001 - erro do Drive ou da criptografia: o banco de agora fica como está
+            return erro(f"A cópia não foi restaurada ({type(e).__name__}). O sistema continua como estava.")
+    print(f"RESTAURACAO: sistema voltou para {nome} ({r['obras']} obras); banco anterior guardado em {r['antes']}.", flush=True)
+    return jsonify(ok=True, nome=nome, **r)
 
 
 @app.get("/api/admin/copia")

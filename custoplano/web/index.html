@@ -5134,6 +5134,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<div class="adm-acoes"><a class="btn btn-primary" rel="nofollow" href="/api/admin/copia" style="text-decoration:none">' + aico('baixar') + 'Baixar cópia agora</a></div>' +
       (d.copias.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópias no servidor</th><th class="num">Tamanho</th></tr></thead><tbody>' +
         d.copias.map(function (c) { return '<tr><td class="mono">' + esc(c.nome) + '</td><td class="num">' + mb(c.bytes) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p>Nenhuma cópia ainda; a primeira sai em até uma hora depois de o servidor ligar.</p>') +
+      ('<h3 style="margin-top:20px">Restaurar uma cópia</h3><p>Use só se os dados do sistema se perderem ou forem estragados. O sistema inteiro (todas as obras) volta para o dia da cópia escolhida. Antes, ele guarda o banco de agora, para poder desfazer.</p>' +
+        '<div id="admRest"><div class="adm-acoes"><button class="btn btn-ghost" type="button" data-adm="rest-lista">' + aico('copias') + 'Ver cópias para restaurar</button></div></div>') +
       '</section>';
     h += '<section class="adm-card" id="admAreas"></section>';
     document.getElementById('admBody').innerHTML = h;
@@ -5309,6 +5311,28 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var obra = ADM && ADM.obras.filter(function (o) { return o.id === id; })[0];
     if (a[0] === 'copiar') { var t = document.getElementById('admLinkTxt'); t.select(); (navigator.clipboard ? navigator.clipboard.writeText(t.value) : Promise.reject()).then(function () { b.textContent = 'Copiado'; }, function () { document.execCommand('copy'); b.textContent = 'Copiado'; }); return; }
     if (a[0] === 'abrir') { trocarObra(id, function () { location.hash = 'sistema'; }); return; }
+    if (a[0] === 'rest-lista') {
+      var caixa = document.getElementById('admRest'); caixa.innerHTML = '<p>Lendo as cópias…</p>';
+      api('/api/admin/restaurar/lista').then(function (r) {
+        var linha = function (orig, chave, nome, info) {
+          return '<tr><td class="mono">' + esc(nome) + '</td><td>' + info + '</td><td><button class="btn btn-ghost btn-sm" type="button" data-adm="rest:' + orig + ':' + encodeURIComponent(chave) + ':' + encodeURIComponent(nome) + '">Restaurar</button></td></tr>';
+        };
+        var linhas = (r.drive || []).map(function (c) { return linha('drive', c.id, c.nome, 'Google Drive (cifrada)'); })
+          .concat((r.servidor || []).map(function (c) { return linha('servidor', c.nome, c.nome, 'Servidor · ' + mb(c.bytes)); }));
+        caixa.innerHTML = (r.aviso ? '<p>' + esc(r.aviso) + '</p>' : '') + (linhas.length ? '<div class="adm-scroll"><table class="tbl adm-tbl" style="min-width:0"><thead><tr><th>Cópia</th><th>Onde está</th><th></th></tr></thead><tbody>' + linhas.join('') + '</tbody></table></div>' : '<p>Nenhuma cópia disponível.</p>');
+      }, function () { caixa.innerHTML = '<p>Não consegui ler as cópias. Tente de novo.</p>'; }); return;
+    }
+    if (a[0] === 'rest') {
+      var nomeC = decodeURIComponent(a[3]);
+      var conf = prompt('O sistema inteiro (todas as obras) vai voltar para a cópia:\n' + nomeC + '\n\nTudo o que foi feito depois dela some do sistema. O banco de agora fica guardado como cópia "antes-da-restauracao", para poder desfazer.\n\nPara confirmar, digite RESTAURAR:');
+      if (conf === null) return;
+      b.disabled = true; b.textContent = 'Restaurando…';
+      var corpo = a[1] === 'drive' ? { origem: 'drive', id: decodeURIComponent(a[2]), confirmar: conf } : { origem: 'servidor', nome: decodeURIComponent(a[2]), confirmar: conf };
+      api('/api/admin/restaurar', corpo).then(function (r) {
+        alert('Pronto. O sistema voltou para a cópia ' + r.nome + ' (' + r.obras + ' obras). O banco de antes ficou guardado como ' + r.antes + '.\n\nA página vai recarregar; se pedir, entre de novo.');
+        location.reload();
+      }, function (err) { alert(err.message); b.disabled = false; b.textContent = 'Restaurar'; }); return;
+    }
     if (a[0] === 'serv' && obra) {
       var atuais = obra.servicos || [], liga = atuais.indexOf(a[2]) < 0;
       var novos = liga ? atuais.concat([a[2]]) : atuais.filter(function (x) { return x !== a[2]; });

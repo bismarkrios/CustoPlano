@@ -261,6 +261,33 @@ def limpar_copias(manter: int = 7) -> None:
         os.remove(os.path.join(pasta, diarias.pop()["nome"]))
 
 
+def restaurar(caminho_db: str) -> dict:
+    """Volta o sistema para a cópia em caminho_db (banco SQLite já aberto, sem compactação).
+
+    Antes confere a cópia (integridade, tabelas de usuários e obras) e guarda o banco de agora como
+    cópia "-antes-da-restauracao", para poder voltar atrás. A troca usa a cópia do próprio SQLite,
+    com o site no ar: quem estiver usando vê os dados restaurados na próxima ação."""
+    src = sqlite3.connect(caminho_db)
+    try:
+        if src.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            raise ValueError("a cópia está corrompida e não foi usada")
+        tabelas = {r[0] for r in src.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if not {"usuarios", "obras"} <= tabelas:
+            raise ValueError("o arquivo não é uma cópia do sistema Custo Plano")
+        obras = src.execute("SELECT COUNT(*) FROM obras").fetchone()[0]
+        usuarios = src.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+        antes = os.path.basename(copia_de_seguranca("antes-da-restauracao-" + secrets.token_hex(2)))
+        dst = sqlite3.connect(CAMINHO)
+        try:
+            src.backup(dst)
+        finally:
+            dst.close()
+    finally:
+        src.close()
+    iniciar()  # cópia antiga ganha as tabelas e colunas novas
+    return {"obras": obras, "usuarios": usuarios, "antes": antes}
+
+
 def agora() -> str:
     return dt.datetime.now().isoformat(timespec="seconds")
 

@@ -88,6 +88,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: python teste_registros_acesso.py
 
+      - name: Testar a restauração guiada de uma cópia (Administração)
+        env:
+          CP_BANCO: ${{ runner.temp }}/restaurar/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/restaurar" && python teste_restaurar.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

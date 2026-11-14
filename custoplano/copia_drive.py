@@ -122,6 +122,36 @@ def testar_copia_do_drive() -> str:
     return f["name"]
 
 
+def listar_cifradas() -> list[dict]:
+    """Cópias cifradas guardadas no Drive, da mais recente para a mais antiga: [{id, nome}]."""
+    s = _sessao()
+    pasta = _pasta(s)
+    q = f"'{pasta}' in parents and trashed=false and appProperties has {{ key='custoplano' and value='copia' }}"
+    r = s.get(API, params={"q": q, "fields": "files(id,name)", "orderBy": "name desc", "pageSize": 200}, timeout=60)
+    r.raise_for_status()
+    return [{"id": f["id"], "nome": f["name"]} for f in r.json().get("files", []) if f["name"].endswith(".cp")]
+
+
+def baixar_e_abrir(arquivo_id: str, destino_db: str) -> str:
+    """Baixa do Drive uma cópia cifrada e a deixa aberta (banco SQLite) em destino_db. Devolve o nome."""
+    nomes = {f["id"]: f["nome"] for f in listar_cifradas()}
+    if arquivo_id not in nomes:
+        raise ValueError("essa cópia não está na pasta de cópias do Drive")
+    s = _sessao()
+    r = s.get(f"{API}/{arquivo_id}", params={"alt": "media"}, timeout=300)
+    r.raise_for_status()
+    pasta = os.path.dirname(destino_db)
+    cif, gz = os.path.join(pasta, "drive.cp"), os.path.join(pasta, "drive.db.gz")
+    with open(cif, "wb") as g:
+        g.write(r.content)
+    decifrar(cif, gz)
+    with gzip.open(gz, "rb") as f, open(destino_db, "wb") as g:
+        shutil.copyfileobj(f, g)
+    os.remove(cif)
+    os.remove(gz)
+    return nomes[arquivo_id]
+
+
 def configurado() -> bool:
     return bool(os.environ.get("CP_DRIVE_CHAVE", "").strip() and os.environ.get("CP_DRIVE_USUARIO", "").strip())
 
