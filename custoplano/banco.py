@@ -53,6 +53,11 @@ CREATE TABLE IF NOT EXISTS registros_acesso (
     quando      TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS registros_acesso_quando ON registros_acesso (quando);
+-- Último aviso por e-mail de medição atrasada de cada obra (repete no máximo uma vez por semana)
+CREATE TABLE IF NOT EXISTS avisos_medicao (
+    obra_id     INTEGER PRIMARY KEY,
+    enviado_em  TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS links_senha (
     hash        TEXT PRIMARY KEY,                 -- sha256 do código do link (o código em si não fica guardado)
     usuario_id  INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
@@ -286,6 +291,26 @@ def restaurar(caminho_db: str) -> dict:
         src.close()
     iniciar()  # cópia antiga ganha as tabelas e colunas novas
     return {"obras": obras, "usuarios": usuarios, "antes": antes}
+
+
+def emails_da_obra(obra_id: int) -> list[str]:
+    """E-mails de quem edita a obra (o engenheiro da construtora), sem a equipe e sem a conta de demonstração."""
+    with conectar() as con:
+        return [r[0] for r in con.execute(
+            "SELECT u.email FROM acessos a JOIN usuarios u ON u.id = a.usuario_id WHERE a.obra_id = ? AND a.papel = 'editor'"
+            " AND u.admin = 0 AND lower(u.email) != 'demo@custoplano.com.br' ORDER BY u.email", (obra_id,))]
+
+
+def ultimo_aviso_medicao(obra_id: int) -> str | None:
+    with conectar() as con:
+        r = con.execute("SELECT enviado_em FROM avisos_medicao WHERE obra_id = ?", (obra_id,)).fetchone()
+        return r[0] if r else None
+
+
+def marcar_aviso_medicao(obra_id: int) -> None:
+    with conectar() as con:
+        con.execute("INSERT INTO avisos_medicao (obra_id, enviado_em) VALUES (?, ?) "
+                    "ON CONFLICT(obra_id) DO UPDATE SET enviado_em = excluded.enviado_em", (obra_id, agora()))
 
 
 def agora() -> str:

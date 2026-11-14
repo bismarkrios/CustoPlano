@@ -779,6 +779,16 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .hub-adm{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 18px;border-radius:10px;background:var(--surface);border:1px solid var(--line)}
 .adm-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px}
 .adm-card h2{font-size:22px;margin:0}
+.pob-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.pob{display:flex;flex-direction:column;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;font:inherit;color:var(--ink);cursor:pointer}
+.pob:hover{border-color:var(--blue)}.pob:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.pob-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.pob-top b{font:700 18px var(--display)}
+.pob-bar{position:relative;height:10px;border-radius:5px;background:var(--blue-soft)}.pob-bar i{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--ink)}.pob-bar em{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--s5)}
+.pob-txt{font-size:13.5px}
+.pob-k{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.pob-k span{background:var(--ground);border-radius:6px;padding:8px;font-size:12px;color:var(--muted)}.pob-k b{display:block;font:800 16px var(--display);color:var(--ink);white-space:nowrap}
+.pob-als{display:flex;flex-direction:column;gap:6px}.pob-al{padding:7px 10px;border-radius:6px;font-size:13px}
+.pob-r{background:#F6E7E1;color:#7A3A26}.pob-a{background:#F7EED9;color:#6B4C10}
+@media (max-width:640px){.pob-k{grid-template-columns:repeat(2,1fr)}}
 .adm-card p{margin:0;color:var(--muted);font-size:14.5px}
 .adm-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:0;background:transparent}
 .adm-form .btn{min-height:46px}
@@ -5074,6 +5084,34 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function aico(n, t) {
     return '<svg class="adm-ico" width="' + (t || 15) + '" height="' + (t || 15) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ADM_ICO[n] + '</svg>';
   }
+  // Painel das obras (só a equipe): todas as obras lado a lado, com o que pede ação
+  function carregarPainelObras() {
+    var box = document.getElementById('admPainel'); if (!box) return;
+    var titulo = '<h2>' + aico('obras', 20) + 'Painel das obras</h2>';
+    api('/api/admin/painel-obras').then(function (d) {
+      var obras = d.obras.filter(function (o) { return !o.teste; }).concat(d.obras.filter(function (o) { return o.teste; }));
+      if (!obras.length) { box.innerHTML = titulo + '<p>Nenhuma obra ainda.</p>'; return; }
+      var p2 = function (v) { return v == null ? '—' : fmt2(v) + '%'; };
+      box.innerHTML = titulo + '<p>Atualizado agora. Clique numa obra para abrir.' + (d.email ? '' : ' O aviso de medição atrasada por e-mail liga quando o e-mail de saída for configurado.') + '</p>' +
+        '<div class="pob-grid">' + obras.map(function (o) {
+          var dif = o.real != null && o.previsto != null ? o.real - o.previsto : null;
+          var difTxt = dif == null ? '' : ' · <span style="white-space:nowrap;color:' + (dif < 0 ? 'var(--s5)' : 'var(--s3)') + '">' + fmt2(Math.abs(dif)) + ' p.p. ' + (dif < 0 ? 'atrasado' : 'adiantado') + '</span>';
+          var al = o.alertas.map(function (t) { return '<div class="pob-al pob-r">' + esc(t.charAt(0).toUpperCase() + t.slice(1)) + '</div>'; }).join('') +
+            (o.aviso_enviado ? '<div class="pob-al pob-a">Aviso de medição enviado em ' + fdate(pdate(o.aviso_enviado + 'T12:00')) + '</div>' : '') +
+            o.faltas.map(function (t) { return '<div class="pob-al pob-a">' + esc(t) + '</div>'; }).join('');
+          return '<button type="button" class="pob" data-adm="abrir:' + o.id + '">' +
+            '<span class="pob-top"><b>' + esc(o.obra) + '</b>' + (o.teste ? '<span class="chip c-muted">teste</span>' : (o.empresa ? '<span class="chip c-muted">' + esc(o.empresa) + '</span>' : '')) + '</span>' +
+            (o.real != null ? '<span class="pob-bar"><i style="width:' + Math.min(100, o.real) + '%"></i><em style="left:' + Math.min(100, o.previsto || 0) + '%"></em></span>' +
+              '<span class="pob-txt"><b>' + p2(o.real) + '</b> real · ' + p2(o.previsto) + ' previsto' + difTxt + '</span>' : '<span class="pob-txt">Sem cronograma</span>') +
+            '<span class="pob-k"><span><b>' + (o.dias_sem_medicao == null ? '—' : o.dias_sem_medicao + (o.dias_sem_medicao === 1 ? ' dia' : ' dias')) + '</b>sem medição</span>' +
+            '<span><b>' + (o.indice_custo == null ? '—' : fmt2(o.indice_custo)) + '</b>' + (o.indice_custo == null ? 'custo não importado' : 'índice de custo') + '</span>' +
+            '<span><b>' + (o.ppc == null ? '—' : fmt2(o.ppc) + '%') + '</b>PPC da semana</span>' +
+            '<span><b>' + o.ncs_abertas + '</b>NC abertas' + (o.ncs_vencidas ? ' (' + o.ncs_vencidas + ' vencida' + (o.ncs_vencidas > 1 ? 's' : '') + ')' : '') + '</span></span>' +
+            (al ? '<span class="pob-als">' + al + '</span>' : '') + '</button>';
+        }).join('') + '</div>';
+    }, function (err) { box.innerHTML = titulo + '<p>' + esc(err.message) + '</p>'; });
+  }
+
   function renderAdm() {
     var d = ADM, nomeObra = {};
     d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
@@ -5084,6 +5122,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       '<button class="btn btn-ghost btn-sm" type="button" data-adm="copiar">Copiar</button>' +
       '<a class="btn btn-primary btn-sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Olá! Este é o seu acesso ao sistema da Custo Plano. Abra o link para criar a sua senha (vale 7 dias): ' + ADM_LINK.link) + '">Enviar pelo WhatsApp</a></div>' : '';
     var h = '<div><p class="eyebrow">Equipe Custo Plano</p><h1 style="margin-top:8px">Administração</h1></div>' + linkBox;
+    h += '<section class="adm-card" id="admPainel"><h2>' + aico('obras', 20) + 'Painel das obras</h2><p>Carregando…</p></section>';
     // obras
     h += '<section class="adm-card"><h2>' + aico('obras', 20) + 'Obras</h2><p>Cada obra guarda o próprio cronograma, medições, custos, suprimentos e qualidade. ' +
       'Em Serviços, marque o que a construtora contratou: o cliente vê só as telas e os relatórios desses serviços.</p>' +
@@ -5140,6 +5179,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     h += '<section class="adm-card" id="admAreas"></section>';
     document.getElementById('admBody').innerHTML = h;
     renderAreas();
+    carregarPainelObras();
   }
   // ---------------- calculadora de R$/m² (quadro de áreas lido da prancha; nada é usado antes da conferência)
   var AR = { leitura: null, q: null, projeto: '', venda: null, custo: null, conf: false, msg: '', lendo: false };

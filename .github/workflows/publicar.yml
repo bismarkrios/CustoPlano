@@ -95,6 +95,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: mkdir -p "$RUNNER_TEMP/restaurar" && python teste_restaurar.py
 
+      - name: Testar o painel das obras e o aviso de medição atrasada
+        env:
+          CP_BANCO: ${{ runner.temp }}/painel-obras/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/painel-obras" && python teste_painel_obras.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

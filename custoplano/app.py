@@ -1550,6 +1550,85 @@ def exportar_historico(mid, formato):
     return _exportar(c, projeto_de(c, fresco=True), formato, "medicao" if formato == "xml" else "boletim")
 
 
+# ------------------------------------------------------------ painel das obras e aviso de medição
+def avanco_atual(obra_id: int) -> dict | None:
+    """Real x previsto de hoje, com a medição salva da obra e o peso escolhido (o mesmo da tela Medição)."""
+    c = banco.cronograma(obra_id)
+    if not c:
+        return None
+    p = projeto_de(c)
+    A = p.agregar(json.loads(c["atual"]), json.loads(c["anterior"]), para_data(c["data_status"]), c["peso"])
+    return {"real": round(p.pct(A["total"], "r"), 2), "previsto": round(p.pct(A["total"], "p"), 2)}
+
+
+@app.get("/api/admin/painel-obras")
+@so_admin
+def admin_painel_obras():
+    """Todas as obras numa tela: físico real x previsto, dias sem medição, custo, PPC, NCs e o que falta."""
+    hoje = dt.date.today()
+    saida = []
+    for r in resumo.resumo_obras(hoje, analise_custos, projeto_da_obra, com_id=True):
+        try:
+            av = avanco_atual(r["id"])
+        except Exception:  # noqa: BLE001 - uma obra com problema não derruba o painel
+            av = None
+        custo = r.get("custo") or {}
+        faltas = []
+        if r.get("cronograma") == "não importado":
+            faltas.append("Falta importar o cronograma")
+        if custo.get("orcamento") == "não importado":
+            faltas.append("Falta importar o Orçado x Realizado")
+        if not (r.get("qualidade") or {}).get("inspecoes_30d"):
+            faltas.append("Nenhuma inspeção de FVS nos últimos 30 dias")
+        ultimo = banco.ultimo_aviso_medicao(r["id"])
+        saida.append({
+            "id": r["id"], "obra": r["obra"], "empresa": r["empresa"], "teste": bool(r.get("teste")),
+            "data_status": r.get("data_status"),
+            "dias_sem_medicao": (hoje - dt.date.fromisoformat(r["data_status"])).days if r.get("data_status") else None,
+            "real": av and av["real"], "previsto": av and av["previsto"],
+            "indice_custo": custo.get("indice", custo.get("idc")), "ppc": (r.get("ppc") or {}).get("ppc"),
+            "ncs_abertas": r.get("ncs_abertas", 0), "ncs_vencidas": r.get("ncs_vencidas", 0),
+            "alertas": r.get("alertas", []), "faltas": faltas, "aviso_enviado": ultimo[:10] if ultimo else None,
+        })
+    return jsonify(obras=saida, email=bool(smtp_configurado()))
+
+
+def _avisar_medicoes_atrasadas(hoje: dt.date | None = None) -> int:
+    """E-mail ao engenheiro da obra (e cópia à equipe) quando a medição passa de 7 dias sem atualizar.
+    Repete no máximo uma vez por semana. Só roda com o e-mail de saída configurado. Devolve quantos enviou."""
+    if not smtp_configurado():
+        return 0
+    hoje = hoje or dt.date.today()
+    site = os.environ.get("CP_SITE", "").rstrip("/") or "https://custoplano.com.br"
+    copia = os.environ.get("CP_ADMIN_EMAIL", "").strip()
+    enviados = 0
+    for r in resumo.resumo_obras(hoje, com_id=True):
+        dias = r.get("medicao_atrasada_dias") or 0
+        if r.get("teste") or dias <= resumo.DIAS_MEDICAO:
+            continue
+        ultimo = banco.ultimo_aviso_medicao(r["id"])
+        if ultimo and (hoje - dt.date.fromisoformat(ultimo[:10])).days < 7:
+            continue
+        ultima = (r.get("ultima_medicao") or {}).get("data") or r.get("data_status")
+        texto = (f"Olá.\n\nA medição da obra {r['obra']} está atrasada há {dias} dias"
+                 + (f" (última atualização em {dt.date.fromisoformat(ultima).strftime('%d/%m/%Y')})" if ultima else "") + ".\n\n"
+                 "Atualizar leva poucos minutos: abra a Medição, marque o avanço das tarefas da semana e clique em Fechar medição.\n\n"
+                 f"Abrir o sistema: {site}/#entrar\n\nCusto Plano Consultoria")
+        destinos = banco.emails_da_obra(r["id"]) + ([copia] if copia else [])
+        ok = 0
+        for para in dict.fromkeys(destinos):
+            try:
+                correio.enviar(para, f"{r['obra']}: medição atrasada há {dias} dias", texto)
+                ok += 1
+            except Exception as e:  # noqa: BLE001
+                print(f"Não consegui enviar o aviso de medição ({type(e).__name__}).", flush=True)
+        if ok:
+            banco.marcar_aviso_medicao(r["id"])
+            enviados += ok
+            print(f"AVISO-MEDICAO: obra {r['id']} atrasada {dias} dias, {ok} e-mail(s).", flush=True)
+    return enviados
+
+
 # ------------------------------------------------------------ comandos (CLI)
 # Resumo de engenharia das obras nos 3 pilares (prazo, custo, qualidade) no log, uma vez por dia, para a
 # conferência semanal da equipe. Fica aqui no fim porque usa analise_custos, definida acima.
@@ -1561,6 +1640,7 @@ def _resumo_diario() -> None:
         try:
             if feito != dt.date.today():
                 resumo.registrar_no_log(analise_custos=analise_custos, projeto_da_obra=projeto_da_obra)
+                _avisar_medicoes_atrasadas()
                 feito = dt.date.today()
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa do resumo
             print(f"Não consegui montar o resumo de engenharia: {e}", flush=True)

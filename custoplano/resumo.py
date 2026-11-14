@@ -9,6 +9,12 @@ import qualidade
 
 MARCA = "RESUMO-ENGENHARIA"
 DIAS_MEDICAO = 7  # data de status mais antiga que isso = medição atrasada
+
+
+def _br(d) -> str:
+    """2026-10-25 -> 25/10/2026 (padrão dd/mm/aaaa dos textos)."""
+    d = str(d or "")[:10]
+    return f"{d[8:10]}/{d[5:7]}/{d[:4]}" if len(d) == 10 and d[4] == "-" else d
 DIAS_QUALIDADE = 30  # janela dos indicadores de qualidade (inspeções e NCs fechadas)
 
 
@@ -77,8 +83,8 @@ def _alertas(r: dict) -> list[str]:
     """O que pede ação da equipe nesta obra, em frases curtas (só números, sem dado pessoal)."""
     a = []
     if r.get("medicao_atrasada_dias"):
-        a.append(f"medição física parada há {r['medicao_atrasada_dias']} dias (data de status {r['data_status']}"
-                 + (f", última medição fechada em {r['ultima_medicao']['data']})" if r.get("ultima_medicao") else ")"))
+        a.append(f"medição física parada há {r['medicao_atrasada_dias']} dias (data de status {_br(r['data_status'])}"
+                 + (f", última medição fechada em {_br(r['ultima_medicao']['data'])})" if r.get("ultima_medicao") else ")"))
     if isinstance(r.get("fvs_atrasadas"), int) and r["fvs_atrasadas"]:
         a.append(f"{r['fvs_atrasadas']} FVS do cronograma com a inspeção vencida")
     if r.get("ncs_vencidas"):
@@ -86,7 +92,7 @@ def _alertas(r: dict) -> list[str]:
     return a
 
 
-def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_obra=None) -> list[dict]:
+def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_obra=None, com_id: bool = False) -> list[dict]:
     """analise_custos(obra_id) -> análise de custos da obra (app.analise_custos); sem ela, o custo fica de fora.
     projeto_da_obra(obra_id) -> cronograma da obra (Projeto), para contar as FVS atrasadas; sem ele, elas ficam de fora."""
     hoje = hoje or dt.date.today()
@@ -98,6 +104,8 @@ def resumo_obras(hoje: dt.date | None = None, analise_custos=None, projeto_da_ob
         saida = []
         for o in obras:
             r = {"obra": o["nome"], "empresa": o["empresa"]}
+            if com_id:  # para o painel e o aviso por e-mail (o log diário não leva o id)
+                r["id"] = o["id"]
             c = con.execute("SELECT data_status FROM cronogramas WHERE usuario_id=?", (o["id"],)).fetchone()
             if c:
                 atraso = (hoje - dt.date.fromisoformat(c["data_status"][:10])).days
