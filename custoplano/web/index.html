@@ -38,7 +38,11 @@
     nativo = sessionStorage.getItem('cp_app') === '1';
   } catch (e) {}
   if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) nativo = true;
-  if (window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) nativo = true;
+  // app instalado (PWA): no celular abre só a Medição; no computador (e em tablet grande) abre o sistema inteiro
+  if (window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)) {
+    var celular = window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+    if (celular) nativo = true;
+  }
   if (nativo) document.documentElement.classList.add('nativo');
 })();
 </script>
