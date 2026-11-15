@@ -935,7 +935,37 @@ def importar():
     hoje = dt.datetime.now().replace(hour=17, minute=0, second=0, microsecond=0)
     sd = p.data_status or hoje
     banco.salvar_cronograma(oid(), arq.filename, xml, p.peso, sd.strftime("%Y-%m-%d"), p.medicao_arquivo)
+    _medicao_do_project(p, sd)
     return ver_cronograma()
+
+
+def _medicao_do_project(p: Projeto, sd: dt.datetime) -> bool:
+    """Medição feita no MS Project conta como medição: se o arquivo traz avanço novo numa data de status
+    mais nova que a última medição fechada, ela entra no histórico como se tivesse clicado em Fechar medição.
+    Reenviar o mesmo arquivo não duplica (o avanço não mudou)."""
+    atual = {str(k): float(v or 0) for k, v in p.medicao_arquivo.items()}
+    if not any(atual.values()):
+        return False
+    hist = banco.historico(oid())
+    if hist and sd.strftime("%Y-%m-%d") <= str(hist[0]["data_status"])[:10]:
+        return False
+    # compara com a última medição fechada (não com o arquivo de antes): assim reenviar um arquivo
+    # já importado antes desta regra também conta, e reenviar o mesmo arquivo não duplica
+    anterior = {}
+    ultima = banco.medicao_fechada(oid(), hist[0]["id"]) if hist else None
+    if ultima:
+        try:
+            anterior = {str(k): float(v or 0) for k, v in json.loads(ultima["atual"] or "{}").items()}
+        except (ValueError, TypeError):
+            anterior = {}
+    if anterior and all(abs(atual.get(k, 0.0) - anterior.get(k, 0.0)) < 0.005 for k in set(atual) | set(anterior)):
+        return False  # mesmo avanço de antes: não é medição nova
+    base = {k: anterior.get(k, 0.0) for k in atual} if anterior else dict(atual)
+    banco.salvar_medicao(oid(), atual, p.peso, sd.strftime("%Y-%m-%d"), base)
+    A = p.agregar(atual, base, sd, p.peso)
+    banco.fechar_medicao(oid(), p.pct(A["total"], "r"), p.pct(A["total"], "p"))
+    print(f"Medição do Project registrada: obra {oid()}, data de status {sd:%d/%m/%Y}, real {p.pct(A['total'], 'r'):.2f}%", flush=True)
+    return True
 
 
 @app.post("/api/importar-exemplo")

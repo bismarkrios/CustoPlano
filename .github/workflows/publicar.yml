@@ -102,6 +102,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: mkdir -p "$RUNNER_TEMP/painel-obras" && python teste_painel_obras.py
 
+      - name: Testar a medição feita no MS Project contando como medição fechada
+        env:
+          CP_BANCO: ${{ runner.temp }}/medicao-project/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/medicao-project" && python teste_medicao_project.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

@@ -745,7 +745,7 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .pct{font-family:var(--mono);font-size:11.5px}
 .prj-real .prj-row.sum>span:nth-child(n+3){font-weight:500}
 .pct-in{width:58px;min-height:26px;padding:2px 6px;font-family:var(--mono);font-size:12px;text-align:right}
-.prj-real .prj-row{grid-template-columns:var(--pcols)}
+.prj-real .prj-row{grid-template-columns:var(--pcols);background:var(--surface)}.prj-split{display:flex;align-items:flex-start}.prj-fix{flex:none;width:var(--fixw);max-width:calc(100% - 180px);overflow-x:auto;border-right:1px solid var(--line);box-shadow:4px 0 6px -4px rgba(40,43,89,.18);position:relative;z-index:1}.prj-gw{flex:1 1 auto;min-width:0}.prj-split .prj{min-width:0}.prj-split .prj-row{height:30px;min-height:0}.prj-split .prj-row.head{height:40px}.prj-gantt .prj-row{grid-template-columns:minmax(0,1fr)}@media (max-width:899.98px){.prj-fix{max-width:55%}}.prj-real .prj-row.sum{background:color-mix(in srgb,var(--soft) 60%,var(--surface))}.prj-real .prj-row.head,.prj-real .prj-row.top{background:var(--soft)}
 .prj-real .prj-row>span.dt{font-variant-numeric:tabular-nums}
 .pcols{position:relative}
 .pcols summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px}
@@ -2567,14 +2567,16 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         peso: '<span class="mono" style="text-align:right;color:var(--muted)">' + (a && a.w ? (P.weight === 'custo' ? fmt1(a.w / (A.total.w || 1) * 100) + '%' : fmt1(P.weight === 'dur' ? a.w / 8 : a.w)) : '—') + '</span>'
       };
       var opc = function (lista) { return lista.filter(function (k) { return S.pcols.indexOf(k) >= 0; }).map(function (k) { return cel[k]; }).join(''); };
-      return '<div class="prj-row' + (sum ? ' sum' : '') + '">' +
+      var cls = 'prj-row' + (sum ? ' sum' : '');
+      return ['<div class="' + cls + '">' +
         '<span class="num">' + esc(t.id) + '</span>' +
         '<span><span class="prj-name" style="padding-left:' + pad + 'px">' + nameCell + '<span style="overflow:hidden;text-overflow:ellipsis" title="' + esc(t.name) + '"><span class="mono" style="color:var(--muted);margin-right:6px">' + esc(t.wbs) + '</span>' + esc(t.name) + '</span></span></span>' +
         '<span title="' + esc(FO[t.uid] || '') + '"' + (sum ? '' : ' style="font-weight:400"') + '>' + esc(FO[t.uid] || '') + '</span>' +
         opc(['dur']) + '<span class="dt">' + fdate(t.start) + '</span><span class="dt">' + fdate(t.finish) + '</span>' + opc(['bini', 'bfim', 'desv', 'pred', 'peso']) +
-        '<span style="text-align:right">' + pctCell + '</span>' +
-        '<span class="track" style="' + grid + '">' + bar + '<span class="today" style="left:' + sdL + '%"></span></span></div>';
-    }).join('');
+        '<span style="text-align:right">' + pctCell + '</span></div>',
+        '<div class="' + cls + '"><span class="track" style="' + grid + '">' + bar + '<span class="today" style="left:' + sdL + '%"></span></span></div>'];
+    });
+    var rowsL = rows.map(function (r) { return r[0]; }).join(''), rowsR = rows.map(function (r) { return r[1]; }).join('');
     var real = aPct(A.total, 'r'), prev = aPct(A.total, 'p'), ant = aPct(A.total, 'b');
     var nChanged = P.tasks.filter(function (t) { return !t.children.length && Math.round(P.meas[t.uid] || 0) !== Math.round(P.base[t.uid] || 0); }).length;
     var leaves = P.tasks.filter(function (t) { return !t.children.length; }).length;
@@ -2611,10 +2613,13 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
           S.hist.map(function (h) { return '<tr><td class="mono">' + esc(h.data_status.split('-').reverse().join('/')) + '</td><td class="mono">' + esc(h.fechado_em.replace('T', ' ').slice(0, 16)) + '</td><td class="mono">' + fmt1(h.avanco_real) + '%</td><td class="mono">' + fmt1(h.avanco_prev) + '%</td><td><a rel="nofollow" href="/api/historico/' + h.id + '/xml">XML</a> · <a rel="nofollow" href="/api/historico/' + h.id + '/csv">CSV</a> · <a rel="nofollow" href="/api/historico/' + h.id + '/xlsx">Excel</a></td></tr>'; }).join('') +
           '</tbody></table></div></details>' : '') +
       '</section>' +
-      '<section class="card" style="padding:0;overflow:hidden"><div class="scroll-x"><div class="prj prj-real" style="--pcols:' + pcolsCss + ';min-width:' + (pcolsSoma + tlW) + 'px">' +
-        '<div class="prj-row head"><span class="num">Id</span><span>Nome da tarefa</span><span>Fornecedor</span>' + hOpc(['dur']) + '<span>Início</span><span>Término</span>' + hOpc(['bini', 'bfim', 'desv', 'pred', 'peso']) + '<span style="text-align:right">%</span>' + head + '</div>' +
-        rows +
-      '</div></div></section>' +
+      '<section class="card" style="padding:0;overflow:hidden"><div class="prj-split">' +
+        '<div class="prj-fix" style="--fixw:' + pcolsSoma + 'px"><div class="prj prj-real" style="--pcols:' + pcolsCss.replace(/ minmax\(0,1fr\)$/, '') + ';min-width:' + pcolsSoma + 'px">' +
+          '<div class="prj-row head"><span class="num">Id</span><span>Nome da tarefa</span><span>Fornecedor</span>' + hOpc(['dur']) + '<span>Início</span><span>Término</span>' + hOpc(['bini', 'bfim', 'desv', 'pred', 'peso']) + '<span style="text-align:right">%</span></div>' +
+          rowsL + '</div></div>' +
+        '<div class="scroll-x prj-gw"><div class="prj prj-real prj-gantt" style="min-width:' + tlW + 'px">' +
+          '<div class="prj-row head">' + head + '</div>' + rowsR + '</div></div>' +
+      '</div></section>' +
       '<p style="font-size:12.5px;color:var(--muted)">Barra cinza: prazo da tarefa, com a parte escura = % concluído. Traço fino: linha de base. Linha vermelha: data de status. O avanço dos grupos é a média das tarefas ponderada pelo peso escolhido. As medições ficam salvas neste navegador.</p>';
   }
 
