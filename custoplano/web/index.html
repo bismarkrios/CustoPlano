@@ -745,7 +745,7 @@ html[data-theme="light"] #app{--ink:#002455;--accent:#002455;--muted:#4a5a72;--l
 .pct{font-family:var(--mono);font-size:11.5px}
 .prj-real .prj-row.sum>span:nth-child(n+3){font-weight:500}
 .pct-in{width:58px;min-height:26px;padding:2px 6px;font-family:var(--mono);font-size:12px;text-align:right}
-.prj-real .prj-row{grid-template-columns:var(--pcols);background:var(--surface)}.prj-split{display:flex;align-items:flex-start}.prj-fix{flex:none;width:var(--fixw);max-width:calc(100% - 180px);overflow-x:auto;border-right:1px solid var(--line);box-shadow:4px 0 6px -4px rgba(40,43,89,.18);position:relative;z-index:1}.prj-gw{flex:1 1 auto;min-width:0}.prj-split .prj{min-width:0}.prj-split .prj-row{height:30px;min-height:0}.prj-split .prj-row.head{height:40px}.prj-gantt .prj-row{grid-template-columns:minmax(0,1fr)}@media (max-width:899.98px){.prj-fix{max-width:55%}}.prj-real .prj-row.sum{background:color-mix(in srgb,var(--soft) 60%,var(--surface))}.prj-real .prj-row.head,.prj-real .prj-row.top{background:var(--soft)}
+.prj-real .prj-row{grid-template-columns:var(--pcols);background:var(--surface)}.prj-split{display:flex;align-items:flex-start}.prj-fix,.prj-gw{max-height:calc(100vh - 150px);max-height:calc(100dvh - 150px);overflow:auto;overscroll-behavior:contain}.prj-fix{scrollbar-width:none}.prj-fix::-webkit-scrollbar{display:none}.prj-split .prj-row.head{position:sticky;top:0;z-index:3}.prj-fix{flex:none;width:var(--fixw);max-width:calc(100% - 180px);border-right:1px solid var(--line);box-shadow:4px 0 6px -4px rgba(40,43,89,.18);position:relative;z-index:1}.prj-gw{flex:1 1 auto;min-width:0}.prj-split .prj{min-width:0}.prj-split .prj-row{height:30px;min-height:0}.prj-split .prj-row.head{height:40px}.prj-gantt .prj-row{grid-template-columns:minmax(0,1fr)}@media (max-width:899.98px){.prj-fix{max-width:55%}.prj-fix,.prj-gw{max-height:calc(100dvh - 200px)}}.prj-real .prj-row.sum{background:color-mix(in srgb,var(--soft) 60%,var(--surface))}.prj-real .prj-row.head,.prj-real .prj-row.top{background:var(--soft)}
 .prj-real .prj-row>span.dt{font-variant-numeric:tabular-nums}
 .pcols{position:relative}
 .pcols summary{list-style:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);font-size:14px}
@@ -4657,6 +4657,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       } else if (el.getAttribute('role') === 'region') { el.removeAttribute('tabindex'); el.removeAttribute('role'); el.removeAttribute('aria-label'); }
     });
   }
+  /* Project: a tabela e o Gantt rolam juntos na vertical, dentro do quadro, com o cabeçalho parado */
+  function prjRolagem(body, pos) {
+    var fx = body.querySelector('.prj-fix'), gw = body.querySelector('.prj-gw');
+    if (!fx || !gw) return;
+    if (pos) { gw.scrollTop = pos[0]; gw.scrollLeft = pos[1]; fx.scrollTop = pos[0]; }
+    var mexendo = null;
+    fx.addEventListener('scroll', function () { if (mexendo === gw) return; mexendo = fx; gw.scrollTop = fx.scrollTop; requestAnimationFrame(function () { mexendo = null; }); }, { passive: true });
+    gw.addEventListener('scroll', function () { if (mexendo === fx) return; mexendo = gw; fx.scrollTop = gw.scrollTop; requestAnimationFrame(function () { mexendo = null; }); }, { passive: true });
+  }
   function render() {
     requestAnimationFrame(marcarRolagem);
     var REAL = contaReal();
@@ -4701,10 +4710,12 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var v = { painel: (contaReal() ? vPainelReal : vPainel), prj: (P ? vProjectReal : (contaReal() ? vPrjVazio : vProject)), sup: (contaReal() ? vSupReal : vSup), cron: vCron, lb: vLB, pa: (contaReal() && !PA ? vPAVazio : vPA), cal: vCal, med: vMed, cus: vCus, qp: vQPainel, qcal: vQCal, qi: vQInsp, qc: vQCron, qn: vQNc, qm: vQMatriz, qmod: vQMod, cp: (contaReal() ? vCPReal : vCP), res: vRes }[S.screen](M);
     var rel = API && !NATIVO && REL_TELA[S.screen];
     if (rel && !relOk(rel[0])) rel = null;
+    var gwA = body.querySelector('.prj-gw'), gwPos = gwA && S.screen === telaAntes ? [gwA.scrollTop, gwA.scrollLeft] : null;
     body.innerHTML = '<div class="app-head"><div class="app-head-row"><div><h1>' + hd[0] + '</h1><p>' + hd[1] + '</p></div>' +
       (rel ? '<button type="button" class="btn btn-ghost btn-sm" data-a="prel:' + rel[0] + '">' + rel[1] + ' (PDF)</button>' : '') + '</div></div>' + v;
     if (S.screen !== telaAntes) { telaAntes = S.screen; body.classList.remove('entra'); void body.offsetWidth; body.classList.add('entra'); clearTimeout(entraT); entraT = setTimeout(function () { body.classList.remove('entra'); }, 900); contarKpis(); }
     if (S.screen === 'pa' && S.pa.rolar) { S.pa.rolar = false; paFoco(); }
+    prjRolagem(body, gwPos);
     paintSync();
     var qm = S.mod === 'qual';
     document.getElementById('navPlan').hidden = qm; document.getElementById('navQual').hidden = !qm;
