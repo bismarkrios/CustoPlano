@@ -2523,6 +2523,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       var dow = (d0.getUTCDay() + 6) % 7; cur = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate() - dow);
       while (cur <= P.max) { ticks.push({ at: cur, lab: fdate(cur).slice(0, 5), ano: new Date(cur).getUTCFullYear() }); cur += 7 * 864e5; }
     }
+    span = Math.max(cur - P.min, span); // a régua vai até o fim do último mês (ou semana), para o último não ficar cortado
     var lp = function (ms) { return Math.max(0, Math.min(100, (ms - P.min) / span * 100)); };
     var tlW = Math.max(640, ticks.length * (monthly ? 44 : 42));
     // mês (ou dia/mês) em cima e o ano completo embaixo
