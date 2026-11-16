@@ -61,6 +61,7 @@ enviados = []
 correio.configurado = lambda: {"servidor": "x"}
 correio.enviar = lambda para, assunto, texto: enviados.append((para, assunto, texto))
 os.environ["CP_ADMIN_EMAIL"] = "contato@custoplano.com.br"
+os.environ["CP_AVISO_CLIENTE"] = "1"
 app._avisar_medicoes_atrasadas()
 paras = sorted(x[0] for x in enviados)
 checar(paras == ["contato@custoplano.com.br", "eng@construtora.com"], f"destinatários: {paras}")  # leitor e obra interna fora
@@ -70,6 +71,11 @@ app._avisar_medicoes_atrasadas()
 checar(len(enviados) == 2, "repetiu o aviso no mesmo dia")
 app._avisar_medicoes_atrasadas(dt.date.today() + dt.timedelta(days=7))
 checar(len(enviados) == 4, f"não repetiu depois de 7 dias: {len(enviados)}")
+os.environ.pop("CP_AVISO_CLIENTE")
+enviados.clear()
+app._avisar_medicoes_atrasadas(dt.date.today() + dt.timedelta(days=14))
+checar([x[0] for x in enviados] == ["contato@custoplano.com.br"], f"sem CP_AVISO_CLIENTE o cliente recebeu: {enviados}")
+os.environ["CP_AVISO_CLIENTE"] = "1"
 
 # medição em dia: sem aviso
 enviados.clear()

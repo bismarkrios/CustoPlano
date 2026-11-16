@@ -465,7 +465,7 @@ def robots():
 # Data da última mudança real de cada página pública (git log do arquivo).
 # Avisa o Google o que reler. Atualize na mesma publicação que muda a página.
 ATUALIZADO_EM = {
-    "/": "2026-11-01",
+    "/": "2026-11-16",
     "/manual": "2026-11-08",
     "/privacidade": "2026-11-08",
     "/artigos": "2026-11-03",
@@ -1663,7 +1663,9 @@ def _avisar_medicoes_atrasadas(hoje: dt.date | None = None) -> int:
                  + (f" (última atualização em {dt.date.fromisoformat(ultima).strftime('%d/%m/%Y')})" if ultima else "") + ".\n\n"
                  "Atualizar leva poucos minutos: abra a Medição, marque o avanço das tarefas da semana e clique em Fechar medição.\n\n"
                  f"Abrir o sistema: {site}/#entrar\n\nCusto Plano Consultoria")
-        destinos = banco.emails_da_obra(r["id"]) + ([copia] if copia else [])
+        # Bismark (16/11/2026): por enquanto o aviso vai só para a equipe; o cliente só recebe com CP_AVISO_CLIENTE=1.
+        cliente = banco.emails_da_obra(r["id"]) if os.environ.get("CP_AVISO_CLIENTE", "") == "1" else []
+        destinos = cliente + ([copia] if copia else [])
         ok = 0
         for para in dict.fromkeys(destinos):
             try:

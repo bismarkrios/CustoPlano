@@ -1126,6 +1126,15 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 .wa-float:focus-visible{outline:3px solid #0B3D1E;outline-offset:3px}
 @media (max-width:520px){.wa-float{width:56px;height:56px;padding:0;justify-content:center;right:14px;bottom:14px}.wa-float span{display:none}}
 @media print{.wa-float{display:none}}
+/* site no celular: seções longas fechadas, o cliente toca para abrir (no computador nada muda) */
+.sanf-btn{display:none}
+@media (max-width:640px){
+  .sanf:not(.aberta) .sec>:not(header){display:none}
+  .sanf .sec>header{margin-bottom:0}
+  .sanf-btn{display:inline-flex;align-items:center;gap:6px;margin-top:14px;min-height:44px;padding:0 16px;border-radius:6px;border:1.5px solid currentColor;background:transparent;color:inherit;font-family:inherit;font-size:15px;font-weight:600;line-height:1;cursor:pointer}
+  .sanf-btn svg{transition:transform .15s}
+  .sanf.aberta .sanf-btn svg{transform:rotate(180deg)}
+}
 </style>
 </head>
 <body>
@@ -1202,11 +1211,11 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block" id="servicos">
+  <section class="block sanf" id="servicos">
     <div class="wrap sec">
       <header>
         <h2>O que fazemos</h2>
-        <p>Somos uma consultoria em gerenciamento de obras: planejamento de obras no MS Project, controle de custo de obra e gestão da qualidade, junto com a sua equipe de engenharia, do planejamento inicial até a entrega das chaves. As três frentes são entregues juntas, porque prazo, custo e qualidade não se separam. Somos uma consultoria em gestão: as decisões técnicas e a responsabilidade técnica pela obra continuam com o engenheiro da construtora.</p>
+        <p>Somos uma consultoria em gerenciamento de obras: <a href="/artigos/planejamento-de-obras-ms-project">planejamento de obras no MS Project</a>, <a href="/artigos/controle-de-custo-de-obra">controle de custo de obra</a> e gestão da qualidade, junto com a sua equipe de engenharia, do planejamento inicial até a entrega das chaves. As três frentes são entregues juntas, porque prazo, custo e qualidade não se separam. Somos uma consultoria em gestão: as decisões técnicas e a responsabilidade técnica pela obra continuam com o engenheiro da construtora.</p>
       </header>
       <ol class="linhas">
         <li>
@@ -1222,10 +1231,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         <li>
           <div><h3>2. Controle operacional semanal</h3><p>Acompanhamento contínuo, com rotina semanal objetiva e relatórios consolidados para a diretoria.</p></div>
           <ul>
-            <li><b>Planejamento de curto prazo:</b> reuniões de alinhamento com a equipe e gestão do PPC.</li>
+            <li><b>Planejamento de curto prazo:</b> reuniões de alinhamento com a equipe e <a href="/artigos/ppc-planejamento-semanal">gestão do PPC</a>.</li>
             <li><b>Gestão de restrições:</b> mapeamento, prazos e remoção ativa de gargalos operacionais.</li>
-            <li><b>Acompanhamento de desempenho:</b> consolidação do avanço físico medido pela sua equipe e monitoramento da curva S.</li>
-            <li><b>Controle de custos:</b> orçado × realizado por etapa a partir do seu ERP, realizado mês a mês e estimativa no término.</li>
+            <li><b>Acompanhamento de desempenho:</b> consolidação do avanço físico medido pela sua equipe e monitoramento da <a href="/artigos/curva-s-como-ler">curva S</a>.</li>
+            <li><b>Controle de custos:</b> <a href="/artigos/planilha-orcado-x-realizado">orçado × realizado</a> por etapa a partir do seu ERP, realizado mês a mês e estimativa no término.</li>
             <li><b>Governança:</b> relatório gerencial mensal completo para apoiar a tomada de decisão.</li>
           </ul>
         </li>
@@ -1242,7 +1251,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block" id="atendemos">
+  <section class="block sanf" id="atendemos">
     <div class="wrap sec">
       <header>
         <h2>Para quem trabalhamos</h2>
@@ -1265,7 +1274,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block" id="diferenca">
+  <section class="block sanf" id="diferenca">
     <div class="wrap sec">
       <header>
         <h2>Por que não só um software</h2>
@@ -1319,7 +1328,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block dark" id="metodo">
+  <section class="block dark sanf" id="metodo">
     <div class="wrap sec">
       <header>
         <h2>Uma semana de obra com a Custo Plano</h2>
@@ -1334,7 +1343,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block" id="indicadores">
+  <section class="block sanf" id="indicadores">
     <div class="wrap sec">
       <header>
         <h2>Os números que acompanhamos</h2>
@@ -1354,7 +1363,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     </div>
   </section>
 
-  <section class="block" id="qualidade">
+  <section class="block sanf" id="qualidade">
     <div class="wrap sec">
       <header>
         <h2>Qualidade organizada direto no canteiro</h2>
@@ -1442,6 +1451,25 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       </form>
     </div>
   </section>
+<script>
+(function () {
+  Array.prototype.forEach.call(document.querySelectorAll('section.sanf'), function (sec) {
+    var head = sec.querySelector('.sec > header'); if (!head) return;
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'sanf-btn'; b.setAttribute('aria-expanded', 'false');
+    b.innerHTML = '<span>Ver mais</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+    b.addEventListener('click', function () {
+      var ab = sec.classList.toggle('aberta');
+      b.setAttribute('aria-expanded', ab); b.firstChild.textContent = ab ? 'Ver menos' : 'Ver mais';
+      if (!ab) sec.scrollIntoView({ block: 'start' });
+    });
+    head.appendChild(b);
+  });
+  // link do menu ou do topo para uma seção fechada: abre antes de rolar
+  function abrirAlvo() { var a = location.hash && document.getElementById(location.hash.slice(1)); if (a && a.classList.contains('sanf') && !a.classList.contains('aberta')) { var bt = a.querySelector('.sanf-btn'); if (bt) bt.click(); a.scrollIntoView(); } }
+  window.addEventListener('hashchange', abrirAlvo); abrirAlvo();
+})();
+</script>
 </main>
 
 <footer class="site">
