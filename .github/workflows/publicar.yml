@@ -109,6 +109,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: mkdir -p "$RUNNER_TEMP/medicao-project" && python teste_medicao_project.py
 
+      - name: Testar o e-mail de saída (Gmail pela conta de serviço e SMTP)
+        env:
+          CP_BANCO: ${{ runner.temp }}/correio/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/correio" && python teste_correio.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

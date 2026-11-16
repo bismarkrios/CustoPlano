@@ -1665,16 +1665,38 @@ def _avisar_medicoes_atrasadas(hoje: dt.date | None = None) -> int:
 def _resumo_diario() -> None:
     import time
 
-    feito = None
+    feito, email_antes = None, None
     while True:
         try:
             if feito != dt.date.today():
                 resumo.registrar_no_log(analise_custos=analise_custos, projeto_da_obra=projeto_da_obra)
                 _avisar_medicoes_atrasadas()
                 feito = dt.date.today()
+            email_agora = smtp_configurado()
+            if email_agora and email_antes is False:
+                _avisar_medicoes_atrasadas()  # o e-mail acabou de ser ligado: manda os avisos pendentes já
+            if email_agora:
+                _email_ligado()
+            email_antes = email_agora
         except Exception as e:  # noqa: BLE001 - nunca derrubar o site por causa do resumo
             print(f"Não consegui montar o resumo de engenharia: {e}", flush=True)
         time.sleep(3600)
+
+
+def _email_ligado() -> None:
+    """Na primeira vez que o e-mail de saída funciona, manda um e-mail de teste para a equipe (uma vez só)."""
+    marca = os.path.join(os.path.dirname(os.path.abspath(banco.CAMINHO)), "email-ligado.txt")
+    if os.path.exists(marca):
+        return
+    para = os.environ.get("CP_ADMIN_EMAIL", "").strip() or os.environ.get("CP_DRIVE_USUARIO", "").strip()
+    if not para:
+        return
+    correio.enviar(para, "Custo Plano: e-mail do sistema ligado",
+                   "O e-mail de saída do sistema está funcionando.\n\nA partir de agora saem por e-mail os links de "
+                   "troca de senha e o aviso de medição atrasada (obra com mais de 7 dias sem medir).\n\nCusto Plano")
+    with open(marca, "w") as f:
+        f.write(dt.datetime.now().isoformat(timespec="seconds"))
+    print(f"EMAIL-TESTE: e-mail de saída ligado, teste enviado para {para.split('@')[0][:2]}***@{para.split('@')[-1]}", flush=True)
 
 
 if os.environ.get("CP_COPIAS_AUTO", "1") == "1":
