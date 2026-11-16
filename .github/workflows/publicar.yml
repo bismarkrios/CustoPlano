@@ -116,6 +116,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: mkdir -p "$RUNNER_TEMP/correio" && python teste_correio.py
 
+      - name: Testar o link de acesso enviado por e-mail
+        env:
+          CP_BANCO: ${{ runner.temp }}/link-email/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/link-email" && python teste_link_email.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

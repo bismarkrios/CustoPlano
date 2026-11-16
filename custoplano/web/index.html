@@ -5138,7 +5138,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     d.obras.forEach(function (o) { nomeObra[o.id] = o.nome; });
     var optObras = d.obras.map(function (o) { return '<option value="' + o.id + '">' + esc(o.nome) + (o.empresa ? ' · ' + esc(o.empresa) : '') + '</option>'; }).join('');
     var optPapel = '<option value="editor">Edita</option><option value="leitor">Só consulta</option>';
-    var linkBox = ADM_LINK ? '<div class="adm-link" role="status"><span style="flex-basis:100%"><b>' + esc(ADM_LINK.titulo) + '</b> Mande este link para ' + esc(ADM_LINK.email) + '. Ele vale 7 dias e só funciona uma vez.</span>' +
+    var linkBox = ADM_LINK ? '<div class="adm-link" role="status"><span style="flex-basis:100%"><b>' + esc(ADM_LINK.titulo) + '</b> ' + (ADM_LINK.enviado ? 'Enviamos o link por e-mail para ' + esc(ADM_LINK.email) + '. Se a pessoa não achar o e-mail, copie o link ou mande pelo WhatsApp.' : 'Mande este link para ' + esc(ADM_LINK.email) + '.') + ' Ele vale 7 dias e só funciona uma vez.</span>' +
       '<input type="text" readonly id="admLinkTxt" value="' + esc(ADM_LINK.link) + '" aria-label="Link de acesso">' +
       '<button class="btn btn-ghost btn-sm" type="button" data-adm="copiar">Copiar</button>' +
       '<a class="btn btn-primary btn-sm" style="text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent('Olá! Este é o seu acesso ao sistema da Custo Plano. Abra o link para criar a sua senha (vale 7 dias): ' + ADM_LINK.link) + '">Enviar pelo WhatsApp</a></div>' : '';
@@ -5362,7 +5362,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       if (!em.value.trim() || !em.checkValidity()) { admMsg('Informe um e-mail válido.'); em.focus(); return; }
       var papel = document.getElementById('au-papel').value, equipe = papel === 'equipe';
       api('/api/admin/usuario', { email: em.value.trim(), nome: document.getElementById('au-nome').value.trim(), equipe: equipe, acessos: ob && !equipe ? [{ obra_id: +ob, papel: papel }] : [] })
-        .then(function (r) { ADM_LINK = { titulo: 'Acesso criado.', email: em.value.trim(), link: r.link }; carregarAdm().then(function () { window.scrollTo(0, 0); }); }, function (err) { admMsg(err.message); });
+        .then(function (r) { ADM_LINK = { titulo: 'Acesso criado.', email: em.value.trim(), link: r.link, enviado: r.enviado }; carregarAdm().then(function () { window.scrollTo(0, 0); }); }, function (err) { admMsg(err.message); });
     }
   });
   document.getElementById('adm').addEventListener('click', function (e) {
@@ -5423,7 +5423,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       api('/api/admin/acesso', { usuario_id: id, obra_id: +a[2], papel: null }).then(carregarAdm, function (err) { alert(err.message); }); return;
     }
     if (a[0] === 'link') {
-      api('/api/admin/link-senha', { usuario_id: id }).then(function (r) { ADM_LINK = { titulo: 'Link de senha criado.', email: r.email, link: r.link }; renderAdm(); window.scrollTo(0, 0); }, function (err) { alert(err.message); }); return;
+      api('/api/admin/link-senha', { usuario_id: id }).then(function (r) { ADM_LINK = { titulo: 'Link de senha criado.', email: r.email, link: r.link, enviado: r.enviado }; renderAdm(); window.scrollTo(0, 0); }, function (err) { alert(err.message); }); return;
     }
     if (a[0] === 'zap') {
       var pu = ADM.usuarios.filter(function (x) { return x.id === id; })[0] || {};

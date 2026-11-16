@@ -755,7 +755,25 @@ def admin_usuario():
     for a in d.get("acessos") or []:
         if banco.obra(int(a.get("obra_id") or 0)) and a.get("papel") in ("editor", "leitor"):
             banco.definir_acesso(uid, int(a["obra_id"]), a["papel"])
-    return jsonify(id=uid, link=f"{endereco_site()}/#senha={banco.criar_link_senha(uid, 24 * 7)}")
+    link = f"{endereco_site()}/#senha={banco.criar_link_senha(uid, 24 * 7)}"
+    return jsonify(id=uid, link=link, enviado=_mandar_link(email, nome, link, novo=True))
+
+
+def _mandar_link(email: str, nome: str, link: str, novo: bool) -> bool:
+    """Manda o link de senha direto para o e-mail cadastrado. Sem e-mail ligado (ou se falhar), devolve False
+    e a tela mostra o link para copiar ou mandar pelo WhatsApp."""
+    if not smtp_configurado():
+        return False
+    texto = (f"Olá{(' ' + nome) if nome else ''},\n\n"
+             + ("Seu acesso ao sistema da Custo Plano foi criado. " if novo else "")
+             + "Para criar a sua senha, abra o link abaixo (vale 7 dias e só funciona uma vez):\n\n"
+             f"{link}\n\nDepois, entre com este e-mail e a senha que você criou.\n\nCusto Plano")
+    try:
+        correio.enviar(email, "Custo Plano: " + ("seu acesso ao sistema" if novo else "crie a sua senha"), texto)
+        return True
+    except Exception as e:  # noqa: BLE001
+        print(f"Não consegui enviar o link de senha por e-mail: {e}", flush=True)
+        return False
 
 
 @app.post("/api/admin/acesso")
@@ -774,11 +792,12 @@ def admin_acesso():
 @app.post("/api/admin/link-senha")
 @so_admin
 def admin_link_senha():
-    """Link novo para a pessoa criar ou trocar a senha (vale 7 dias), para mandar pelo WhatsApp."""
+    """Link novo para a pessoa criar ou trocar a senha (vale 7 dias): vai por e-mail; sem e-mail, pelo WhatsApp."""
     u = banco.usuario(int((request.get_json(silent=True) or {}).get("usuario_id") or 0))
     if not u or u["email"].lower() == DEMO_EMAIL:
         return erro("Usuário não encontrado.", 404)
-    return jsonify(link=f"{endereco_site()}/#senha={banco.criar_link_senha(u['id'], 24 * 7)}", email=u["email"])
+    link = f"{endereco_site()}/#senha={banco.criar_link_senha(u['id'], 24 * 7)}"
+    return jsonify(link=link, email=u["email"], enviado=_mandar_link(u["email"], u["nome"] or "", link, novo=False))
 
 
 @app.post("/api/admin/usuario/remover")
