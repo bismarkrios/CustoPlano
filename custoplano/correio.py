@@ -31,6 +31,12 @@ def _cred_gmail():
     return cred.with_subject(os.environ["CP_DRIVE_USUARIO"].strip())
 
 
+def _sessao_gmail():
+    from google.auth.transport.requests import AuthorizedSession
+
+    return AuthorizedSession(_cred_gmail())
+
+
 def gmail_pronto(forcar: bool = False) -> bool:
     """O escopo gmail.send está liberado? Pede um token (não envia nada). Guarda a resposta por 1 hora."""
     if not (os.environ.get("CP_DRIVE_CHAVE", "").strip() and os.environ.get("CP_DRIVE_USUARIO", "").strip()):
@@ -71,10 +77,8 @@ def enviar(para: str, assunto: str, texto: str) -> None:
     msg["Subject"] = assunto
     msg.set_content(texto)
     if c.get("gmail"):
-        from google.auth.transport.requests import AuthorizedSession
-
         bruto = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-        r = AuthorizedSession(_cred_gmail()).post(
+        r = _sessao_gmail().post(
             "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", json={"raw": bruto}, timeout=30)
         if r.status_code >= 300:
             raise RuntimeError(f"Gmail recusou o envio ({r.status_code}): {r.text[:200]}")

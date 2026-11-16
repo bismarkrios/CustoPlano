@@ -8,7 +8,6 @@ import os
 for k in ("CP_SMTP_SERVIDOR", "CP_SMTP_USUARIO", "CP_SMTP_SENHA", "CP_DRIVE_CHAVE", "CP_DRIVE_USUARIO"):
     os.environ.pop(k, None)
 import correio  # noqa: E402
-import google.auth.transport.requests as gtr  # noqa: E402
 
 falhas = []
 
@@ -31,17 +30,13 @@ enviados = []
 
 
 class SessaoFalsa:
-    def __init__(self, cred):
-        pass
-
     def post(self, url, json=None, timeout=None):
         enviados.append((url, json))
         return type("R", (), {"status_code": 200, "text": "{}"})()
 
 
 correio._gmail.update(ok=True, quando=__import__("time").time())
-correio._cred_gmail = lambda: None
-gtr.AuthorizedSession = SessaoFalsa
+correio._sessao_gmail = SessaoFalsa
 c = correio.configurado()
 checar(bool(c and c.get("gmail")), "Gmail liberado não ligou o e-mail")
 correio.enviar("eng@construtora.com", "Obra: medição atrasada há 12 dias", "Olá.\nTexto com acentuação: medição.")
