@@ -239,7 +239,19 @@ def sessao_valida() -> bool:
     if session.get("pv") != banco.versao_senha(uid):
         session.clear()
         return False
+    if session.get("ate") and dt.datetime.now().timestamp() > session["ate"]:
+        session.clear()  # equipe: a sessão vale 12 h (cliente continua com 7 dias)
+        return False
     return True
+
+
+SESSAO_EQUIPE_HORAS = 12
+
+
+def _mascara(email: str) -> str:
+    """E-mail só pela metade no log (LGPD): bi***@outlook.com."""
+    nome, _, dominio = (email or "").partition("@")
+    return f"{nome[:2]}***@{dominio}"
 
 
 def oid() -> int:
@@ -523,6 +535,7 @@ def login():
         email, senha = (d.get("email") or "").strip(), d.get("senha") or ""
     chave, chave_email = f"{_ip()}|{email.lower()}", f"*|{email.lower()}"
     if _bloqueado(chave) or _bloqueado(chave_email, MAX_POR_EMAIL):
+        print(f"ALERTA-LOGIN: bloqueio por tentativas para {_mascara(email.lower())} (IP {_ip()}).", flush=True)
         return erro("Muitas tentativas de login. Aguarde 15 minutos e tente de novo.", 429)
     u = banco.autenticar(email, senha)
     if not u:
@@ -542,6 +555,9 @@ def abrir_sessao(uid: int) -> None:
     session.permanent = True
     session["uid"] = uid
     session["pv"] = banco.versao_senha(uid)
+    if u["admin"]:
+        session["ate"] = dt.datetime.now().timestamp() + SESSAO_EQUIPE_HORAS * 3600
+        print(f"ALERTA-LOGIN: entrada da equipe {_mascara(u['email'].lower())} (IP {_ip()}).", flush=True)
     if u["email"].lower() == DEMO_EMAIL:
         session["demo"] = True
     ids = [o["id"] for o in banco.obras_do_usuario(uid)]

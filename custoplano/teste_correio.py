@@ -46,6 +46,23 @@ checar(m["To"] == "eng@construtora.com", "destinatário errado")
 checar("contato@exemplo.com.br" in m["From"], "remetente não é a conta do Workspace")
 checar("medição" in m.get_payload(decode=True).decode(), "texto perdeu a acentuação")
 
+# limite de 50 por dia, com registro no log sem o e-mail inteiro
+import contextlib, io  # noqa: E401,E402
+saida = io.StringIO()
+with contextlib.redirect_stdout(saida):
+    for i in range(correio.LIMITE_DIA - 1):
+        correio.enviar("eng@construtora.com", "teste", "x")
+    try:
+        correio.enviar("eng@construtora.com", "teste", "x")
+        checar(False, "passou do limite diário de e-mails")
+    except RuntimeError:
+        pass
+log = saida.getvalue()
+checar(len(enviados) == correio.LIMITE_DIA, f"enviou {len(enviados)} em vez de {correio.LIMITE_DIA}")
+checar("EMAIL-ENVIADO: en***@construtora.com · teste" in log, "EMAIL-ENVIADO não foi para o log")
+checar("eng@construtora.com" not in log, "o log tem o e-mail inteiro")
+checar("ALERTA-EMAIL" in log, "o limite não gerou alerta no log")
+
 # SMTP preenchido tem preferência
 os.environ.update(CP_SMTP_SERVIDOR="smtp.exemplo.com", CP_SMTP_USUARIO="u@exemplo.com", CP_SMTP_SENHA="x")
 checar(not correio.configurado().get("gmail"), "SMTP preenchido não teve preferência")

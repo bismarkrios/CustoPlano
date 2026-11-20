@@ -12,6 +12,7 @@ A senha nunca fica no código nem no navegador.
 from __future__ import annotations
 
 import base64
+import datetime as _dt
 import json
 import os
 import smtplib
@@ -67,10 +68,18 @@ def configurado() -> dict | None:
     return None
 
 
+LIMITE_DIA = 50  # trava contra disparo em massa se o sistema for abusado
+_ENVIADOS: dict = {}
+
+
 def enviar(para: str, assunto: str, texto: str) -> None:
     c = configurado()
     if not c:
         raise RuntimeError("e-mail de saída não configurado")
+    hoje = _dt.date.today().isoformat()
+    if _ENVIADOS.get(hoje, 0) >= LIMITE_DIA:
+        print(f"ALERTA-EMAIL: limite de {LIMITE_DIA} e-mails no dia atingido; envio recusado.", flush=True)
+        raise RuntimeError("limite diário de e-mails atingido")
     msg = EmailMessage()
     msg["From"] = f"Custo Plano <{c['remetente']}>"
     msg["To"] = para
@@ -82,8 +91,13 @@ def enviar(para: str, assunto: str, texto: str) -> None:
             "https://gmail.googleapis.com/gmail/v1/users/me/messages/send", json={"raw": bruto}, timeout=30)
         if r.status_code >= 300:
             raise RuntimeError(f"Gmail recusou o envio ({r.status_code}): {r.text[:200]}")
-        return
-    with smtplib.SMTP(c["servidor"], c["porta"], timeout=20) as s:
-        s.starttls()
-        s.login(c["usuario"], c["senha"])
-        s.send_message(msg)
+    else:
+        with smtplib.SMTP(c["servidor"], c["porta"], timeout=20) as s:
+            s.starttls()
+            s.login(c["usuario"], c["senha"])
+            s.send_message(msg)
+    if hoje not in _ENVIADOS:
+        _ENVIADOS.clear()  # guarda só o dia de hoje
+    _ENVIADOS[hoje] = _ENVIADOS.get(hoje, 0) + 1
+    nome, _, dominio = para.partition("@")
+    print(f"EMAIL-ENVIADO: {nome[:2]}***@{dominio} · {assunto[:80]} ({_ENVIADOS[hoje]}/{LIMITE_DIA} hoje)", flush=True)
