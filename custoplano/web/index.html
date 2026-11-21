@@ -3460,7 +3460,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   function loadCustos() {
     if (!API || !temServ('custos')) return;
     S.cu.carregando = !CU;
-    api('/api/custos').then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && (S.screen === 'cus' || S.screen === 'painel')) render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
+    api('/api/custos' + (S.cu.mes ? '?mes=' + S.cu.mes : '')).then(function (r) { CU = r.custos; S.cu.carregando = false; if (!app.hidden && (S.screen === 'cus' || S.screen === 'painel')) render(); }, function () { S.cu.carregando = false; if (S.screen === 'cus') render(); });
   }
   function cuSet(p) { return p.then(function (r) { CU = r.custos; S.cu.msg = ''; render(); }, function (e) { S.cu.msg = e.message; render(); }); }
 
@@ -3488,6 +3488,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     // com a planilha Orçado x Realizado, a tela segue a estrutura dela: (b) orçamento, (c) contratado, (d) incorrido, (i)/(j)/(k)
     var CT = CU.controle && CU.controle.total;
     if (CT) kpis = kpisCtl(CT);
+    kpis = faixaMes() + kpis;
     if (CU.so_controle) return kpis + msg + vCusCtl();
     if (!S.cu.tabEscolhida) S.cu.tab = CT ? 'ctl' : (S.cu.tab === 'ctl' ? 'orc' : S.cu.tab);
     var avisos = (CU.avisos || []).slice();
@@ -3497,7 +3498,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var tab = function (id, t) { return '<button type="button" data-a="cut:' + id + '" aria-pressed="' + (S.cu.tab === id) + '">' + t + '</button>'; };
     var bar = '<div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">' + esc(CU.arquivo || 'Orçamento') + '</b><span style="font-size:12.5px;color:var(--muted)">' + CU.itens.length + ' itens · ' + CU.etapas.filter(function (e) { return e.orcado; }).length + ' etapas · data de status ' + ds + '</span></span>' +
       '<div class="tabs" role="group" aria-label="Visualização de custos">' + tab('ctl', 'Orçado x Realizado') + tab('orc', 'Orçamento') + tab('fin', 'Financeiro') + (CU.origem === 'erp' ? '' : tab('real', 'Valor agregado')) + '</div></div>' +
-      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'erp' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento e custos do arquivo do ERP (abas Orçamento e Analítico)</span>' + (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro arquivo do ERP</label>') : CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" rel="nofollow" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
+      '<div class="prj-bar"><button type="button" class="btn btn-ghost btn-sm" data-a="cuxls">Exportar para Excel</button>' + (CU.origem === 'erp' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento e custos do arquivo do ERP (abas Orçamento e Analítico)</span>' + (ehDemo() || CU.mes ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro arquivo do ERP</label>') : CU.origem === 'project' ? '<span class="kpi-s" style="align-self:center;flex:1 1 220px">Orçamento tirado das colunas Custo e Custo da linha de base do cronograma</span><label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar o orçamento detalhado</label>' : '<label for="cuFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outro orçamento</label><a class="btn btn-ghost btn-sm" rel="nofollow" href="/api/custos/modelo.xlsx">Baixar o modelo</a><span style="flex:1"></span><button type="button" class="linkbtn" data-a="curm" style="font-size:13px">Remover orçamento</button>') + '</div>' +
       (avisos.length ? '<div class="notebox">' + avisos.map(esc).join('<br>') + '</div>' : '') + msg;
     if (CU.origem === 'erp' && S.cu.tab === 'real') S.cu.tab = 'fin';
     var corpo = S.cu.tab === 'fin' ? vCusFin() : S.cu.tab === 'ctl' ? vCusCtl() : S.cu.tab === 'real' ? vCusReal() : vCusOrc();
@@ -3665,7 +3666,37 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
         '</div>';
   }
   function rs0(v) { return !v ? '–' : (v < 0 ? '−' : '') + Math.round(Math.abs(v)).toLocaleString('pt-BR'); }
-  function vCusCtl() {
+  // Orçado x Realizado mês a mês (Bismark, 21/11/2026): se o cliente quiser, cada importação fica guardada no mês dela
+  var MESES = null, MESk = '';
+  function mesBr(m) { return m.slice(5, 7) + '/' + m.slice(0, 4); }
+  function vCusMeses() {
+    var k = String(CONTA && CONTA.obra ? CONTA.obra.id : '');
+    if (MESk !== k) { MESk = k; MESES = null; }
+    if (!MESES) {
+      MESES = { carregando: true, meses: [] };
+      api('/api/custos/meses').then(function (r) { MESES = r; render(); }, function () { MESES = { meses: [], erro: true }; });
+      return '';
+    }
+    if (MESES.carregando || MESES.erro) return '';
+    var ro = ehDemo() || (CONTA && CONTA.obra && CONTA.obra.papel === 'leitor');
+    var liga = ro ? '' : '<label style="display:inline-flex;gap:10px;align-items:center;justify-content:flex-start;font-size:14px;font-weight:600;cursor:pointer;min-height:44px;align-self:flex-start"><input type="checkbox" data-a="cumesliga" style="width:20px;height:20px;min-height:0;flex:0 0 auto;margin:0;padding:0"' + (MESES.ligado ? ' checked' : '') + '> Guardar o fechamento de cada mês</label>';
+    var cab = '<p style="font-size:13px;color:var(--muted)">' + (MESES.ligado ? 'Cada importação fica guardada no mês em que foi feita; se importar de novo no mesmo mês, vale a mais recente. Os meses guardados não mudam com as próximas importações.' : 'Ligue para guardar uma cópia da planilha de cada mês e comparar a evolução da obra.') + '</p>';
+    if (!MESES.meses.length) return (liga || MESES.ligado) ? '<section class="card" style="display:flex;flex-direction:column;gap:8px"><b>Mês a mês</b>' + liga + cab + '</section>' : '';
+    var pct = function (v, b) { return b ? fmt2(v / b * 100) + '%' : '–'; };
+    var rows = MESES.meses.map(function (m) {
+      var at = S.cu.mes === m.mes;
+      return '<tr' + (at ? ' class="cu-et"' : '') + '><th scope="row" class="pa-row">' + mesBr(m.mes) + '</th><td class="mono num">' + rs0(m.oatu) + '</td><td class="mono num">' + pct(m.contratado, m.oatu) + '</td><td class="mono num">' + pct(m.incorrido, m.oatu) + '</td><td class="mono num">' + rs0(m.estimativa) + '</td><td class="mono num' + (m.desvio < -0.5 ? ' ruim' : '') + '">' + (m.desvio == null || Math.abs(m.desvio) < 0.5 ? '–' : (m.desvio < 0 ? '−' : '+') + rs0(Math.abs(m.desvio))) + '</td><td class="mono num' + (m.indice > 1 ? ' ruim' : '') + '">' + (m.indice == null ? '–' : fmt2(m.indice)) + '</td>' +
+        '<td>' + (at ? '<span class="kpi-s">aberto</span>' : '<button type="button" class="linkbtn" data-a="cumes:' + m.mes + '" style="font-size:13px">Ver</button>') + '</td></tr>';
+    }).join('');
+    return '<section class="card" style="display:flex;flex-direction:column;gap:8px"><b>Mês a mês</b>' + liga + cab +
+      '<div class="scroll-x"><table class="tbl"><thead><tr><th>Mês</th><th>Orçamento atualizado (b)</th><th>Contratado (c)</th><th>Incorrido (d)</th><th>Estimativa no término (i)</th><th>Desvio (j)</th><th>Índice (k)</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      '<p style="font-size:12.5px;color:var(--muted)">Valores em reais, sem centavos; contratado e incorrido em % do orçamento atualizado do mês.</p></section>';
+  }
+  function vCusCtl() { return vCusMeses() + vCusCtl0(); }
+  function faixaMes() {
+    return CU.mes ? '<div class="notebox" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="flex:1 1 220px">Você está vendo o fechamento de <b>' + mesBr(CU.mes) + '</b>, guardado em ' + isoBr((CU.controle && CU.controle.atualizado_em || '').slice(0, 10)) + '. É só consulta; o relatório em PDF continua sendo o do mês atual.</span><button type="button" class="btn btn-ghost btn-sm" data-a="cumes:">Voltar ao mês atual</button></div>' : '';
+  }
+  function vCusCtl0() {
     var C = CU.controle;
     if (!C) return '<section class="card" style="display:flex;flex-direction:column;gap:12px"><b>Orçado x Realizado</b>' +
       '<p style="color:var(--muted);font-size:14px">Importe a planilha Orçado x Realizado, no padrão Custo Plano ou exportada do ERP da construtora (Excel ou CSV). Por serviço, ela traz o orçamento inicial (a) e o atualizado (b), o contratado (c), o incorrido (d), os saldos de contrato (e) e de pedido (f) e o saldo a contratar (h). O sistema calcula o comprometido, a estimativa no término, o desvio e o índice, e confere o total com o orçamento e os custos lançados aqui.</p>' +
@@ -3682,7 +3713,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var resumo = '<p style="font-size:14px">A obra deve terminar em <b>R$\u00a0' + rs0(est) + '</b>, ' + (Math.abs(d) < 0.5 ? 'igual ao orçamento atualizado.' : (d < 0 ? '<b style="color:var(--bad)">R$\u00a0' + rs0(-d) + ' acima</b>' : '<b style="color:var(--good)">R$\u00a0' + rs0(d) + ' abaixo</b>') + ' do orçamento atualizado (R$\u00a0' + rs0(T.oatu) + ').') +
       (T.a_contratar ? ' Dessa estimativa, R$\u00a0' + rs0(T.a_contratar) + ' ainda são premissa (saldo a contratar).' : '') + '</p>';
     return '<section class="card" style="display:flex;flex-direction:column;gap:10px"><div class="prj-bar"><span style="display:flex;flex-direction:column;flex:1 1 220px;min-width:0"><b style="font-size:15px">Orçado x Realizado</b><span style="font-size:12.5px;color:var(--muted)">' + esc(C.arquivo || '') + (C.atualizado_em ? ' · importada em ' + isoBr(C.atualizado_em.slice(0, 10)) : '') + '</span></span>' +
-      (ehDemo() ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outra planilha</label><button type="button" class="linkbtn" data-a="cuctlrm" style="font-size:13px">Remover</button>') + '</div>' + resumo +
+      (ehDemo() || CU.mes ? '' : '<label for="cuCtlFile" class="btn btn-ghost btn-sm" style="cursor:pointer">Importar outra planilha</label><button type="button" class="linkbtn" data-a="cuctlrm" style="font-size:13px">Remover</button>') + '</div>' + resumo +
       (C.reimportar && !ehDemo() ? '<div class="notebox"><b>Importe de novo o arquivo do ERP</b> para ver as abas Orçamento e Financeiro (realizado mês a mês) e todos os níveis até o credor. A planilha desta obra foi importada antes dessas abas existirem.</div>' : '') +
       (C.avisos.length ? '<div class="notebox">' + C.avisos.map(esc).join('<br>') + '</div>' : '') + '</section>' +
       (C.tem_niveis ? '<div class="tabs" role="group" aria-label="Nível da tabela"><button type="button" data-a="cuctlv:et" aria-pressed="' + (S.cu.ctlv !== 'niv') + '">Por etapa</button><button type="button" data-a="cuctlv:niv" aria-pressed="' + (S.cu.ctlv === 'niv') + '">Todos os níveis</button></div>' : '') +
@@ -3693,10 +3724,10 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
   // todos os níveis do ERP: UC > etapa > itens > credor, abrindo e fechando cada linha
   var NIV = null, NIVk = '', NIV_ROT = ['Unidade de custo', 'Etapa', 'Item', 'Credor'];
   function vCusNiv(cab, cel, idx) {
-    var C = CU.controle, k = (C.arquivo || '') + (C.atualizado_em || '');
+    var C = CU.controle, k = (C.arquivo || '') + (C.atualizado_em || '') + (CU.mes || '');
     if (NIVk !== k) {
       NIVk = k; NIV = null;
-      api('/api/custos/controle/niveis').then(function (r) { if (NIVk === k) { NIV = r.niveis; render(); } }, function (e) { NIV = []; S.cu.msg = e.message; render(); });
+      api('/api/custos/controle/niveis' + (CU.mes ? '?mes=' + CU.mes : '')).then(function (r) { if (NIVk === k) { NIV = r.niveis; render(); } }, function (e) { NIV = []; S.cu.msg = e.message; render(); });
     }
     if (!NIV) return '<section class="card"><p style="color:var(--muted);font-size:14px">Carregando todos os níveis…</p></section>';
     var max = S.cu.nivMax == null ? 1 : S.cu.nivMax, ab = S.cu.nivOpen || {};
@@ -3723,7 +3754,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     var fd = new FormData(); fd.append('arquivo', file);
     S.cu.msg = 'Lendo ' + file.name + '…'; S.screen = 'cus'; S.cu.tab = 'ctl'; render();
     api('/api/custos/controle', fd).then(function (r) {
-      CU = r.custos; S.cu.nivOpen = {}; S.cu.msg = CU && CU.controle ? 'Planilha Orçado x Realizado importada: ' + CU.controle.linhas.length + ' serviços.' : ''; render();
+      CU = r.custos; S.cu.nivOpen = {}; MESES = null; S.cu.mes = ''; S.cu.msg = CU && CU.controle ? 'Planilha Orçado x Realizado importada: ' + CU.controle.linhas.length + ' serviços.' : ''; render();
     }, function (e) { S.cu.msg = 'Não foi possível importar: ' + e.message; render(); });
   }
   document.getElementById('cuCtlFile').addEventListener('change', function (e) { cuCtlImport(e.target.files[0]); e.target.value = ''; });
@@ -4821,7 +4852,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
     switch (a[0]) {
       case 'navmais': menuCel(!document.getElementById('side').classList.contains('aberto')); return;
       case 'navfecha': menuCel(false); return;
-      case 'nav': menuCel(false); S.screen = a[1]; S.med.uid = null; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
+      case 'nav': menuCel(false); if (S.cu.mes && a[1] !== 'cus') { S.cu.mes = ''; CU = null; } S.screen = a[1]; S.med.uid = null; S.sel = null; S.prjMsg = ''; S.q.msg = ''; S.q.ncEdit = null; S.q.modEdit = null; if (a[1] === 'cus') { S.cu.msg = ''; loadCustos(); } if (a[1] === 'pa' || a[1] === 'painel') loadPlano(); if (a[1] === 'sup') { S.supR.msg = ''; loadSup(); } if (a[1] === 'painel') loadCustos(); render(); window.scrollTo(0, 0); return;
       case 'sel': S.sel = a[1]; break;
       case 'close': S.sel = null; break;
       case 'set': setSt(a[1], a[2]); break;
@@ -4860,6 +4891,8 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
       case 'calh': S.cal.dia = null; S.cal.mes = null; break;
       case 'cut': S.cu.tab = a[1]; S.cu.tabEscolhida = true; break;
       case 'cuctlv': S.cu.ctlv = a[1]; break;
+      case 'cumes': S.cu.mes = a[1] || ''; S.cu.nivOpen = {}; CU = null; loadCustos(); break;
+      case 'cumesliga': if (precisaRede()) return; var mlg = !MESES.ligado; api('/api/custos/meses', { ligado: mlg }).then(function (r) { MESES = r; render(); }, function (e2) { S.cu.msg = e2.message; render(); }); return;
       case 'cunvmax': S.cu.nivMax = +a[1]; S.cu.nivOpen = {}; break;
       case 'cunv': S.cu.nivOpen = S.cu.nivOpen || {}; var nvb = document.querySelector('[data-a="cunv:' + a[1] + '"]'); S.cu.nivOpen[a[1]] = !(nvb && nvb.getAttribute('aria-expanded') === 'true'); break;
       case 'cuit': S.cu.open[a[1]] = !S.cu.open[a[1]]; break;
@@ -5028,7 +5061,7 @@ button.chip[data-adm^="serv:"]{border:0;cursor:pointer;font:inherit;display:inli
 
   /* ---------- Conta: obras, administração e senhas ---------- */
   function limparObra() {
-    P = null; PA = null; CU = null; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; S.hist = []; S.screen = 'painel'; S.sel = null;
+    P = null; PA = null; CU = null; S.cu.mes = ''; Q = null; CPD = null; S.cpw = 0; S.q.form = null; S.sync = ''; S.hist = []; S.screen = 'painel'; S.sel = null;
     if (window.caches) caches.delete('cp-api').catch(function () {});
   }
   function trocarObra(id, depois) {

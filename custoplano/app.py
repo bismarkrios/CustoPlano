@@ -1122,11 +1122,11 @@ def projeto_da_obra(uid: int):
     return projeto_de(c) if c else None
 
 
-def analise_custos(uid: int):
+def analise_custos(uid: int, mes: str | None = None):
     c = banco.cronograma(uid)
     p = projeto_de(c) if c else None
     reg, dados = orcamento_de(uid, p)
-    ctl = banco.controle_custos(uid)
+    ctl = banco.controle_do_mes(uid, mes) if mes else banco.controle_custos(uid)
     if ctl and ctl.get("orcamento"):
         # arquivo do ERP é sempre a base (Bismark, 25/10/2026): as abas Orçamento e Analítico dão o orçamento e o
         # realizado mês a mês, no lugar de qualquer orçamento importado antes (e nunca do Project)
@@ -1160,7 +1160,10 @@ def analise_custos(uid: int):
 @logado
 @servico("custos")
 def ver_custos():
-    a = analise_custos(oid())
+    mes = _mes_valido(request.args.get("mes"))
+    a = analise_custos(oid(), mes)
+    if a and mes:
+        a["mes"] = mes  # a tela mostra o fechamento guardado daquele mês, só para consulta
     if a and len(a.get("lancamentos") or []) > 200:  # a tela mostra os mais recentes; o Excel exportado traz todos
         a["lancamentos_n"] = len(a["lancamentos"])
         a["lancamentos"] = a["lancamentos"][:200]
@@ -1203,7 +1206,35 @@ def importar_controle():
 @logado
 @servico("custos")
 def niveis_controle():
-    return jsonify(niveis=cst.calcular_niveis(banco.controle_custos(oid())) or [])
+    mes = _mes_valido(request.args.get("mes"))
+    ctl = banco.controle_do_mes(oid(), mes) if mes else banco.controle_custos(oid())
+    return jsonify(niveis=cst.calcular_niveis(ctl) or [])
+
+
+def _mes_valido(mes: str | None) -> str | None:
+    return mes if mes and re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", mes) else None
+
+
+@app.get("/api/custos/meses")
+@logado
+@servico("custos")
+def ver_meses_custos():
+    """Orçado x Realizado mês a mês: um resumo de cada mês guardado (a última importação do mês vale)."""
+    meses = []
+    for m in banco.meses_controle(oid()):
+        T = (cst.calcular_controle(m) or {}).get("total") or {}
+        meses.append({"mes": m["mes"], "arquivo": m["arquivo"], "importado_em": m["atualizado_em"],
+                      **{k: T.get(k) for k in ("oatu", "contratado", "incorrido", "estimativa", "desvio", "indice")}})
+    return jsonify(ligado=banco.custos_mes_a_mes(oid()), meses=meses)
+
+
+@app.post("/api/custos/meses")
+@logado
+@servico("custos")
+@sem_demo
+def ligar_meses_custos():
+    banco.ligar_custos_mes_a_mes(oid(), bool((request.get_json(silent=True) or {}).get("ligado")))
+    return ver_meses_custos()
 
 
 @app.post("/api/custos/controle/remover")

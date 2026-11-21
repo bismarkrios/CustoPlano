@@ -130,6 +130,13 @@ jobs:
           CP_COPIAS_AUTO: "0"
         run: mkdir -p "$RUNNER_TEMP/sessao-equipe" && python teste_sessao_equipe.py
 
+      - name: Testar o Orçado x Realizado mês a mês
+        env:
+          CP_BANCO: ${{ runner.temp }}/custos-meses/teste.db
+          CP_SECRET: teste
+          CP_COPIAS_AUTO: "0"
+        run: mkdir -p "$RUNNER_TEMP/custos-meses" && python teste_custos_mes_a_mes.py
+
       - name: Testar obras e acessos (várias pessoas por obra, consulta, administração, links de senha)
         env:
           CP_BANCO: ${{ runner.temp }}/obras/teste.db

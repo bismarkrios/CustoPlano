@@ -114,6 +114,14 @@ CREATE TABLE IF NOT EXISTS curto_prazo (
     dados         TEXT NOT NULL,                -- JSON: {segunda-feira da semana: {uid da tarefa: {st, causa}}}
     atualizado_em TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS controle_custos_meses (
+    usuario_id    INTEGER NOT NULL REFERENCES obras(id) ON DELETE CASCADE,
+    mes           TEXT NOT NULL,                -- AAAA-MM: a última importação do mês fica guardada
+    arquivo       TEXT NOT NULL,
+    dados         TEXT NOT NULL,
+    importado_em  TEXT NOT NULL,
+    PRIMARY KEY (usuario_id, mes)
+);
 CREATE TABLE IF NOT EXISTS controle_custos (
     usuario_id    INTEGER PRIMARY KEY REFERENCES obras(id) ON DELETE CASCADE,
     arquivo       TEXT NOT NULL,
@@ -139,8 +147,11 @@ def iniciar() -> None:
     _colunas_novas()
     with conectar() as con:
         con.executescript(ESQUEMA)
-        if "servicos" not in {r[1] for r in con.execute("PRAGMA table_info(obras)")}:
+        cols = {r[1] for r in con.execute("PRAGMA table_info(obras)")}
+        if "servicos" not in cols:
             con.execute("ALTER TABLE obras ADD COLUMN servicos TEXT NOT NULL DEFAULT 'planejamento,custos,qualidade'")
+        if "custos_mes_a_mes" not in cols:  # o cliente escolhe guardar uma cópia do Orçado x Realizado por mês
+            con.execute("ALTER TABLE obras ADD COLUMN custos_mes_a_mes INTEGER NOT NULL DEFAULT 0")
         # o cronograma de exemplo antigo tinha o nome de uma obra real; troca nas cópias já importadas
         con.execute(
             "UPDATE cronogramas SET xml = replace(replace(xml, 'Rubi – Obra teste', 'Residencial Exemplo – Torre A'), 'Rubi teste.xml', 'Obra de exemplo.xml') "
@@ -694,6 +705,56 @@ def salvar_controle_custos(usuario_id: int, arquivo: str, dados: dict) -> None:
                  atualizado_em=excluded.atualizado_em""",
             (usuario_id, arquivo, json.dumps(dados, ensure_ascii=False), agora()),
         )
+    guardar_mes_controle(usuario_id)
+
+
+def custos_mes_a_mes(obra_id: int) -> bool:
+    with conectar() as con:
+        r = con.execute("SELECT custos_mes_a_mes FROM obras WHERE id = ?", (obra_id,)).fetchone()
+    return bool(r and r["custos_mes_a_mes"])
+
+
+def ligar_custos_mes_a_mes(obra_id: int, ligado: bool) -> None:
+    with conectar() as con:
+        con.execute("UPDATE obras SET custos_mes_a_mes = ? WHERE id = ?", (1 if ligado else 0, obra_id))
+    if ligado:
+        guardar_mes_controle(obra_id)
+
+
+def guardar_mes_controle(obra_id: int, mes: str | None = None) -> bool:
+    """Copia o Orçado x Realizado atual para o mês (o mais recente do mês vale). Só com o mês a mês ligado."""
+    if not custos_mes_a_mes(obra_id):
+        return False
+    with conectar() as con:
+        r = con.execute("SELECT arquivo, dados, atualizado_em FROM controle_custos WHERE usuario_id = ?", (obra_id,)).fetchone()
+        if not r:
+            return False
+        con.execute(
+            """INSERT INTO controle_custos_meses (usuario_id, mes, arquivo, dados, importado_em) VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(usuario_id, mes) DO UPDATE SET arquivo=excluded.arquivo, dados=excluded.dados,
+                 importado_em=excluded.importado_em""",
+            (obra_id, mes or r["atualizado_em"][:7], r["arquivo"], r["dados"], r["atualizado_em"]),
+        )
+    return True
+
+
+def meses_controle(obra_id: int) -> list[dict]:
+    with conectar() as con:
+        rs = con.execute("SELECT mes, arquivo, dados, importado_em FROM controle_custos_meses WHERE usuario_id = ? "
+                         "ORDER BY mes DESC", (obra_id,)).fetchall()
+    return [dict(json.loads(r["dados"]), mes=r["mes"], arquivo=r["arquivo"], atualizado_em=r["importado_em"]) for r in rs]
+
+
+def controle_do_mes(obra_id: int, mes: str) -> dict | None:
+    with conectar() as con:
+        r = con.execute("SELECT arquivo, dados, importado_em FROM controle_custos_meses WHERE usuario_id = ? AND mes = ?",
+                        (obra_id, mes)).fetchone()
+    return dict(json.loads(r["dados"]), arquivo=r["arquivo"], atualizado_em=r["importado_em"], mes=mes) if r else None
+
+
+def remover_mes_controle(obra_id: int, mes: str) -> None:
+    with conectar() as con:
+        con.execute("DELETE FROM controle_custos_meses WHERE usuario_id = ? AND mes = ?", (obra_id, mes))
 
 
 def remover_controle_custos(usuario_id: int) -> None:
