@@ -477,16 +477,16 @@ def robots():
 # Data da última mudança real de cada página pública (git log do arquivo).
 # Avisa o Google o que reler. Atualize na mesma publicação que muda a página.
 ATUALIZADO_EM = {
-    "/": "2026-11-16",
+    "/": "2026-11-25",
     "/manual": "2026-11-08",
     "/privacidade": "2026-11-08",
-    "/artigos": "2026-11-03",
-    "/artigos/obra-atrasada-ou-so-parece": "2026-10-31",
-    "/artigos/ppc-planejamento-semanal": "2026-10-31",
-    "/artigos/curva-s-como-ler": "2026-10-31",
-    "/artigos/controle-de-custo-de-obra": "2026-10-31",
-    "/artigos/planejamento-de-obras-ms-project": "2026-10-31",
-    "/artigos/planilha-orcado-x-realizado": "2026-11-03",
+    "/artigos": "2026-11-25",
+    "/artigos/obra-atrasada-ou-so-parece": "2026-11-25",
+    "/artigos/ppc-planejamento-semanal": "2026-11-25",
+    "/artigos/curva-s-como-ler": "2026-11-25",
+    "/artigos/controle-de-custo-de-obra": "2026-11-25",
+    "/artigos/planejamento-de-obras-ms-project": "2026-11-25",
+    "/artigos/planilha-orcado-x-realizado": "2026-11-25",
 }
 
 
